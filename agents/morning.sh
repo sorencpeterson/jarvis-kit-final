@@ -33,6 +33,20 @@ trap 'kill "$HEARTBEAT_PID" 2>/dev/null; rmdir "$SELFLOCK" 2>/dev/null' EXIT
 # $RUN wraps every step in a 900s per-agent timeout (agents/run_step.sh) so one hung
 # agent can't stall the chain (red-team). It resolves the venv python itself; falls back
 # to the bare interpreter if the wrapper is somehow missing.
+
+# ---- plan profile (lite keeps a $20 Claude plan alive) ----------------------
+# store/config.json "morning_profile": lite | full   (default: full)
+# lite runs only the lanes that produce something you act on today, because a
+# Pro plan cannot absorb 100+ LLM-calling agents before breakfast.
+PROFILE="$(.venv/bin/python -c "import json;print(json.load(open('store/config.json')).get('morning_profile','full'))" 2>/dev/null || echo full)"
+lane() {  # lane <name>  -> 0 if this lane should run under the current profile
+  case "$PROFILE" in
+    lite) case "$1" in core|jobs) return 0;; *) return 1;; esac ;;
+    *)    return 0 ;;
+  esac
+}
+echo "morning profile: $PROFILE"
+
 if [ -x "agents/run_step.sh" ]; then RUN="bash agents/run_step.sh"
 elif [ -x ".venv/bin/python" ]; then RUN=".venv/bin/python"; else RUN="python3"; fi
 # Keep the Mac awake for the whole run so a lid-closed DarkWake can't re-sleep mid-run.
@@ -47,6 +61,7 @@ caffeinate -i -w $$ &
   for i in $(seq 1 24); do curl -m 5 -sf https://api.anthropic.com >/dev/null 2>&1 && break; sleep 5; done
 
   # ============ MONEY LANE (brief-ready target: first ~15 minutes) ============
+  if lane money; then
   $RUN capture/pull_reminders.py
   $RUN agents/triage_inbox.py
   # Gmail intelligence chain (built 2026-07-03, never scheduled — went dark for 83h
@@ -91,6 +106,8 @@ caffeinate -i -w $$ &
   $RUN agents/morning_chain.py    # config-gated apply kick (ships 0; evening chain is the live lane)
   $RUN agents/daily_brief.py      # <=== BRIEF READY
   hb morning-money                # heartbeat: money lane completed (brief freshness signal)
+
+  fi  # end MONEY LANE
 
   # ============ JOBS LANE ============
   $RUN agents/jobs.py

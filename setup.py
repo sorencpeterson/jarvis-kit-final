@@ -56,6 +56,51 @@ EMPTY_JSON = {
 }
 
 
+# Claude plan profiles. The system calls `claude -p` for every thinking step, so
+# the plan sets how much it can do in a day. These are the knobs that keep a $20
+# account alive: cheaper model routing, a hard daily token budget (planner._cli
+# degrades to the default model past it), a trimmed morning chain, and lower caps.
+PLANS = {
+    "pro": {
+        "label": "Claude Pro ($20/mo)",
+        "models": {r: "claude-haiku-4-5-20251001" for r in
+                   ("default", "interpret", "plan", "tone_screen", "brief", "chat_fast",
+                    "quality_grade", "jarvis")} |
+                  {r: "claude-sonnet-4-6" for r in ("content", "networking", "reply", "proposal", "tailor")},
+        "daily_token_budget": 400000,
+        "morning_profile": "lite",
+        "job_daily_apply_cap": 5,
+        "network_daily": {"connect": 8, "comment": 4, "like": 15, "dm": 3},
+    },
+    "max": {
+        "label": "Claude Max",
+        "models": {r: "claude-haiku-4-5-20251001" for r in
+                   ("default", "interpret", "plan", "tone_screen", "brief", "chat_fast")} |
+                  {r: "claude-sonnet-4-6" for r in
+                   ("content", "networking", "reply", "proposal", "quality_grade", "tailor")} |
+                  {"jarvis": "claude-opus-4-8"},
+        "daily_token_budget": 0,
+        "morning_profile": "full",
+        "job_daily_apply_cap": 10,
+        "network_daily": {"connect": 10, "comment": 6, "like": 20, "dm": 5},
+    },
+}
+
+
+def pick_plan(default: str = "pro") -> str:
+    print("\n  WHICH CLAUDE PLAN\n")
+    print("    1. Claude Pro ($20/mo)   <- most people. Trims the daily chain and")
+    print("                                routes cheap models so you do not burn")
+    print("                                the whole limit before lunch.")
+    print("    2. Claude Max            Full chain, stronger models.")
+    print("\n  You can change this later in store/config.json.")
+    try:
+        v = input(f"\n  Choose 1 or 2 [{'1' if default == 'pro' else '2'}]: ").strip()
+    except (EOFError, KeyboardInterrupt):
+        v = ""
+    return "max" if v == "2" else "pro"
+
+
 def ask(q: str, default: str = "", required: bool = False) -> str:
     suffix = f" [{default}]" if default else ""
     while True:
@@ -71,7 +116,12 @@ def ask(q: str, default: str = "", required: bool = False) -> str:
 
 
 def main() -> int:
+    quick = "--quick" in sys.argv or "-q" in sys.argv
+    preset = next((a.split("=", 1)[1] for a in sys.argv if a.startswith("--plan=")), None)
     print("\n  JARVIS setup\n  " + "-" * 40)
+    if quick:
+        print("  Quick mode: name and email only, sensible defaults for the rest.")
+        print("  Edit config/owner.json any time, or re-run without --quick.\n")
     existing = {}
     if OWNER.exists():
         try:
@@ -83,14 +133,26 @@ def main() -> int:
     cfg: dict = {}
     print("\n  WHO YOU ARE\n")
     for key, q, dflt, req in FIELDS:
+        if quick and not req:
+            cfg[key] = str(existing.get(key, dflt))
+            continue
         cfg[key] = ask(q, str(existing.get(key, dflt)), req)
 
     cfg["handle"] = (cfg.get("linkedin", "").rstrip("/").split("/")[-1]
                      or cfg["name"].lower().replace(" ", ""))
 
-    print("\n  JOB SEARCH (enter to skip if you are not job hunting)\n")
-    for key, q, dflt, req in JOB_FIELDS:
-        cfg[key] = ask(q, str(existing.get(key, dflt)), req)
+    plan = preset if preset in PLANS else ("pro" if quick else pick_plan())
+    cfg["claude_plan"] = plan
+    if quick or preset:
+        print(f"  Plan: {PLANS[plan]['label']}")
+
+    if quick:
+        for key, q, dflt, req in JOB_FIELDS:
+            cfg[key] = str(existing.get(key, dflt))
+    else:
+        print("\n  JOB SEARCH (enter to skip if you are not job hunting)\n")
+        for key, q, dflt, req in JOB_FIELDS:
+            cfg[key] = ask(q, str(existing.get(key, dflt)), req)
 
     cfg["home"] = str(Path.home())
     cfg["app_root"] = str(ROOT)
@@ -118,26 +180,16 @@ def main() -> int:
         cfgp.write_text(json.dumps({
             "_note": "Runtime knobs. Everything outward-facing ships OFF.",
             "job_auto": False,
-            "job_daily_apply_cap": 10,
+            "job_daily_apply_cap": PLANS[plan]["job_daily_apply_cap"],
             "cold_daily_enroll": 0,
-            "models": {
-                "default": "claude-haiku-4-5-20251001",
-                "interpret": "claude-haiku-4-5-20251001",
-                "plan": "claude-haiku-4-5-20251001",
-                "tone_screen": "claude-haiku-4-5-20251001",
-                "brief": "claude-haiku-4-5-20251001",
-                "chat_fast": "claude-haiku-4-5-20251001",
-                "content": "claude-sonnet-4-6",
-                "networking": "claude-sonnet-4-6",
-                "reply": "claude-sonnet-4-6",
-                "proposal": "claude-sonnet-4-6",
-                "quality_grade": "claude-sonnet-4-6",
-                "tailor": "claude-sonnet-4-6",
-                "jarvis": "claude-opus-4-8",
-            },
+            "morning_profile": PLANS[plan]["morning_profile"],
+            "daily_token_budget": PLANS[plan]["daily_token_budget"],
+            "_budget_note": "Output tokens/day before internal features downgrade to "
+                            "the cheap default model. 0 = no cap.",
+            "models": PLANS[plan]["models"],
             "_models_note": "Which model each feature routes to. Cheap models for "
                             "internal steps, stronger ones for anything a human reads.",
-            "network": {"daily": {"connect": 10, "comment": 6, "like": 20, "dm": 5},
+            "network": {"daily": PLANS[plan]["network_daily"],
                         "weekly": {"connect": 100},
                         "daily_action_budget": 40,
                         "hours_window": {"start": 8, "end": 18},

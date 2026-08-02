@@ -29,17 +29,19 @@ INTEGRATIONS = [
     ("ntfy_topic", "Push notifications (ntfy)",
      "Phone alerts: interview replies, things needing you. Free, no account.",
      "Pick any hard-to-guess string, install the ntfy app, subscribe to it.", "ntfy_topic"),
-    ("openai_api_key", "OpenAI",
-     "Optional. Image generation for content posts.",
+    ("openai_api_key", "OpenAI (images)",
+     "Optional, costs money. FREE ALTERNATIVE: skip it. Text posts do fine, or "
+     "generate images elsewhere and drop them in content/images/.",
      "https://platform.openai.com/api-keys", "openai_api_key"),
-    ("elevenlabs_api_key", "ElevenLabs",
-     "Optional. Voice output for the daily brief.",
+    ("elevenlabs_api_key", "ElevenLabs (voice)",
+     "Optional, costs money. FREE ALTERNATIVE: macOS already has `say`. "
+     "Try: say -f store/brief.md",
      "https://elevenlabs.io/app/settings/api-keys", "elevenlabs_api_key"),
     ("google", "Google (Gmail + Calendar)",
      "Optional. Reply tracking, interview detection, meeting prep.",
      "See schedule/SETUP.md for the OAuth walkthrough.", None),
     ("ghl", "GoHighLevel",
-     "Optional. CRM sync for client/lead work.",
+     "Optional, and only if you already pay for GHL. Nothing depends on it.",
      "Your GHL agency settings, Private Integrations.", "ghl_api_key"),
 ]
 
@@ -117,7 +119,9 @@ def main() -> int:
     print("\n  Connection wizard")
     print("  " + "-" * 44)
     print("  Everything is optional except Claude Code.")
-    print("  Press Enter to skip anything you do not use.\n")
+    print("  Press Enter to skip anything you do not use.")
+    print("  Several of these have a free alternative, noted inline.")
+    print("  See COSTS.md for the full breakdown.\n")
 
     if not _which("claude"):
         print("  \033[31m! Claude Code is not installed.\033[0m")

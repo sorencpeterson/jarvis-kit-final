@@ -29,6 +29,19 @@ agents call it for every thinking step. Everything else (push notifications,
 Gmail, Calendar, image generation, CRM) turns on one more lane and can wait.
 `python3 connect.py --status` shows what is wired up.
 
+**On a $20 Claude Pro plan?** Setup asks and configures for it: cheap model
+routing, a daily token budget, a trimmed morning chain. See **[COSTS.md](COSTS.md)**
+for what everything costs and the free alternative to each paid piece.
+
+Skip the wizard entirely if you prefer:
+
+```bash
+python3 setup.py --quick      # name and email only
+python3 setup.py --plan=max   # preset the plan
+```
+
+Or just copy `config/owner.example.json` to `config/owner.json` and edit it.
+
 To check it took:
 
 ```bash
