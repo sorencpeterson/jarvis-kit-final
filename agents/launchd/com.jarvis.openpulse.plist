@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <!-- proposal_open_pulse.py is only worth its name on a poll cycle: the whole point is
+       "X is reading your proposal RIGHT NOW, call them". 20-min interval. Load is [OWNER]'s:
+       launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.jarvis.openpulse.plist -->
+  <key>Label</key><string>com.jarvis.openpulse</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>[APP_ROOT]/.venv/bin/python</string>
+    <string>[APP_ROOT]/agents/proposal_open_pulse.py</string>
+  </array>
+  <key>RunAtLoad</key><false/>
+  <key>StartInterval</key><integer>1200</integer>
+  <key>WorkingDirectory</key><string>[APP_ROOT]</string>
+  <key>StandardOutPath</key><string>[APP_ROOT]/agents/openpulse.log</string>
+  <key>StandardErrorPath</key><string>[APP_ROOT]/agents/openpulse.log</string>
+</dict>
+</plist>

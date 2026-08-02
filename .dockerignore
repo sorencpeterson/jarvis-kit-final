@@ -1,0 +1,69 @@
+# =============================================================================
+# .dockerignore — shrink the build context AND fail-safe against baking secrets.
+# The Dockerfile copies only named dirs (app/ agents/ dashboard/ tools/ deploy/ +
+# store_lib.py + requirements.txt), but this list is the backstop: even if someone
+# later switches to `COPY . .`, none of the following can ever enter an image layer.
+# =============================================================================
+
+# ---- SECRETS — never, under any circumstance, in an image -------------------
+.env
+*.env
+.env.bak-*
+*.env.bak-*
+store/.sign_secret
+schedule/credentials/
+*token.json
+*.pem
+*.key
+
+# ---- RUNTIME STATE — store/ is a mounted VOLUME, not image content ----------
+# It also holds live secrets (config.json: openai/elevenlabs keys) + all PII.
+store/
+
+# ---- Python cruft / the host venv -------------------------------------------
+.venv/
+venv/
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+
+# ---- VCS + local dev noise --------------------------------------------------
+.git/
+.gitignore
+.DS_Store
+.claude/
+.browser-profile/
+
+# ---- Logs + temp (regenerated at runtime) -----------------------------------
+*.log
+*.tmp
+*.bak
+*.lock
+
+# ---- Node / build artifacts we don't ship -----------------------------------
+node_modules/
+video/node_modules/
+vendor/
+
+# ---- Large / regenerable media (Mac-local features: audio, video, images) ---
+content/images/
+content/samples/
+media/
+*.mp3
+*.mp4
+*.wav
+*.m4a
+
+# ---- Mac-only subsystems the server image does not run ----------------------
+# coach/ (Call Coach: audio+whisper), capture/ (Reminders/HealthKit), video/,
+# schedule/ (launchd), *.plist, install/serve/run shells stay on the Mac.
+coach/
+capture/
+video/
+schedule/
+*.plist
+
+# ---- Docs / trackers — not needed at runtime, keep the context lean ---------
+*.md
+!deploy/cloud/README.md

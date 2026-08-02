@@ -1,0 +1,8 @@
+Alex has a warm sales call booked (web design / marketing ops, pricing tree: landing 800,
+standard 1200, booking 2500). This prospect runs a small e-commerce shop and asked in the
+booking form "is this just a template site" and also "what happens if I want changes after
+launch, is that extra?"
+
+Return ONLY JSON: {"objections": [{"hear": "the likeliest thing they'll say", "say": "Alex's
+exact blunt counter, no em-dashes, no cliches, direct"}]} with exactly 2 items: one for
+"is this a template" and one for post-launch changes/scope.

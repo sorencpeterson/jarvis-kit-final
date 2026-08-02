@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <!-- call_escalator.py needs afternoon runs (3pm nag, 8pm accountability); the morning
+       chain alone leaves it inert. Idempotent per stage per day, so extra fires are safe.
+       Load is [OWNER]'s:
+       launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.jarvis.escalator.plist -->
+  <key>Label</key><string>com.jarvis.escalator</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>[APP_ROOT]/.venv/bin/python</string>
+    <string>[APP_ROOT]/agents/call_escalator.py</string>
+  </array>
+  <key>RunAtLoad</key><false/>
+  <key>StartCalendarInterval</key>
+  <array>
+    <dict><key>Hour</key><integer>15</integer><key>Minute</key><integer>5</integer></dict>
+    <dict><key>Hour</key><integer>20</integer><key>Minute</key><integer>5</integer></dict>
+  </array>
+  <key>WorkingDirectory</key><string>[APP_ROOT]</string>
+  <key>StandardOutPath</key><string>[APP_ROOT]/agents/escalator.log</string>
+  <key>StandardErrorPath</key><string>[APP_ROOT]/agents/escalator.log</string>
+</dict>
+</plist>

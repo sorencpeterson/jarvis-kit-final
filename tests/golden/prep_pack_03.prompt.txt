@@ -1,0 +1,7 @@
+Prospect: Wendell | niche: agency white-label partner. Alex booked a sales call with them
+(web design / marketing ops, pricing tree: landing 800, standard 1200, booking 2500,
+agencyfirst 1000 flat first order). Return JSON:
+{"opener": "one natural first line referencing that THEY booked",
+"questions": ["3 discovery questions, his blunt voice"],
+"objections": [{"hear": "likeliest objection", "say": "the counter"}] (2 items),
+"close": "the exact closing line"}

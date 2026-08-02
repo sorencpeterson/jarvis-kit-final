@@ -1,0 +1,26 @@
+{
+  "type": "object",
+  "required": ["opener", "questions", "objections", "close"],
+  "properties": {
+    "opener": {"type": "string", "minLength": 1},
+    "questions": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"type": "string"}
+    },
+    "objections": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["hear", "say"],
+        "properties": {
+          "hear": {"type": "string"},
+          "say": {"type": "string"}
+        }
+      }
+    },
+    "close": {"type": "string", "minLength": 1}
+  },
+  "_note": "Same prep-pack shape, agency white-label partner niche (tests the agencyfirst tier context in the prompt doesn't break the JSON shape)."
+}

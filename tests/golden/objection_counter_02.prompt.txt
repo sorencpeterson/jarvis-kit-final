@@ -1,0 +1,8 @@
+Alex has a warm sales call booked (web design / marketing ops, pricing tree: landing 800,
+standard 1200, booking 2500). The prospect mentioned on the phone that they "already have a
+guy" who does their website stuff, and separately worried the turnaround might be slow since
+their last web project took 3 months.
+
+Return ONLY JSON: {"objections": [{"hear": "the likeliest thing they'll say", "say": "Alex's
+exact blunt counter, no em-dashes, no cliches, direct"}]} with exactly 2 items: one for
+"already have a guy" and one for timeline/turnaround worry.

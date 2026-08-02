@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  Keeps the Second Brain server ALWAYS running — starts at login and restarts if
+  it ever dies. This is the #1 stickiness fix (no more manual launch).
+  Enable once (your hands):
+
+    cp ~/Claude/second-brain/com.jarvis.brain-server.plist ~/Library/LaunchAgents/
+    launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.jarvis.brain-server.plist
+
+  Then it's on http://localhost:8765 forever. Disable:
+    launchctl bootout gui/$(id -u)/com.jarvis.brain-server
+-->
+<plist version="1.0">
+<dict>
+  <key>Label</key><string>com.jarvis.brain-server</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/bash</string>
+    <string>[APP_ROOT]/serve.sh</string>
+    <string>127.0.0.1</string>
+  </array>
+  <key>RunAtLoad</key><true/>
+  <key>KeepAlive</key><true/>
+  <key>StandardErrorPath</key><string>[APP_ROOT]/server.err.log</string>
+  <key>StandardOutPath</key><string>[APP_ROOT]/server.out.log</string>
+</dict>
+</plist>

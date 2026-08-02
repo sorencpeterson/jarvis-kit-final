@@ -1,0 +1,24 @@
+# personal data — never commit
+store/
+config/owner.json
+content/posts.jsonl
+content/images/
+.env
+.env.*
+auth.json
+*.log
+
+# runtime
+.venv/
+__pycache__/
+*.pyc
+.browser-profile/
+tts-cache/
+node_modules/
+.DS_Store
+
+# credentials — never commit (this is how a Google OAuth token leaked once)
+schedule/credentials/
+*credentials*.json
+client_secret*.json
+token.json

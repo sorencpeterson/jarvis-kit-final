@@ -1,0 +1,78 @@
+# =============================================================================
+# docker-compose.yml — run the second-brain SERVER anywhere (Mac, Linux VPS, box).
+# This runs the public surface only (read API + signed links + webhook + health).
+# The LLM brain and browser/audio operators stay on [OWNER]'s Mac (see
+# deploy/cloud/README.md). Bring it up with:  docker compose up --build
+# =============================================================================
+
+services:
+  brain-server:
+    build:
+      context: .            # repo root (second-brain/), where requirements.txt lives
+      dockerfile: Dockerfile
+    image: second-brain:latest
+    container_name: second-brain
+
+    # Load runtime secrets/config from .env at CONTAINER START (never baked in).
+    # store_lib.secret() resolves: process env -> .env -> store/config.json. This
+    # file feeds the process env layer. If .env is absent the server still boots and
+    # MINTS its own BRAIN_TOKEN into the mounted store, so nothing hard-fails.
+    env_file:
+      - .env
+
+    # Belt-and-suspenders: make the app bind loopback-then-proxied explicitly and
+    # let the code know it's containerized. (server.py already defaults to these;
+    # set here so the intent is visible and overridable per host.)
+    environment:
+      # A reverse proxy / tunnel is expected to sit in front; see ports note below.
+      - PYTHONUNBUFFERED=1
+
+    # ---- Networking -----------------------------------------------------------
+    # Publish to 127.0.0.1 on the HOST only. The container listens on 0.0.0.0
+    # internally (cloud requirement), but we do NOT expose the raw API to the
+    # world here: a reverse proxy (Caddy/nginx/Cloudflare Tunnel) should be the
+    # only thing that can reach 127.0.0.1:8765 and should forward just the public
+    # routes. To go public, front THIS with TLS + the app's Host guard; do not
+    # change the left side to 0.0.0.0 without that proxy in place.
+    ports:
+      - "127.0.0.1:8765:8765"
+
+    # ---- Persistent state -----------------------------------------------------
+    # store/ is the whole point of the mount: jsonl/json state survives restarts
+    # and image rebuilds, and (critically) secrets in store/config.json live on
+    # the volume, NOT in the image. Named volume by default; swap for a bind mount
+    # (see the commented line) if you want to read the files on the host directly.
+    volumes:
+      - brain-store:/app/store
+      # --- Alternative: bind-mount the real repo store/ (host path -> container) ---
+      # Use this instead of the named volume to share [OWNER]'s actual store with a
+      # local container. The host dir must be readable/writable by uid 10001
+      # (the non-root 'brain' user): `sudo chown -R 10001:10001 ./store`.
+      # - ./store:/app/store
+
+    # Restart unless [OWNER] explicitly stops it — this is meant to be always-on.
+    restart: unless-stopped
+
+    # ---- Health ---------------------------------------------------------------
+    # Hit the public liveness probe from inside the container. /pub/health returns
+    # {"ok": true, "service": "proposals"} and reveals nothing sensitive. Marks the
+    # container healthy/unhealthy so an orchestrator can restart a wedged server.
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8765/pub/health"]
+      interval: 30s          # probe cadence
+      timeout: 5s            # a slow reply past this counts as a failure
+      retries: 3             # 3 straight failures -> unhealthy
+      start_period: 15s      # grace while uvicorn boots (don't fail during startup)
+
+    # Log rotation so an always-on container can't fill the host disk with JSON logs.
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+# Named volume for store/. `docker compose down` keeps it; `down -v` deletes it
+# (which would wipe state + the minted token + the persisted sign secret — don't).
+volumes:
+  brain-store:
+    driver: local

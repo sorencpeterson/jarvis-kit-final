@@ -1,0 +1,362 @@
+{
+ "_comment": "E337: per-agent expected-cadence table. Each entry documents how often an agent SHOULD run and how agents/agent_cadence_checker.py verifies it: via runlog (store/runs.jsonl, if the agent has adopted agents/runlog.py's track()) or via output_file mtime (a store/ file the agent is known to write on every successful run) or both. expected_hours is the max gap before a run counts as a MISS. This file is DATA, hand-editable \u2014 add a line here for any new agent that should be watched.",
+ "_schema": {
+  "agent": "matches runs.jsonl's 'agent' field when runlog is adopted; informational label otherwise",
+  "expected_hours": "max hours between runs before this counts as a miss",
+  "runlog_name": "the exact string in runs.jsonl's 'agent' field, or null if not runlog-adopted yet",
+  "output_file": "a store/ path this agent overwrites/appends on every successful run, or null if none reliable",
+  "owner_lane": "which mission/lane owns this agent, for context only"
+ },
+ "agents": [
+  {
+   "agent": "attention",
+   "expected_hours": 24,
+   "runlog_name": "attention",
+   "output_file": "store/attention.json",
+   "owner_lane": "internals"
+  },
+  {
+   "agent": "day_plan",
+   "expected_hours": 24,
+   "runlog_name": "day_plan",
+   "output_file": "store/day_plan.md",
+   "owner_lane": "internals"
+  },
+  {
+   "agent": "daily_brief",
+   "expected_hours": 24,
+   "runlog_name": "daily_brief",
+   "output_file": "store/brief.json",
+   "owner_lane": "internals"
+  },
+  {
+   "agent": "promises",
+   "expected_hours": 24,
+   "runlog_name": "promises",
+   "output_file": "store/promises.jsonl",
+   "owner_lane": "internals"
+  },
+  {
+   "agent": "contact_graph",
+   "expected_hours": 48,
+   "runlog_name": "contact_graph",
+   "output_file": "store/contact_graph.json",
+   "owner_lane": "internals"
+  },
+  {
+   "agent": "organize",
+   "expected_hours": 24,
+   "runlog_name": null,
+   "output_file": "store/board.json",
+   "owner_lane": "internals"
+  },
+  {
+   "agent": "snapshot",
+   "expected_hours": 24,
+   "runlog_name": null,
+   "output_file": "store/snapshots",
+   "owner_lane": "internals"
+  },
+  {
+   "agent": "standup",
+   "expected_hours": 24,
+   "runlog_name": "standup",
+   "output_file": "store/standup.md",
+   "owner_lane": "internals"
+  },
+  {
+   "agent": "thread_memory",
+   "expected_hours": 48,
+   "runlog_name": "thread_memory",
+   "output_file": "store/thread_summaries.jsonl",
+   "owner_lane": "internals"
+  },
+  {
+   "agent": "meeting_prep",
+   "expected_hours": 24,
+   "runlog_name": "meeting_prep",
+   "output_file": "store/prep_cards.jsonl",
+   "owner_lane": "internals"
+  },
+  {
+   "agent": "mail_sync",
+   "expected_hours": 26,
+   "runlog_name": null,
+   "output_file": "store/mail_cursor.json",
+   "owner_lane": "mail"
+  },
+  {
+   "agent": "mail_brain",
+   "expected_hours": 26,
+   "runlog_name": "mail_brain",
+   "output_file": null,
+   "owner_lane": "mail"
+  },
+  {
+   "agent": "mail_digest",
+   "expected_hours": 24,
+   "runlog_name": "mail_digest",
+   "output_file": null,
+   "owner_lane": "mail"
+  },
+  {
+   "agent": "warm_block",
+   "expected_hours": 24,
+   "runlog_name": null,
+   "output_file": "store/warm_block.json",
+   "owner_lane": "warm"
+  },
+  {
+   "agent": "reply_watch",
+   "expected_hours": 2,
+   "runlog_name": "reply_watch",
+   "output_file": "store/replies.jsonl",
+   "owner_lane": "warm"
+  },
+  {
+   "agent": "one_thing",
+   "expected_hours": 26,
+   "runlog_name": "one_thing",
+   "output_file": null,
+   "owner_lane": "internals"
+  },
+  {
+   "agent": "proposal_open_pulse",
+   "expected_hours": 26,
+   "runlog_name": "proposal_open_pulse",
+   "output_file": null,
+   "owner_lane": "money"
+  },
+  {
+   "agent": "send_finger_nag",
+   "expected_hours": 26,
+   "runlog_name": "send_finger_nag",
+   "output_file": null,
+   "owner_lane": "money"
+  },
+  {
+   "agent": "call_escalator",
+   "expected_hours": 26,
+   "runlog_name": "call_escalator",
+   "output_file": null,
+   "owner_lane": "money"
+  },
+  {
+   "agent": "honesty_agent",
+   "expected_hours": 192,
+   "runlog_name": "honesty_agent",
+   "output_file": null,
+   "owner_lane": "internals"
+  },
+  {
+   "agent": "interview_war_room",
+   "expected_hours": 26,
+   "runlog_name": "interview_war_room",
+   "output_file": null,
+   "owner_lane": "jobs"
+  },
+  {
+   "agent": "interview_followup",
+   "expected_hours": 26,
+   "runlog_name": "interview_followup",
+   "output_file": null,
+   "owner_lane": "jobs"
+  },
+  {
+   "agent": "warmest_five",
+   "expected_hours": 26,
+   "runlog_name": "warmest_five",
+   "output_file": null,
+   "owner_lane": "jobs"
+  },
+  {
+   "agent": "quiet_worklist",
+   "expected_hours": 26,
+   "runlog_name": "quiet_worklist",
+   "output_file": null,
+   "owner_lane": "money"
+  },
+  {
+   "agent": "win_asset",
+   "expected_hours": 720,
+   "runlog_name": "win_asset",
+   "output_file": null,
+   "owner_lane": "money"
+  },
+  {
+   "agent": "company_risk",
+   "expected_hours": 26,
+   "runlog_name": "company_risk",
+   "output_file": null,
+   "owner_lane": "jobs"
+  },
+  {
+   "agent": "stage_coach",
+   "expected_hours": 26,
+   "runlog_name": "stage_coach",
+   "output_file": null,
+   "owner_lane": "jobs"
+  },
+  {
+   "agent": "interview_postmortem",
+   "expected_hours": 26,
+   "runlog_name": "interview_postmortem",
+   "output_file": null,
+   "owner_lane": "jobs"
+  },
+  {
+   "agent": "takehome_helper",
+   "expected_hours": 26,
+   "runlog_name": "takehome_helper",
+   "output_file": null,
+   "owner_lane": "jobs"
+  },
+  {
+   "agent": "salary_ladder",
+   "expected_hours": 26,
+   "runlog_name": "salary_ladder",
+   "output_file": null,
+   "owner_lane": "jobs"
+  },
+  {
+   "agent": "resume_ab",
+   "expected_hours": 26,
+   "runlog_name": "resume_ab",
+   "output_file": null,
+   "owner_lane": "jobs"
+  },
+  {
+   "agent": "rejection_digest",
+   "expected_hours": 192,
+   "runlog_name": "rejection_digest",
+   "output_file": null,
+   "owner_lane": "jobs"
+  },
+  {
+   "agent": "transcript_miner",
+   "expected_hours": 26,
+   "runlog_name": "transcript_miner",
+   "output_file": null,
+   "owner_lane": "money"
+  },
+  {
+   "agent": "care_upsell",
+   "expected_hours": 26,
+   "runlog_name": "care_upsell",
+   "output_file": null,
+   "owner_lane": "money"
+  },
+  {
+   "agent": "deposit_nudge",
+   "expected_hours": 26,
+   "runlog_name": "deposit_nudge",
+   "output_file": null,
+   "owner_lane": "money"
+  },
+  {
+   "agent": "dropoff_audit",
+   "expected_hours": 26,
+   "runlog_name": "dropoff_audit",
+   "output_file": null,
+   "owner_lane": "money"
+  },
+  {
+   "agent": "reactivation_triage",
+   "expected_hours": 26,
+   "runlog_name": "reactivation_triage",
+   "output_file": null,
+   "owner_lane": "money"
+  },
+  {
+   "agent": "tier_winrate",
+   "expected_hours": 26,
+   "runlog_name": "tier_winrate",
+   "output_file": null,
+   "owner_lane": "money"
+  },
+  {
+   "agent": "portfolio_teardown",
+   "expected_hours": 26,
+   "runlog_name": "portfolio_teardown",
+   "output_file": null,
+   "owner_lane": "money"
+  },
+  {
+   "agent": "prospect_trigger_watch",
+   "expected_hours": 192,
+   "runlog_name": "prospect_trigger_watch",
+   "output_file": null,
+   "owner_lane": "money"
+  },
+  {
+   "agent": "job_cover",
+   "expected_hours": 26,
+   "runlog_name": "job_cover",
+   "output_file": null,
+   "owner_lane": "jobs"
+  },
+  {
+   "agent": "job_pipeline_quality",
+   "expected_hours": 26,
+   "runlog_name": "job_pipeline_quality",
+   "output_file": null,
+   "owner_lane": "jobs"
+  },
+  {
+   "agent": "job_efficiency",
+   "expected_hours": 26,
+   "runlog_name": "job_efficiency",
+   "output_file": null,
+   "owner_lane": "jobs"
+  },
+  {
+   "agent": "job_answer_growth",
+   "expected_hours": 26,
+   "runlog_name": "job_answer_growth",
+   "output_file": null,
+   "owner_lane": "jobs"
+  },
+  {
+   "agent": "mail_threads",
+   "expected_hours": 26,
+   "runlog_name": "mail_threads",
+   "output_file": null,
+   "owner_lane": "mail"
+  },
+  {
+   "agent": "mail_signals",
+   "expected_hours": 26,
+   "runlog_name": "mail_signals",
+   "output_file": null,
+   "owner_lane": "mail"
+  },
+  {
+   "agent": "mail_hygiene",
+   "expected_hours": 26,
+   "runlog_name": "mail_hygiene",
+   "output_file": null,
+   "owner_lane": "mail"
+  },
+  {
+   "agent": "mail_sender_scores",
+   "expected_hours": 26,
+   "runlog_name": "mail_sender_scores",
+   "output_file": null,
+   "owner_lane": "mail"
+  },
+  {
+   "agent": "job_fit_signals",
+   "expected_hours": 26,
+   "runlog_name": "job_fit_signals",
+   "output_file": null,
+   "owner_lane": "jobs"
+  },
+  {
+   "agent": "watch_brief",
+   "expected_hours": 26,
+   "runlog_name": "watch_brief",
+   "output_file": "store/watch_brief.png",
+   "owner_lane": "internals"
+  }
+ ]
+}

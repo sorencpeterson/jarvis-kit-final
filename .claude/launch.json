@@ -1,0 +1,22 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "brain",
+      "runtimeExecutable": "bash",
+      "runtimeArgs": [
+        "serve.sh"
+      ],
+      "port": 8765
+    },
+    {
+      "name": "brain-preview",
+      "runtimeExecutable": "bash",
+      "runtimeArgs": [
+        "-lc",
+        "exec .venv/bin/uvicorn app.server:app --host 127.0.0.1 --port 8799 --no-access-log"
+      ],
+      "port": 8799
+    }
+  ]
+}

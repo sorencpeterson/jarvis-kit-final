@@ -1,0 +1,672 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The 30-Day Agency Ops Install Checklist — [OWNER]</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@0,500;0,600;0,700;0,800;0,900;1,500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#14181F;          /* primary text / dark pages */
+    --ink-2:#23272F;
+    --slate:#676F7E;        /* muted text */
+    --slate-2:#8A91A0;
+    --paper:#FFFFFF;
+    --panel:#FAFAF7;        /* warm off-white panel */
+    --panel-2:#F4F2EC;
+    --line:#E8E7E3;         /* hairline */
+    --line-2:#DBD9D2;
+    --amber:#F59F0A;        /* brand accent (the "Send me the checklist" amber) */
+    --amber-ink:#9A6300;    /* amber dark, for text on light */
+    --amber-soft:#FDF3DE;   /* amber wash */
+    --green:#1F9D6B;
+    --red:#C7503B;
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family:"Inter", system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+    color:var(--ink);
+    background:#3a3d44;       /* screen backdrop; not printed */
+    -webkit-font-smoothing:antialiased;
+    font-size:14px;
+    line-height:1.5;
+  }
+  .serif{font-family:"Playfair Display", Georgia, "Times New Roman", serif;}
+
+  /* ---------- page model ---------- */
+  .page{
+    position:relative;
+    width:8.5in;
+    height:11in;
+    background:var(--paper);
+    margin:0 auto;
+    overflow:hidden;
+    page-break-after:always;
+    break-after:page;
+  }
+  .page:last-child{page-break-after:auto;break-after:auto;}
+  .pad{padding:0.72in 0.74in 0.64in;}
+  .page--dark{background:var(--ink);color:#fff;}
+
+  /* screen-only chrome */
+  @media screen{
+    body{padding:28px 0 60px;}
+    .page{box-shadow:0 18px 50px rgba(0,0,0,.38);margin-bottom:26px;border-radius:2px;}
+    .toolbar{position:fixed;top:14px;right:18px;z-index:50;display:flex;gap:8px;}
+    .toolbar button{font-family:inherit;font-size:12.5px;font-weight:600;border:none;cursor:pointer;
+      background:var(--amber);color:#1b1300;padding:9px 14px;border-radius:7px;box-shadow:0 6px 16px rgba(0,0,0,.3);}
+    .toolbar .ghost{background:#22262e;color:#fff;}
+  }
+  @media print{
+    .toolbar{display:none !important;}
+    body{background:#fff;padding:0;}
+    .page{box-shadow:none;margin:0;border-radius:0;}
+  }
+  @page{ size:Letter; margin:0; }
+  *{ -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+
+  /* ---------- type ---------- */
+  h1,h2,h3,h4{margin:0;font-weight:700;}
+  .eyebrow{font-size:10.5px;font-weight:700;letter-spacing:.20em;text-transform:uppercase;color:var(--amber-ink);}
+  .eyebrow.on-dark{color:var(--amber);}
+  p{margin:0 0 10px;}
+  a{color:inherit;}
+  .muted{color:var(--slate);}
+  .small{font-size:12px;}
+  .tiny{font-size:10.5px;}
+  .lead{font-size:15.5px;line-height:1.6;color:var(--ink-2);}
+
+  /* ---------- cover ---------- */
+  .cover{display:flex;flex-direction:column;height:100%;padding:0.9in 0.85in;}
+  .cover .top{display:flex;justify-content:space-between;align-items:flex-start;}
+  .monogram{width:42px;height:42px;border:1.5px solid rgba(255,255,255,.55);border-radius:8px;
+    display:flex;align-items:center;justify-content:center;font-weight:800;letter-spacing:.04em;font-size:15px;}
+  .cover .sys{ text-align:right;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:rgba(255,255,255,.62);line-height:1.7;}
+  .cover .mid{margin-top:auto;}
+  .kicker{font-size:12.5px;letter-spacing:.26em;text-transform:uppercase;color:var(--amber);font-weight:700;}
+  .cover h1{font-size:62px;line-height:1.02;letter-spacing:-.01em;margin:20px 0 0;}
+  .cover h1 em{font-style:italic;color:var(--amber);}
+  .cover .sub{font-size:16px;line-height:1.6;color:rgba(255,255,255,.78);max-width:5.7in;margin-top:22px;}
+  .rule-amber{height:3px;width:64px;background:var(--amber);border:0;margin:26px 0 0;border-radius:2px;}
+  .cover .bottom{margin-top:38px;display:flex;justify-content:space-between;align-items:flex-end;}
+  .byline{font-size:13.5px;line-height:1.6;}
+  .byline strong{font-weight:700;}
+  .byline .role{color:rgba(255,255,255,.6);}
+  .stamp{border:1px solid rgba(255,255,255,.28);border-radius:9px;padding:11px 15px;text-align:center;}
+  .stamp .n{font-family:"Playfair Display",serif;font-size:30px;font-weight:800;color:var(--amber);line-height:1;}
+  .stamp .l{font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.62);margin-top:5px;}
+
+  /* ---------- running footer ---------- */
+  .foot{position:absolute;left:0.74in;right:0.74in;bottom:0.4in;display:flex;justify-content:space-between;
+    align-items:center;font-size:9.5px;letter-spacing:.06em;color:var(--slate-2);text-transform:uppercase;}
+  .foot .dot{color:var(--amber-ink);}
+  .page--dark .foot{color:rgba(255,255,255,.5);}
+  .page--dark .foot .dot{color:var(--amber);}
+
+  /* ---------- section header ---------- */
+  .sec-head{display:flex;align-items:flex-end;justify-content:space-between;border-bottom:1.5px solid var(--ink);
+    padding-bottom:12px;margin-bottom:20px;}
+  .sec-head h2{font-family:"Playfair Display",serif;font-size:30px;font-weight:700;letter-spacing:-.01em;}
+  .sec-head .idx{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--slate);font-weight:600;}
+
+  /* ---------- week divider band ---------- */
+  .week-band{display:flex;flex-direction:column;justify-content:center;height:100%;padding:0.9in 0.85in;position:relative;}
+  .week-band .wk{font-size:12px;letter-spacing:.3em;text-transform:uppercase;color:var(--amber);font-weight:700;}
+  .week-band .num{font-family:"Playfair Display",serif;font-weight:900;font-size:150px;line-height:.86;color:var(--ink);letter-spacing:-.03em;}
+  .week-band .num span{color:var(--line-2);}
+  .week-band h2{font-family:"Playfair Display",serif;font-size:40px;font-weight:700;margin-top:6px;letter-spacing:-.01em;}
+  .week-band .goal{font-size:16px;color:var(--slate);max-width:5.2in;margin-top:14px;line-height:1.6;}
+  .week-band .pillars{margin-top:30px;display:flex;gap:10px;flex-wrap:wrap;}
+  .ptag{font-size:11px;font-weight:600;letter-spacing:.02em;color:var(--ink);background:var(--panel-2);
+    border:1px solid var(--line-2);border-radius:30px;padding:7px 13px;}
+  .ptag .b{color:var(--amber-ink);}
+  .progress{position:absolute;top:0.9in;right:0.85in;display:flex;gap:7px;align-items:center;}
+  .pip{width:30px;height:5px;border-radius:3px;background:var(--line-2);}
+  .pip.on{background:var(--amber);}
+
+  /* ---------- checklist ---------- */
+  .group{margin-bottom:16px;}
+  .group h4{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--amber-ink);font-weight:700;margin-bottom:9px;}
+  ul.cl{list-style:none;margin:0;padding:0;}
+  ul.cl li{display:flex;gap:11px;padding:6.5px 0;border-bottom:1px solid var(--line);align-items:flex-start;}
+  ul.cl li:last-child{border-bottom:0;}
+  .box{flex:0 0 auto;width:16px;height:16px;border:1.6px solid var(--slate-2);border-radius:4px;margin-top:1px;
+    position:relative;background:#fff;}
+  .box::after{content:"";position:absolute;right:-1px;top:-1px;width:6px;height:6px;background:var(--amber);
+    border-radius:0 3px 0 3px;opacity:.0;}
+  li.key .box::after{opacity:1;}
+  .ci{font-size:13px;line-height:1.5;color:var(--ink-2);}
+  .ci b{color:var(--ink);font-weight:700;}
+  li.key .ci b:first-child{color:var(--amber-ink);}
+
+  /* ---------- callouts ---------- */
+  .note{background:var(--panel);border-left:3px solid var(--amber);border-radius:0 8px 8px 0;
+    padding:13px 16px;margin:14px 0;}
+  .note .lab{font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--amber-ink);font-weight:700;margin-bottom:5px;}
+  .note p{margin:0;font-size:12.5px;line-height:1.55;color:var(--ink-2);}
+
+  .donewhen{display:flex;gap:12px;align-items:flex-start;background:#0f1217;color:#fff;border-radius:9px;padding:14px 16px;margin-top:14px;}
+  .donewhen .k{font-family:"Playfair Display",serif;font-style:italic;font-size:15px;color:var(--amber);flex:0 0 auto;}
+  .donewhen .v{font-size:12.5px;line-height:1.5;color:rgba(255,255,255,.86);}
+  .artifact{font-size:11.5px;color:var(--slate);margin-top:9px;}
+  .artifact b{color:var(--ink);}
+
+  .tiernote{border:1px solid var(--line-2);border-radius:9px;padding:12px 14px;margin-top:13px;background:#fff;}
+  .tiernote .lab{font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--slate);font-weight:700;margin-bottom:7px;}
+  .tiernote .row{display:flex;gap:10px;font-size:11.5px;line-height:1.45;padding:3px 0;}
+  .tiernote .tg{flex:0 0 64px;font-weight:700;color:var(--amber-ink);}
+  .tiernote .tx{color:var(--ink-2);}
+
+  /* ---------- intro page bits ---------- */
+  .map{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:6px 0 4px;}
+  .mcard{border:1px solid var(--line-2);border-radius:10px;padding:13px 13px 15px;background:#fff;position:relative;overflow:hidden;}
+  .mcard .wk{font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--amber-ink);font-weight:700;}
+  .mcard .t{font-family:"Playfair Display",serif;font-weight:700;font-size:16.5px;margin:7px 0 6px;line-height:1.15;}
+  .mcard .d{font-size:11px;color:var(--slate);line-height:1.45;}
+  .mcard .bignum{position:absolute;right:8px;bottom:-10px;font-family:"Playfair Display",serif;font-weight:800;font-size:46px;color:var(--panel-2);z-index:0;}
+  .mcard .wk,.mcard .t,.mcard .d{position:relative;z-index:1;}
+
+  .qbox{background:var(--ink);color:#fff;border-radius:12px;padding:22px 24px;margin:4px 0 0;}
+  .qbox .lab{font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--amber);font-weight:700;}
+  .qbox .q{font-family:"Playfair Display",serif;font-size:25px;line-height:1.18;margin-top:10px;letter-spacing:-.01em;}
+  .qbox .q em{font-style:italic;color:var(--amber);}
+  .qbox .s{font-size:12.5px;color:rgba(255,255,255,.72);margin-top:11px;line-height:1.55;}
+
+  /* ---------- numbers / diagnostic ---------- */
+  .numgrid{display:grid;grid-template-columns:1fr 1fr;gap:13px;margin-top:4px;}
+  .numcard{border:1px solid var(--line-2);border-radius:11px;padding:14px 15px 13px;background:#fff;}
+  .numcard .hd{display:flex;align-items:baseline;gap:9px;}
+  .numcard .no{font-family:"Playfair Display",serif;font-weight:800;font-size:22px;color:var(--amber);line-height:1;}
+  .numcard .nm{font-weight:700;font-size:14px;color:var(--ink);}
+  .numcard .desc{font-size:11px;color:var(--slate);line-height:1.45;margin:7px 0 11px;}
+  .fill{display:flex;align-items:center;gap:9px;margin-bottom:9px;}
+  .fill .yours{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--slate-2);font-weight:600;}
+  .fill .blank{flex:1;border-bottom:1.5px solid var(--line-2);height:20px;}
+  .bench{display:flex;gap:6px;font-size:10px;line-height:1.3;}
+  .chip{border-radius:5px;padding:3px 7px;font-weight:600;}
+  .chip.g{background:#E7F5EE;color:#13724E;}
+  .chip.a{background:#FDF3DE;color:#9A6300;}
+  .chip.r{background:#FBEAE6;color:#A83A28;}
+
+  /* ---------- scorecard table ---------- */
+  table.score{width:100%;border-collapse:collapse;margin-top:4px;}
+  table.score th{font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--slate);font-weight:700;
+    text-align:left;padding:0 8px 8px;border-bottom:1.5px solid var(--ink);}
+  table.score th.c{text-align:center;width:42px;}
+  table.score td{font-size:12px;color:var(--ink-2);padding:8.5px 8px;border-bottom:1px solid var(--line);vertical-align:middle;}
+  table.score td.c{text-align:center;}
+  .tickbox{display:inline-block;width:15px;height:15px;border:1.5px solid var(--slate-2);border-radius:4px;background:#fff;}
+
+  .bands{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin-top:14px;}
+  .band{border-radius:9px;padding:11px 12px;border:1px solid var(--line-2);}
+  .band .r{font-family:"Playfair Display",serif;font-weight:800;font-size:15px;}
+  .band .l{font-size:10.5px;color:var(--slate);margin-top:3px;line-height:1.35;}
+
+  /* ---------- two-col generic ---------- */
+  .cols2{display:grid;grid-template-columns:1fr 1fr;gap:18px;}
+  .stk h4{font-family:"Playfair Display",serif;font-weight:700;font-size:16px;margin-bottom:9px;}
+  .stk ul{margin:0;padding-left:0;list-style:none;}
+  .stk li{font-size:12px;line-height:1.5;color:var(--ink-2);padding:5px 0 5px 18px;position:relative;border-bottom:1px solid var(--line);}
+  .stk li:last-child{border-bottom:0;}
+  .stk li::before{content:"";position:absolute;left:0;top:10px;width:7px;height:7px;border-radius:2px;background:var(--amber);}
+  .stk.x li::before{background:var(--red);border-radius:50%;}
+  .stk.x li{padding-left:18px;}
+
+  /* ---------- CTA page ---------- */
+  .cta{display:flex;flex-direction:column;height:100%;padding:0.9in 0.85in;}
+  .cta .big{font-family:"Playfair Display",serif;font-size:42px;line-height:1.08;letter-spacing:-.01em;margin-top:8px;}
+  .cta .big em{font-style:italic;color:var(--amber);}
+  .ladder{display:grid;grid-template-columns:repeat(3,1fr);gap:11px;margin:26px 0 0;}
+  .lcard{border:1px solid rgba(255,255,255,.16);border-radius:11px;padding:15px;background:rgba(255,255,255,.03);}
+  .lcard .s{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--amber);font-weight:700;}
+  .lcard .n{font-family:"Playfair Display",serif;font-weight:700;font-size:18px;margin:8px 0 3px;}
+  .lcard .pr{font-size:13px;color:#fff;font-weight:600;}
+  .lcard .dd{font-size:11px;color:rgba(255,255,255,.62);margin-top:7px;line-height:1.45;}
+  .guarantee{display:flex;gap:13px;align-items:center;border:1px solid rgba(245,159,10,.4);background:rgba(245,159,10,.08);
+    border-radius:11px;padding:15px 17px;margin-top:22px;}
+  .guarantee .gi{font-family:"Playfair Display",serif;font-style:italic;font-size:30px;color:var(--amber);line-height:1;flex:0 0 auto;}
+  .guarantee .gt{font-size:13px;line-height:1.5;color:rgba(255,255,255,.9);}
+  .guarantee .gt b{color:#fff;}
+  .cta .act{margin-top:auto;display:flex;justify-content:space-between;align-items:flex-end;}
+  .bookbtn{background:var(--amber);color:#1b1300;font-weight:800;font-size:15px;border-radius:9px;padding:14px 22px;display:inline-block;letter-spacing:.01em;}
+  .bookbtn .u{display:block;font-size:11px;font-weight:600;color:#5a3e00;margin-top:2px;letter-spacing:0;}
+  .cta .contact{font-size:12px;color:rgba(255,255,255,.7);text-align:right;line-height:1.7;}
+  .cta .contact b{color:#fff;}
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <button onclick="window.print()">Print / Save as PDF</button>
+</div>
+
+<!-- ============ PAGE 1 — COVER ============ -->
+<section class="page page--dark">
+  <div class="cover">
+    <div class="top">
+      <div class="monogram serif">SP</div>
+      <div class="sys">Founder-Free<br>Delivery System&trade;</div>
+    </div>
+    <div class="mid">
+      <div class="kicker">The Operator's Install Guide</div>
+      <h1 class="serif">The 30-Day<br>Agency Ops<br><em>Install</em> Checklist</h1>
+      <p class="sub">The exact week-by-week sequence I use to take a founder out of delivery — so the agency runs without you. Built for owners of $1–5M service agencies. No theory. No fluff.</p>
+      <hr class="rule-amber">
+    </div>
+    <div class="bottom">
+      <div class="byline">
+        <strong>[OWNER]</strong><br>
+        <span class="role">Fractional COO · Former COO, [PRIOR_BASELINE]-$1M/mo agency</span><br>
+        <span class="role">[OWNER_SITE]</span>
+      </div>
+      <div class="stamp">
+        <div class="n">30</div>
+        <div class="l">Days to Founder-Free</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ PAGE 2 — HOW TO USE ============ -->
+<section class="page">
+  <div class="pad">
+    <div class="sec-head">
+      <h2 class="serif">Start here</h2>
+      <div class="idx">Read first · 2 min</div>
+    </div>
+
+    <p class="lead">You didn't build a multi-million-dollar agency by sitting back. You built it by being the best operator in it — best closer, sharpest strategist, safest hands on every account that mattered. That's exactly what's capping you now.</p>
+    <p class="muted small">This checklist installs the systems that let the work run without you. Four weeks, one focus per week, in order. Don't skip ahead — each week stands on the one before it.</p>
+
+    <div class="qbox">
+      <div class="lab">Before you start, answer one question</div>
+      <div class="q serif">"What breaks first when I take a <em>full week</em> off?"</div>
+      <div class="s">That answer is your real constraint. The whole point of the next 30 days is to make that thing run without you. Write it at the top of Week 1.</div>
+    </div>
+
+    <div style="margin-top:20px;">
+      <div class="eyebrow" style="margin-bottom:10px;">The 30-day map</div>
+      <div class="map">
+        <div class="mcard"><div class="wk">Week 1</div><div class="t serif">Audit &amp; Stabilize</div><div class="d">Find the real constraint. Stop the bleeding.</div><div class="bignum serif">1</div></div>
+        <div class="mcard"><div class="wk">Week 2</div><div class="t serif">Delivery Systems</div><div class="d">Work ships at standard — without your hands.</div><div class="bignum serif">2</div></div>
+        <div class="mcard"><div class="wk">Week 3</div><div class="t serif">Growth &amp; Automation</div><div class="d">A pipeline that runs. Hours bought back.</div><div class="bignum serif">3</div></div>
+        <div class="mcard"><div class="wk">Week 4</div><div class="t serif">Cadence &amp; Handoff</div><div class="d">The team runs it. Not you.</div><div class="bignum serif">4</div></div>
+      </div>
+    </div>
+
+    <div class="note">
+      <div class="lab">How to use it</div>
+      <p>Print it. Put a date on each week. Check boxes by hand — the friction is the point. Items marked with an <b style="color:var(--amber-ink)">amber corner</b> are the keystone for that week; if you only do one thing, do that. Run your <b>real work</b> through each system the same week you build it — adoption is the deliverable, not the document.</p>
+    </div>
+  </div>
+  <div class="foot"><span><span class="dot">●</span> &nbsp;Founder-Free Delivery System&trade; · [OWNER_SITE]</span><span>02</span></div>
+</section>
+
+<!-- ============ PAGE 3 — THE 4 NUMBERS ============ -->
+<section class="page">
+  <div class="pad">
+    <div class="sec-head">
+      <h2 class="serif">Pre-work: pull your four numbers</h2>
+      <div class="idx">Day 0 · The diagnostic</div>
+    </div>
+    <p class="small muted">Ignore the dashboard you're proud of. These four numbers tell the truth about whether your agency can grow — and exactly where it can't. Pull them before Day 1. Most owners find the constraint isn't where they thought.</p>
+
+    <div class="numgrid">
+      <div class="numcard">
+        <div class="hd"><span class="no serif">01</span><span class="nm">Delivery margin — by client</span></div>
+        <div class="desc">Gross margin per client, not blended. The unprofitable ones are usually the loudest, and you're subsidizing them with your own hours.</div>
+        <div class="fill"><span class="yours">Worst 3</span><span class="blank"></span></div>
+        <div class="bench"><span class="chip g">Healthy &gt;50%</span><span class="chip a">Watch 30–50%</span><span class="chip r">Bleed &lt;30%</span></div>
+      </div>
+      <div class="numcard">
+        <div class="hd"><span class="no serif">02</span><span class="nm">Founder hours in delivery</span></div>
+        <div class="desc">Hours per week <i>you</i> personally produce or rescue client work. This number is your growth ceiling, in plain sight.</div>
+        <div class="fill"><span class="yours">Hrs/wk</span><span class="blank"></span></div>
+        <div class="bench"><span class="chip g">Free &lt;5</span><span class="chip a">Heavy 5–15</span><span class="chip r">Trapped &gt;15</span></div>
+      </div>
+      <div class="numcard">
+        <div class="hd"><span class="no serif">03</span><span class="nm">Senior team utilization</span></div>
+        <div class="desc">% of your senior people's time on productive/billable work. Too high means no capacity to grow; too low means you're carrying bench.</div>
+        <div class="fill"><span class="yours">Avg %</span><span class="blank"></span></div>
+        <div class="bench"><span class="chip g">Room 65–80%</span><span class="chip a">Maxed &gt;85%</span><span class="chip r">Bench &lt;55%</span></div>
+      </div>
+      <div class="numcard">
+        <div class="hd"><span class="no serif">04</span><span class="nm">Pipeline-to-capacity</span></div>
+        <div class="desc">Committed work vs. your delivery capacity for the next 60 days. Selling faster than you can deliver isn't growth — it's a quality incident on a timer.</div>
+        <div class="fill"><span class="yours">Ratio</span><span class="blank"></span></div>
+        <div class="bench"><span class="chip g">Balanced 85–100%</span><span class="chip a">Over &gt;120%</span><span class="chip r">Soft &lt;60%</span></div>
+      </div>
+    </div>
+
+    <div class="note">
+      <div class="lab">Operator's note</div>
+      <p>If you can't pull these in under a day, that's finding #1 — your numbers live in too many heads and tabs. Week 3 fixes the visibility. For now, get a rough cut. Directionally right beats precisely late.</p>
+    </div>
+  </div>
+  <div class="foot"><span><span class="dot">●</span> &nbsp;Founder-Free Delivery System&trade; · [OWNER_SITE]</span><span>03</span></div>
+</section>
+
+<!-- ============ PAGE 4 — WEEK 1 DIVIDER ============ -->
+<section class="page">
+  <div class="week-band">
+    <div class="progress"><span class="pip on"></span><span class="pip"></span><span class="pip"></span><span class="pip"></span></div>
+    <div class="wk">Week One</div>
+    <div class="num serif">01</div>
+    <h2 class="serif">Audit &amp; Stabilize</h2>
+    <div class="goal">Find the real constraint and stop the bleeding. You can't systemize chaos — first you have to see it clearly and put out the fire that only you keep putting out.</div>
+    <div class="pillars">
+      <span class="ptag"><span class="b">Outcome:</span> one named constraint</span>
+      <span class="ptag"><span class="b">Artifact:</span> a delivery flow map</span>
+      <span class="ptag"><span class="b">Time:</span> ~4 hours</span>
+    </div>
+  </div>
+  <div class="foot"><span><span class="dot">●</span> &nbsp;Founder-Free Delivery System&trade; · [OWNER_SITE]</span><span>04</span></div>
+</section>
+
+<!-- ============ PAGE 5 — WEEK 1 CHECKLIST ============ -->
+<section class="page">
+  <div class="pad">
+    <div class="sec-head"><h2 class="serif">Week 1 · Audit &amp; Stabilize</h2><div class="idx">Checklist</div></div>
+
+    <div class="group">
+      <h4>See the system</h4>
+      <ul class="cl">
+        <li class="key"><span class="box"></span><span class="ci"><b>Map your delivery flow end to end</b> — Intake → Scope → Production → QA → Client review → Ship. Write the <b>actual</b> steps, not the ideal ones.</span></li>
+        <li><span class="box"></span><span class="ci">Mark every step that <b>requires you personally</b>. That list is your bottleneck inventory.</span></li>
+        <li><span class="box"></span><span class="ci">List your recurring deliverable types (report, ad creative, landing page, strategy doc) and rank them by volume.</span></li>
+        <li><span class="box"></span><span class="ci">Find the single step where work <b>waits longest</b>. That's your constraint — everything in Weeks 2–4 should relieve it.</span></li>
+      </ul>
+    </div>
+
+    <div class="group">
+      <h4>Stop the bleeding</h4>
+      <ul class="cl">
+        <li><span class="box"></span><span class="ci">For your <b>3 worst-margin clients</b>: decide to fix, reprice, or fire. Put a date on each decision.</span></li>
+        <li><span class="box"></span><span class="ci">Kill or delegate <b>one thing this week</b> that only you do and that doesn't actually need you.</span></li>
+        <li><span class="box"></span><span class="ci">Write your constraint in one sentence and pin it where you'll see it daily.</span></li>
+      </ul>
+    </div>
+
+    <div class="donewhen"><span class="k serif">Done when</span><span class="v">You can name your #1 constraint in a single sentence, and you've removed at least one founder dependency from the flow.</span></div>
+    <div class="artifact"><b>You'll have:</b> a one-page delivery flow map with every you-only bottleneck circled.</div>
+
+    <div class="tiernote">
+      <div class="lab">By stage</div>
+      <div class="row"><span class="tg">&lt; $1M</span><span class="tx">You may <i>be</i> the whole delivery team. Focus on documenting how you work before delegating it.</span></div>
+      <div class="row"><span class="tg">$2–5M</span><span class="tx">Map by department, not by you. Your constraint is usually a single overloaded senior person.</span></div>
+    </div>
+  </div>
+  <div class="foot"><span><span class="dot">●</span> &nbsp;Founder-Free Delivery System&trade; · [OWNER_SITE]</span><span>05</span></div>
+</section>
+
+<!-- ============ PAGE 6 — WEEK 2 DIVIDER ============ -->
+<section class="page">
+  <div class="week-band">
+    <div class="progress"><span class="pip on"></span><span class="pip on"></span><span class="pip"></span><span class="pip"></span></div>
+    <div class="wk">Week Two</div>
+    <div class="num serif">02</div>
+    <h2 class="serif">Delivery Systems</h2>
+    <div class="goal">Make work ship at your standard without your hands on it. This is Pillar 1 of the Founder-Free Delivery System™ — and the week that buys back the most of your time.</div>
+    <div class="pillars">
+      <span class="ptag"><span class="b">Pillar 1:</span> Delivery</span>
+      <span class="ptag"><span class="b">Artifact:</span> 3 SOPs + QA gate</span>
+      <span class="ptag"><span class="b">Rule:</span> ship-ready in writing</span>
+    </div>
+  </div>
+  <div class="foot"><span><span class="dot">●</span> &nbsp;Founder-Free Delivery System&trade; · [OWNER_SITE]</span><span>06</span></div>
+</section>
+
+<!-- ============ PAGE 7 — WEEK 2 CHECKLIST ============ -->
+<section class="page">
+  <div class="pad">
+    <div class="sec-head"><h2 class="serif">Week 2 · Delivery Systems</h2><div class="idx">Checklist</div></div>
+
+    <div class="group">
+      <h4>Document the work</h4>
+      <ul class="cl">
+        <li class="key"><span class="box"></span><span class="ci"><b>Write SOPs for your top 3 deliverables.</b> Format each: <i>Trigger → Steps → Ship-ready definition → Who reviews.</i> One page max.</span></li>
+        <li><span class="box"></span><span class="ci">Define <b>"ship-ready"</b> for each — the objective checklist that means it's done right. This replaces your gut.</span></li>
+        <li><span class="box"></span><span class="ci">Record a 5-minute Loom for each SOP. People follow a video over a doc.</span></li>
+      </ul>
+    </div>
+
+    <div class="group">
+      <h4>Build the pipeline</h4>
+      <ul class="cl">
+        <li class="key"><span class="box"></span><span class="ci"><b>Stand up a stage-gated pipeline</b> in your PM tool: Intake → Scoped → In Production → QA → Client Review → Shipped. Write the <b>gate criteria</b> — what must be true to move forward.</span></li>
+        <li><span class="box"></span><span class="ci">Create <b>one QA checklist</b> run before anything reaches a client. Assign a QA owner who <b>isn't you</b>.</span></li>
+        <li><span class="box"></span><span class="ci">Push this week's <b>real work</b> through the new pipeline. Fix what breaks in real time.</span></li>
+      </ul>
+    </div>
+
+    <div class="donewhen"><span class="k serif">Done when</span><span class="v">A deliverable shipped this week without passing through your hands — and it met standard.</span></div>
+    <div class="artifact"><b>You'll have:</b> 3 written SOPs, 1 QA gate, and a visible pipeline your team works from.</div>
+
+    <div class="tiernote">
+      <div class="lab">By stage</div>
+      <div class="row"><span class="tg">$1–2M</span><span class="tx">Pick the 3 deliverables you touch most. Don't boil the ocean — those 3 are 80% of your time back.</span></div>
+      <div class="row"><span class="tg">$2–5M</span><span class="tx">Your SOPs likely exist but are stale or in people's heads. This week is consolidation and a single source of truth.</span></div>
+    </div>
+  </div>
+  <div class="foot"><span><span class="dot">●</span> &nbsp;Founder-Free Delivery System&trade; · [OWNER_SITE]</span><span>07</span></div>
+</section>
+
+<!-- ============ PAGE 8 — WEEK 3 DIVIDER ============ -->
+<section class="page">
+  <div class="week-band">
+    <div class="progress"><span class="pip on"></span><span class="pip on"></span><span class="pip on"></span><span class="pip"></span></div>
+    <div class="wk">Week Three</div>
+    <div class="num serif">03</div>
+    <h2 class="serif">Growth &amp; Automation</h2>
+    <div class="goal">Put growth on rails and buy back hours. Pillars 2 and 3: a pipeline your team actually runs, one dashboard that tells the truth, and the busywork automated.</div>
+    <div class="pillars">
+      <span class="ptag"><span class="b">Pillar 2:</span> Growth</span>
+      <span class="ptag"><span class="b">Pillar 3:</span> AI &amp; Automation</span>
+      <span class="ptag"><span class="b">Artifact:</span> 1 dashboard + 3 automations</span>
+    </div>
+  </div>
+  <div class="foot"><span><span class="dot">●</span> &nbsp;Founder-Free Delivery System&trade; · [OWNER_SITE]</span><span>08</span></div>
+</section>
+
+<!-- ============ PAGE 9 — WEEK 3 CHECKLIST ============ -->
+<section class="page">
+  <div class="pad">
+    <div class="sec-head"><h2 class="serif">Week 3 · Growth &amp; Automation</h2><div class="idx">Checklist</div></div>
+
+    <div class="group">
+      <h4>Growth on rails</h4>
+      <ul class="cl">
+        <li><span class="box"></span><span class="ci">Get every lead and client into <b>one CRM</b> with a clear stage. No deals living in your head or your inbox.</span></li>
+        <li><span class="box"></span><span class="ci">Define pipeline stages and the <b>exit criteria</b> for each — what objectively moves a deal forward.</span></li>
+        <li class="key"><span class="box"></span><span class="ci"><b>Build one dashboard</b> with the numbers that matter: pipeline value, delivery margin, utilization, cash. One screen, reviewed weekly.</span></li>
+      </ul>
+    </div>
+
+    <div class="group">
+      <h4>Buy back the hours</h4>
+      <ul class="cl">
+        <li><span class="box"></span><span class="ci">List your team's top 5 <b>repetitive manual tasks</b> — reporting, onboarding, status updates, invoicing, scheduling.</span></li>
+        <li class="key"><span class="box"></span><span class="ci"><b>Automate the top 3</b> — whatever buys back the most hours. Use what you already have (GHL, Zapier, Make, native tools). Done beats elegant.</span></li>
+        <li><span class="box"></span><span class="ci">Add <b>one AI assist</b> where it's safe and saves real time — first-draft reports, notes → action items, a QA pass. Document the prompt so it's repeatable.</span></li>
+      </ul>
+    </div>
+
+    <div class="donewhen"><span class="k serif">Done when</span><span class="v">Your weekly numbers come from a dashboard, not a scramble — and three manual tasks now run themselves.</span></div>
+    <div class="artifact"><b>You'll have:</b> 1 trusted dashboard, 3 live automations, and 1 documented AI workflow.</div>
+
+    <div class="tiernote">
+      <div class="lab">By stage</div>
+      <div class="row"><span class="tg">&lt; $1M</span><span class="tx">Don't over-engineer. A clean spreadsheet dashboard plus two automations beats a CRM you won't maintain.</span></div>
+      <div class="row"><span class="tg">$5M+</span><span class="tx">You have tools — you have an adoption and data-hygiene problem. Consolidate to one source of truth.</span></div>
+    </div>
+  </div>
+  <div class="foot"><span><span class="dot">●</span> &nbsp;Founder-Free Delivery System&trade; · [OWNER_SITE]</span><span>09</span></div>
+</section>
+
+<!-- ============ PAGE 10 — WEEK 4 DIVIDER ============ -->
+<section class="page">
+  <div class="week-band">
+    <div class="progress"><span class="pip on"></span><span class="pip on"></span><span class="pip on"></span><span class="pip on"></span></div>
+    <div class="wk">Week Four</div>
+    <div class="num serif">04</div>
+    <h2 class="serif">Cadence &amp; Handoff</h2>
+    <div class="goal">Install the rhythm that makes the team run it — not you. Pillar 4. The systems are built; this week you step back and prove they hold without you in the room.</div>
+    <div class="pillars">
+      <span class="ptag"><span class="b">Pillar 4:</span> Team cadence</span>
+      <span class="ptag"><span class="b">Artifact:</span> operating rhythm + owners</span>
+      <span class="ptag"><span class="b">Test:</span> a no-founder day</span>
+    </div>
+  </div>
+  <div class="foot"><span><span class="dot">●</span> &nbsp;Founder-Free Delivery System&trade; · [OWNER_SITE]</span><span>10</span></div>
+</section>
+
+<!-- ============ PAGE 11 — WEEK 4 CHECKLIST ============ -->
+<section class="page">
+  <div class="pad">
+    <div class="sec-head"><h2 class="serif">Week 4 · Cadence &amp; Handoff</h2><div class="idx">Checklist</div></div>
+
+    <div class="group">
+      <h4>Install the rhythm</h4>
+      <ul class="cl">
+        <li><span class="box"></span><span class="ci">Set a <b>weekly operating cadence</b>: a 30-min Monday priorities meeting + a short daily standup (live or async). Same agenda every time.</span></li>
+        <li><span class="box"></span><span class="ci">Set a <b>monthly review</b>: the numbers, what shipped, what's stuck, decisions needed.</span></li>
+        <li><span class="box"></span><span class="ci">Start a <b>decision log</b> — who decided what, when, and why — so decisions stop routing through you.</span></li>
+      </ul>
+    </div>
+
+    <div class="group">
+      <h4>Hand it off — for real</h4>
+      <ul class="cl">
+        <li class="key"><span class="box"></span><span class="ci"><b>Assign a named owner</b> to every system from Weeks 2–3. A system without a human responsible is already dead.</span></li>
+        <li><span class="box"></span><span class="ci">Run the full week <b>deliberately stepping back</b>. Note what breaks — that's your month-2 punch list, not a reason to jump in.</span></li>
+        <li class="key"><span class="box"></span><span class="ci">Schedule a <b>no-founder day</b>: unreachable for delivery decisions. See what holds and what doesn't.</span></li>
+      </ul>
+    </div>
+
+    <div class="donewhen"><span class="k serif">Done when</span><span class="v">The agency ran a full week — including a no-founder day — without a fire only you could put out.</span></div>
+    <div class="artifact"><b>You'll have:</b> a written operating cadence, a decision log, and a named owner for every system.</div>
+
+    <div class="tiernote">
+      <div class="lab">By stage</div>
+      <div class="row"><span class="tg">$2–5M</span><span class="tx">Install the cadence with your leadership layer, then have <i>them</i> run it down to their teams.</span></div>
+      <div class="row"><span class="tg">$5M+</span><span class="tx">Your job is to make your directors own the rhythm. If it still depends on you, you've delegated tasks, not ownership.</span></div>
+    </div>
+  </div>
+  <div class="foot"><span><span class="dot">●</span> &nbsp;Founder-Free Delivery System&trade; · [OWNER_SITE]</span><span>11</span></div>
+</section>
+
+<!-- ============ PAGE 12 — SCORECARD ============ -->
+<section class="page">
+  <div class="pad">
+    <div class="sec-head"><h2 class="serif">The Founder-Free Scorecard</h2><div class="idx">Measure Day 0 vs Day 30</div></div>
+    <p class="small muted">Score it honestly before you start and again at Day 30. One tick per <b>yes</b>. The gap between the two is the work this install does.</p>
+
+    <table class="score">
+      <thead><tr><th>Can you say yes — honestly?</th><th class="c">Day 0</th><th class="c">Day 30</th></tr></thead>
+      <tbody>
+        <tr><td>Your team could ship this week's work if you were unreachable.</td><td class="c"><span class="tickbox"></span></td><td class="c"><span class="tickbox"></span></td></tr>
+        <tr><td>Delivery quality is defined in writing, not in your head.</td><td class="c"><span class="tickbox"></span></td><td class="c"><span class="tickbox"></span></td></tr>
+        <tr><td>Every recurring deliverable has an SOP a new hire could follow.</td><td class="c"><span class="tickbox"></span></td><td class="c"><span class="tickbox"></span></td></tr>
+        <tr><td>Work moves through defined stages with gates — not vibes.</td><td class="c"><span class="tickbox"></span></td><td class="c"><span class="tickbox"></span></td></tr>
+        <tr><td>There's a named owner for delivery quality who isn't you.</td><td class="c"><span class="tickbox"></span></td><td class="c"><span class="tickbox"></span></td></tr>
+        <tr><td>Your key numbers come from one dashboard you trust.</td><td class="c"><span class="tickbox"></span></td><td class="c"><span class="tickbox"></span></td></tr>
+        <tr><td>Your three biggest time-sinks are automated.</td><td class="c"><span class="tickbox"></span></td><td class="c"><span class="tickbox"></span></td></tr>
+        <tr><td>The team runs a weekly cadence without you driving it.</td><td class="c"><span class="tickbox"></span></td><td class="c"><span class="tickbox"></span></td></tr>
+        <tr><td>Decisions get logged and made without funneling to you.</td><td class="c"><span class="tickbox"></span></td><td class="c"><span class="tickbox"></span></td></tr>
+        <tr><td>You've taken 5+ days fully off in 6 months with no dip.</td><td class="c"><span class="tickbox"></span></td><td class="c"><span class="tickbox"></span></td></tr>
+      </tbody>
+    </table>
+
+    <div class="bands">
+      <div class="band"><div class="r serif" style="color:var(--red)">0–3</div><div class="l">Founder-trapped. The business is you. Start at Week 1 today.</div></div>
+      <div class="band"><div class="r serif" style="color:#C98A2B">4–6</div><div class="l">Founder-dependent. Systems are partial. Close the gaps in order.</div></div>
+      <div class="band"><div class="r serif" style="color:#B9991F">7–8</div><div class="l">Founder-light. Tighten ownership and cadence to lock it in.</div></div>
+      <div class="band"><div class="r serif" style="color:var(--green)">9–10</div><div class="l">Founder-free. The agency runs. Now go scale it.</div></div>
+    </div>
+  </div>
+  <div class="foot"><span><span class="dot">●</span> &nbsp;Founder-Free Delivery System&trade; · [OWNER_SITE]</span><span>12</span></div>
+</section>
+
+<!-- ============ PAGE 13 — FAILURE MODES / DAY 30 ============ -->
+<section class="page">
+  <div class="pad">
+    <div class="sec-head"><h2 class="serif">Why installs die — and what Day 30 looks like</h2><div class="idx">Keep it alive</div></div>
+
+    <div class="cols2">
+      <div class="stk x">
+        <h4>The five ways this dies</h4>
+        <ul>
+          <li><b>It lived in a doc nobody opened.</b> Run real work through every system the same week you build it.</li>
+          <li><b>You kept rescuing.</b> Every rescue retrains the team to wait for you. Let small things break.</li>
+          <li><b>Too much at once.</b> One system at a time, in order. The constraint first.</li>
+          <li><b>No named owner.</b> A system without a responsible human is already dead.</li>
+          <li><b>Perfect over shipped.</b> A B+ SOP your team uses beats an A+ one they don't.</li>
+        </ul>
+      </div>
+      <div class="stk">
+        <h4>What good looks like at Day 30</h4>
+        <ul>
+          <li>You can take a week off and the work still ships.</li>
+          <li>New work no longer means more of <i>you</i>.</li>
+          <li>Quality is defined, owned, and repeatable.</li>
+          <li>Your numbers live on one screen.</li>
+          <li>You're working <i>on</i> the agency, not <i>in</i> it.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="qbox" style="margin-top:22px;">
+      <div class="lab">The whole game</div>
+      <div class="q serif">Stop being the smartest <em>bottleneck</em> in the building.</div>
+      <div class="s">You don't need more people. You need the work to run without you. That's what these 30 days install — and what every week you wait keeps costing you in capacity, margin, and your own time.</div>
+    </div>
+
+    <div class="note" style="margin-top:18px;">
+      <div class="lab">If you get stuck</div>
+      <p>The hardest part isn't knowing what to do — it's doing it while the agency is still running through you. If you'd rather have it installed <i>for</i> you, that's literally my job. The next page shows how that works.</p>
+    </div>
+  </div>
+  <div class="foot"><span><span class="dot">●</span> &nbsp;Founder-Free Delivery System&trade; · [OWNER_SITE]</span><span>13</span></div>
+</section>
+
+<!-- ============ PAGE 14 — CTA ============ -->
+<section class="page page--dark">
+  <div class="cta">
+    <div class="top" style="display:flex;justify-content:space-between;align-items:flex-start;">
+      <div class="monogram serif">SP</div>
+      <div class="sys" style="text-align:right;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:rgba(255,255,255,.62);line-height:1.7;">Founder-Free<br>Delivery System&trade;</div>
+    </div>
+
+    <div style="margin-top:46px;">
+      <div class="eyebrow on-dark">Want it installed for you?</div>
+      <div class="big serif">I'll install the whole system in <em>30 days</em> — run by your team, not me.</div>
+    </div>
+
+    <div class="ladder">
+      <div class="lcard"><div class="s">Start here</div><div class="n serif">Ops Audit</div><div class="pr">$1,500</div><div class="dd">A paid teardown of your delivery, growth &amp; ops. You keep the install plan either way — credited if we build it.</div></div>
+      <div class="lcard"><div class="s">The install</div><div class="n serif">30-Day Install</div><div class="pr">$8k–15k</div><div class="dd">The full Founder-Free Delivery System™, built around your agency and handed to your team.</div></div>
+      <div class="lcard"><div class="s">Optional</div><div class="n serif">Operator Retainer</div><div class="pr">$4k–8k/mo</div><div class="dd">I run it with you, month-to-month. Cancel anytime.</div></div>
+    </div>
+
+    <div class="guarantee">
+      <span class="gi serif">✓</span>
+      <span class="gt"><b>It ships in 30 days, or you don't pay the retainer.</b> Fixed window. If I miss it, the retainer's on me until I deliver. None of the risk of a full-time hire — and none of the risk of me.</span>
+    </div>
+
+    <div class="act">
+      <a class="bookbtn" href="https://[OWNER_SITE]/book">Book a 30-minute call<span class="u">We'll find your real constraint. No pitch.</span></a>
+      <div class="contact">
+        <b>[OWNER]</b> · Fractional COO<br>
+        [OWNER_SITE]/book<br>
+        Contact@[OWNER][OWNER].io
+      </div>
+    </div>
+  </div>
+</section>
+
+</body>
+</html>

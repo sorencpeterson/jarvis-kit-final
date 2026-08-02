@@ -1,0 +1,34 @@
+{
+  "type": "array",
+  "minItems": 2,
+  "items": {
+    "type": "object",
+    "required": [
+      "real",
+      "intent",
+      "reply"
+    ],
+    "properties": {
+      "real": {
+        "type": "boolean"
+      },
+      "intent": {
+        "type": "string",
+        "enum": [
+          "interested",
+          "question",
+          "objection",
+          "not_now",
+          "remove",
+          "wrong_person",
+          "other"
+        ]
+      },
+      "reply": {
+        "type": "string"
+      }
+    },
+    "additionalProperties": true
+  },
+  "_note": "Two inputs in one batch: a STOP opt-out (expect intent=remove, reply=''), and an automated delivery notification (expect real=false, reply=''). Tests the multi-item array shape AND the empty-reply contract for non-real/remove cases."
+}

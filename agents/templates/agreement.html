@@ -1,0 +1,371 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Service Agreement — {{company}} · [OWNER_COMPANY]</title>
+<style>
+  :root{--ink:#16181d;--sub:#5a6070;--line:#e6e2d8;--gold:#b8860b;--bg:#faf9f6}
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font:15.5px/1.65 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:var(--ink);background:var(--bg)}
+  .page{max-width:680px;margin:0 auto;padding:48px 24px 80px;position:relative}
+  header{display:flex;justify-content:space-between;align-items:baseline;border-bottom:3px solid var(--ink);padding-bottom:16px;margin-bottom:30px}
+  .logo{font-weight:800;letter-spacing:.14em;font-size:13px}
+  .logo span{color:var(--gold)}
+  h1{font-size:26px;margin-bottom:6px}
+  .sub{color:var(--sub);font-size:14px;margin-bottom:30px}
+  h2{font-size:12px;letter-spacing:.16em;color:#8a6508;text-transform:uppercase;margin:28px 0 10px}
+  p,li{font-size:14.5px;color:#2a2e38}
+  ul{padding-left:20px}
+  li{margin-bottom:6px}
+  .terms td{padding:9px 0;border-bottom:1px dashed var(--line);font-size:14.5px;vertical-align:top}
+  .terms td:first-child{color:var(--sub);width:170px}
+  .terms{width:100%;border-collapse:collapse}
+  /* C51: kill-fee explainer tooltip */
+  .klabel{position:relative;display:inline-flex;align-items:center;gap:5px;cursor:help;border-bottom:1px dotted var(--sub)}
+  .klabel .qm{width:15px;height:15px;border-radius:50%;background:var(--line);color:var(--sub);font-size:10px;
+    font-weight:800;display:inline-flex;align-items:center;justify-content:center;flex:none}
+  .klabel .tip{display:none;position:absolute;bottom:24px;left:0;background:var(--ink);color:#fff;font-size:13px;
+    padding:12px 14px;border-radius:9px;width:240px;font-weight:400;line-height:1.5;box-shadow:0 10px 26px rgba(0,0,0,.2);z-index:10}
+  .klabel:hover .tip,.klabel:focus .tip{display:block}
+  /* C45: milestone strip */
+  .milestones{display:flex;gap:0;margin:14px 0 4px;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#fff}
+  .milestones div{flex:1;padding:14px 12px;border-right:1px solid var(--line);position:relative}
+  .milestones div:last-child{border-right:none}
+  .milestones .dot{width:9px;height:9px;border-radius:50%;background:var(--line);margin-bottom:8px}
+  .milestones div.done .dot{background:#1a7f4e}
+  .milestones div.now .dot{background:var(--gold);box-shadow:0 0 0 4px rgba(184,134,11,.18)}
+  .milestones b{display:block;font-size:12.5px;letter-spacing:.03em;margin-bottom:2px}
+  .milestones span{font-size:12px;color:var(--sub);display:block}
+  .milestones .when{font-size:11px;color:var(--sub);margin-top:4px;font-variant-numeric:tabular-nums}
+  /* C44: scope checklist (client ticks during delivery) */
+  .checklist{list-style:none;padding:0;background:#fff;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+  .checklist li{display:flex;align-items:flex-start;gap:12px;padding:13px 16px;border-bottom:1px solid var(--line);margin:0;font-size:14.5px}
+  .checklist li:last-child{border-bottom:none}
+  .checklist input[type=checkbox]{width:19px;height:19px;flex:none;margin-top:1px;accent-color:var(--gold)}
+  .checklist label{flex:1;cursor:pointer}
+  .checklist .strike{text-decoration:line-through;color:var(--sub)}
+  .checknote{font-size:12.5px;color:var(--sub);margin-top:8px}
+  /* C47: amendments */
+  .amend{background:#fff;border:1px solid var(--line);border-radius:12px;padding:18px;margin-top:10px}
+  .amend .row{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+  .amend textarea{width:100%;border:1px solid var(--line);border-radius:8px;padding:11px 12px;font-size:14px;
+    font-family:inherit;margin-bottom:10px;resize:vertical;min-height:60px}
+  .amend .abtn{background:var(--ink);color:#fff;border:0;border-radius:8px;padding:10px 18px;font-size:13.5px;
+    font-weight:700;cursor:pointer;white-space:nowrap}
+  .amend .abtn:hover{background:#000}
+  .amend .list li{list-style:none;padding:10px 0;border-top:1px dashed var(--line);font-size:13.5px}
+  .amend .list li:first-child{border-top:none}
+  .amend .astatus{font-size:12px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:.03em}
+  /* C50: W9 / insurance attachments */
+  .attach{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px}
+  .attach a{display:inline-flex;align-items:center;gap:7px;background:#fff;border:1px solid var(--line);border-radius:9px;
+    padding:9px 14px;font-size:13px;color:var(--ink);text-decoration:none;font-weight:600}
+  .attach a:hover{border-color:var(--gold)}
+  /* C46: late-payment nudge (informational, rendered only if overdue per server-computed flag) */
+  .nudge{background:#fdf1e8;border:1px solid #f0d3ba;color:#7a4a1a;border-radius:10px;padding:12px 16px;font-size:13.5px;margin-bottom:20px}
+  .accept{margin-top:38px;background:#fff;border:1px solid var(--line);border-radius:14px;padding:26px}
+  .accept h3{font-size:17px;margin-bottom:6px}
+  .accept p{color:var(--sub);font-size:13.5px;margin-bottom:16px}
+  .accept input{width:100%;border:1px solid var(--line);border-radius:9px;padding:14px;font-size:16px;margin-bottom:12px}
+  /* C42: signature pad alongside typed name */
+  .sigmode{display:flex;gap:8px;margin-bottom:14px}
+  .sigmode button{flex:1;border:1px solid var(--line);background:#fff;border-radius:9px;padding:11px;font-size:13.5px;
+    font-weight:700;cursor:pointer;color:var(--sub)}
+  .sigmode button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+  #padwrap{display:none;margin-bottom:12px}
+  #padwrap.show{display:block}
+  #sigpad{width:100%;height:150px;border:1px solid var(--line);border-radius:9px;background:#fff;touch-action:none;display:block}
+  #padclear{margin-top:8px;background:none;border:0;color:var(--sub);font-size:12.5px;text-decoration:underline;cursor:pointer;padding:6px 0}
+  /* C52: mobile polish - thumb-size accept button, no zoom-pinch needed to read terms */
+  .accept button[type=submit]{width:100%;background:var(--ink);color:#fff;font-weight:700;border:0;border-radius:9px;
+    padding:18px;font-size:16.5px;cursor:pointer;min-height:54px}
+  .accept button[type=submit]:hover{background:#000}
+  #done{display:none;text-align:center;padding:10px 0;position:relative;overflow:hidden}
+  #done b{color:#1a7f4e;font-size:17px}
+  .paybtn{display:inline-block;margin-top:14px;background:var(--gold);color:#fff;text-decoration:none;font-weight:700;padding:16px 26px;border-radius:9px;min-height:52px;display:inline-flex;align-items:center}
+  footer{margin-top:50px;padding-top:16px;border-top:1px solid var(--line);color:var(--sub);font-size:12.5px}
+  /* C49: read-receipt chip (mirrors proposal's, informational only) */
+  .readchip{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--sub);margin-top:8px}
+  .readchip .dot{width:6px;height:6px;border-radius:50%;background:#1a7f4e}
+  /* C41: confetti burst, CSS particles, canvas-free, ~1.5s, tasteful */
+  .confetti-wrap{position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:5}
+  .confetti-piece{position:absolute;top:-12px;width:8px;height:14px;opacity:0;border-radius:1px}
+  @keyframes confettifall{
+    0%{opacity:0;transform:translateY(0) rotate(0deg)}
+    8%{opacity:1}
+    100%{opacity:0;transform:translateY(220px) rotate(340deg)}
+  }
+  .confetti-piece.go{animation:confettifall 1.5s ease-in forwards}
+  @media(prefers-reduced-motion:reduce){.confetti-piece.go{animation:none;display:none}}
+  @media(max-width:520px){
+    .page{padding:30px 16px 60px}
+    .milestones{flex-direction:column}
+    .milestones div{border-right:none;border-bottom:1px solid var(--line)}
+    .cmp,.terms td:first-child{width:auto}
+    .amend .row{flex-direction:column;align-items:stretch}
+    .amend .abtn{width:100%}
+    h1{font-size:22px}
+  }
+</style>
+</head>
+<body>
+<div class="page">
+  <header><div class="logo">[OWNER] <span>DIGITAL</span></div><div style="font-size:13px;color:var(--sub)">{{date}}</div></header>
+  <h1>One-page service agreement</h1>
+  <div class="sub">Between <b>[OWNER_COMPANY]</b> ("we") and <b>{{name}}</b>, {{company}} ("you"). Plain English on purpose.</div>
+  {{nudge_banner}}
+
+  <h2>The work</h2>
+  <p><b>{{tier_name}}</b>: {{tier_desc}}</p>
+  <ul>{{scope}}</ul>
+
+  <h2>Delivery checklist</h2>
+  <p style="margin-bottom:10px">Each item gets ticked as it's actually delivered. Shared truth: you see progress the same way we do.</p>
+  <ul class="checklist" id="checklist">{{checklist_items}}</ul>
+  <div class="checknote">Checking a box here is a personal tracker in your browser. It doesn't notify us or change the contract; reply to the delivery email for anything official.</div>
+
+  <h2>Milestones</h2>
+  <div class="milestones">{{milestone_strip}}</div>
+
+  <h2>Terms</h2>
+  <table class="terms">
+    <tr><td>Price</td><td><b>{{price}}</b>, fixed{{currency_note}}. No hourly billing, no surprise line items.</td></tr>
+    <tr><td>Payment</td><td>50% ({{deposit}}) to book the build slot; remainder on delivery, net 7.</td></tr>
+    <tr><td>Timeline</td><td>{{days}} days from deposit. Working preview by day 3.</td></tr>
+    <tr><td>Revisions</td><td>Two rounds included. Additional rounds $150 each, quoted first.</td></tr>
+    <tr><td>Scope changes</td><td>New requests are quoted as add-ons; they never silently change this price or date. See amendments below.</td></tr>
+    <tr><td>Approval</td><td>Nothing goes live until you approve the preview.</td></tr>
+    <tr><td>Ownership</td><td>On final payment, the site, content, and accounts are 100% yours.</td></tr>
+    <tr><td>What we need</td><td>Logo, content decisions, and access per the intake list within 2 business days of deposit; delays extend the timeline day for day.</td></tr>
+    <tr><td><span class="klabel" tabindex="0">Cancellation<span class="qm">?</span>
+      <span class="tip">Cancel before the day-3 preview and we keep the deposit; it covers the design and planning hours already spent. Cancel after the preview and the full price applies, since the build is substantially done. This is the one clause people ask about, so here it is in plain terms.</span></span></td>
+      <td>Cancel before day 3 preview: we keep the deposit as the kill fee. After: full price.</td></tr>
+    <tr><td>Rush</td><td>Delivery under 7 days is +50%, agreed in writing before start.</td></tr>
+  </table>
+  {{attachments_row}}
+
+  <h2>Add-on requests</h2>
+  <p style="margin-bottom:10px">Something extra come up mid-build? Note it here. It becomes its own one-line addendum with its own accept, never a silent change to this agreement.</p>
+  <div class="amend">
+    <div class="row">
+      <textarea id="amendText" placeholder="e.g. Add a blog page, add a second phone number to the header..."></textarea>
+    </div>
+    <div class="row">
+      <span style="font-size:12.5px;color:var(--sub)">Sent to [OWNER] for a quick price, not billed automatically.</span>
+      <button type="button" class="abtn" onclick="addAmendment()">Request add-on</button>
+    </div>
+    <ul class="list" id="amendList"></ul>
+  </div>
+
+  <div class="accept" id="acceptbox">
+    <h3>Accept and start</h3>
+    <p>Type your full name and accept, or draw your signature. Either one counts. You'll get a confirmation and the deposit link.</p>
+    <div class="sigmode">
+      <button type="button" id="modeType" class="on" onclick="setSigMode('type')">Type my name</button>
+      <button type="button" id="modeDraw" onclick="setSigMode('draw')">Draw my signature</button>
+    </div>
+    <div id="padwrap">
+      <canvas id="sigpad"></canvas>
+      <button type="button" id="padclear" onclick="clearPad()">Clear signature</button>
+    </div>
+    <form id="af" onsubmit="return doAccept(event)">
+      <input id="an" placeholder="Full legal name" required minlength="4" autocomplete="name">
+      <button type="submit">I accept — start the build</button>
+    </form>
+    <div id="done">
+      <div class="confetti-wrap" id="confettiWrap"></div>
+      <b>✓ Accepted. Welcome aboard.</b><br>
+      <span style="color:var(--sub);font-size:13.5px">We've been notified and the clock starts on your deposit.</span><br>
+      {{pay_button}}
+      <div class="readchip"><span class="dot"></span>This acceptance is timestamped and logged.</div>
+    </div>
+  </div>
+
+  <footer>[OWNER_COMPANY] · [OWNER_SITE] · Agreement ref {{pid}} · Accepted signatures are logged with a timestamp.</footer>
+</div>
+<script>
+"use strict";
+
+// ---- C44: delivery checklist, personal browser-side tracker only ----
+(function(){
+  var key = "agreecheck_{{pid}}";
+  var boxes = document.querySelectorAll("#checklist input[type=checkbox]");
+  if(!boxes.length) return;
+  var saved = {};
+  try{ saved = JSON.parse(localStorage.getItem(key) || "{}"); }catch(e){}
+  boxes.forEach(function(b){
+    if(saved[b.value]) b.checked = true;
+    syncStrike(b);
+    b.addEventListener("change", function(){
+      syncStrike(b);
+      try{
+        var cur = JSON.parse(localStorage.getItem(key) || "{}");
+        cur[b.value] = b.checked;
+        localStorage.setItem(key, JSON.stringify(cur));
+      }catch(e){}
+    });
+  });
+  function syncStrike(b){
+    var lab = document.querySelector('label[for="' + b.id + '"]');
+    if(lab) lab.classList.toggle("strike", b.checked);
+  }
+})();
+
+// ---- C47: amendments, front-end draft list only (no backend endpoint yet) ----
+var AMENDS = [];
+function addAmendment(){
+  var t = document.getElementById("amendText");
+  var v = (t.value || "").trim();
+  if(!v) return;
+  AMENDS.push(v);
+  t.value = "";
+  var ul = document.getElementById("amendList");
+  var li = document.createElement("li");
+  var span = document.createElement("span");
+  span.className = "astatus";
+  span.textContent = "Pending review · ";
+  li.appendChild(span);
+  li.appendChild(document.createTextNode(v));
+  ul.appendChild(li);
+  // Best-effort notify: fails silently, no endpoint guaranteed to exist.
+  try{
+    var m = location.pathname.match(/\/agree\/([a-z0-9_]+)/i);
+    var pid = m ? m[1] : "";
+    if(pid){
+      fetch("/agree/" + pid + "/beacon" + location.search, {
+        method: "POST", headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({amendment: v}), keepalive: true
+      }).catch(function(){});
+    }
+  }catch(e){}
+}
+
+// ---- C42: signature pad alongside typed name ----
+var sigMode = "type";
+var padCtx = null, drawing = false, hasDrawn = false;
+function setSigMode(mode){
+  sigMode = mode;
+  document.getElementById("modeType").classList.toggle("on", mode === "type");
+  document.getElementById("modeDraw").classList.toggle("on", mode === "draw");
+  var pw = document.getElementById("padwrap");
+  var an = document.getElementById("an");
+  if(mode === "draw"){
+    pw.classList.add("show");
+    an.removeAttribute("required");
+    initPad();
+  } else {
+    pw.classList.remove("show");
+    an.setAttribute("required", "required");
+  }
+}
+function initPad(){
+  var c = document.getElementById("sigpad");
+  if(!c || padCtx) { resizePad(); return; }
+  resizePad();
+  padCtx = c.getContext("2d");
+  padCtx.strokeStyle = "#16181d";
+  padCtx.lineWidth = 2.4;
+  padCtx.lineCap = "round";
+  function pos(e){
+    var r = c.getBoundingClientRect();
+    var p = e.touches ? e.touches[0] : e;
+    return {x: (p.clientX - r.left) * (c.width / r.width), y: (p.clientY - r.top) * (c.height / r.height)};
+  }
+  function start(e){ drawing = true; hasDrawn = true; var p = pos(e); padCtx.beginPath(); padCtx.moveTo(p.x, p.y); e.preventDefault(); }
+  function move(e){ if(!drawing) return; var p = pos(e); padCtx.lineTo(p.x, p.y); padCtx.stroke(); e.preventDefault(); }
+  function end(){ drawing = false; }
+  c.addEventListener("mousedown", start); c.addEventListener("mousemove", move); window.addEventListener("mouseup", end);
+  c.addEventListener("touchstart", start, {passive:false}); c.addEventListener("touchmove", move, {passive:false}); c.addEventListener("touchend", end);
+}
+function resizePad(){
+  var c = document.getElementById("sigpad");
+  if(!c) return;
+  var r = c.getBoundingClientRect();
+  c.width = Math.max(300, r.width) * 2;
+  c.height = 150 * 2;
+  if(padCtx){ padCtx.strokeStyle = "#16181d"; padCtx.lineWidth = 2.4; padCtx.lineCap = "round"; }
+}
+function clearPad(){
+  if(!padCtx) return;
+  padCtx.clearRect(0, 0, padCtx.canvas.width, padCtx.canvas.height);
+  hasDrawn = false;
+}
+
+// ---- C41: tasteful confetti burst on acceptance, canvas-free CSS particles, ~1.5s ----
+function fireConfetti(){
+  var wrap = document.getElementById("confettiWrap");
+  if(!wrap) return;
+  var colors = ["#b8860b", "#e8c34a", "#1a7f4e", "#16181d", "#d64545"];
+  var n = 22;
+  for(var i = 0; i < n; i++){
+    var p = document.createElement("div");
+    p.className = "confetti-piece";
+    p.style.left = (Math.random() * 100) + "%";
+    p.style.background = colors[i % colors.length];
+    p.style.animationDelay = (Math.random() * 0.25) + "s";
+    p.style.transform = "rotate(" + Math.floor(Math.random() * 360) + "deg)";
+    wrap.appendChild(p);
+  }
+  requestAnimationFrame(function(){
+    wrap.querySelectorAll(".confetti-piece").forEach(function(p){ p.classList.add("go"); });
+  });
+  setTimeout(function(){ wrap.innerHTML = ""; }, 1900);
+}
+
+async function doAccept(e){
+  e.preventDefault();
+  var n = document.getElementById('an').value.trim();
+  var usingDraw = sigMode === "draw";
+  if(!usingDraw && n.length < 4) return false;
+  if(usingDraw && !hasDrawn){ alert("Draw your signature first, or switch to type your name."); return false; }
+  var b = document.querySelector('#af button');
+  b.disabled = true; b.textContent = 'Recording...';
+  var body = {name: usingDraw ? (n || "(signed by drawing)") : n};
+  if(usingDraw){
+    try{ body.signature_png = document.getElementById("sigpad").toDataURL("image/png"); }catch(err){}
+  }
+  if(AMENDS.length) body.amendments = AMENDS;
+  try{
+    var r = await fetch(location.pathname + '/accept' + location.search, {method: 'POST',
+      headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body)});
+    var j = await r.json();
+    if(j.ok){
+      document.getElementById('af').style.display = 'none';
+      document.getElementById('done').style.display = 'block';
+      fireConfetti();
+    } else {
+      b.disabled = false; b.textContent = 'I accept — start the build';
+      alert('Something hiccuped. Try once more or just reply to the email.');
+    }
+  } catch(err) {
+    b.disabled = false; b.textContent = 'I accept — start the build';
+    alert('Connection hiccup. Try again or reply to the email.');
+  }
+  return false;
+}
+
+// ---- C49: read-receipt beacon, same fail-silent contract as proposal.html ----
+(function(){
+  var m = location.pathname.match(/\/agree\/([a-z0-9_]+)/i);
+  var pid = m ? m[1] : "";
+  if(!pid) return;
+  var openedAt = Date.now();
+  function send(){
+    try{
+      var body = JSON.stringify({t: Math.round((Date.now() - openedAt) / 1000), d: 100, s: {}});
+      var url = "/agree/" + pid + "/beacon" + location.search;
+      if(navigator.sendBeacon){
+        if(navigator.sendBeacon(url, new Blob([body], {type: "application/json"}))) return;
+      }
+      fetch(url, {method: "POST", headers: {"Content-Type": "application/json"}, body: body, keepalive: true}).catch(function(){});
+    }catch(e){}
+  }
+  document.addEventListener("visibilitychange", function(){ if(document.visibilityState === "hidden") send(); });
+  window.addEventListener("pagehide", send);
+  setTimeout(send, 15000);
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  launchd timer: runs second-brain/run.sh every 10 minutes (pull Siri captures,
+  rebuild dashboard). NOT loaded automatically — [OWNER] enables it once:
+
+    cp second-brain/com.jarvis.secondbrain.plist ~/Library/LaunchAgents/
+    launchctl load ~/Library/LaunchAgents/com.jarvis.secondbrain.plist
+
+  Disable:
+    launchctl unload ~/Library/LaunchAgents/com.jarvis.secondbrain.plist
+
+  NOTE: the Reminders permission grant attaches to the process launchd runs, so
+  the first cycle may surface a TCC prompt — approve it once.
+-->
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.jarvis.secondbrain</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/bash</string>
+    <string>[APP_ROOT]/run.sh</string>
+  </array>
+  <key>StartInterval</key>
+  <integer>600</integer>
+  <key>RunAtLoad</key>
+  <true/>
+  <key>StandardErrorPath</key>
+  <string>[APP_ROOT]/launchd.err.log</string>
+  <key>StandardOutPath</key>
+  <string>[APP_ROOT]/launchd.out.log</string>
+</dict>
+</plist>

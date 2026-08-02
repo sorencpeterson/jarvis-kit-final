@@ -1,0 +1,54 @@
+#!/bin/bash
+# pre-commit hook for hand commits (FABLE-BUILD-QUEUE Section 4: "CI/pre-commit
+# for secret-guard + fast tests"). The hourly autocommit already refuses to
+# commit a staged secret (agents/autocommit.sh), but a hand `git commit` used to
+# bypass that guard entirely. This hook closes the window.
+#
+# Source of truth lives at tools/pre-commit; the installed copy is
+# .git/hooks/pre-commit (not tracked by git). Install / update:
+#   cp tools/pre-commit .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit
+#
+# What it runs (total ~0.4s measured 2026-07-07; anything slower gets deleted
+# by its owner, so nothing heavier goes in here):
+#   1. Secret guard on the STAGED diff. The two grep patterns below are copied
+#      VERBATIM from agents/autocommit.sh (lines 19-22 as of 2026-07-07):
+#      (a) case-sensitive provider prefixes (sk-/sk-ant-/xi-/AIza/ghp_/xoxb-...)
+#      (b) case-insensitive named-credential assignment (openai_api_key etc.).
+#      If you change the patterns THERE, change them HERE, same commit.
+#   2. tools/ast_check.py (parse-only syntax gate, ~0.2s), only when a .py file
+#      is staged.
+#
+# Bypass for a false positive (e.g. a doc QUOTING a redacted token shape):
+#   git commit --no-verify
+# but read the diff first; a secret in git history is forever.
+
+set -u
+cd "$(git rev-parse --show-toplevel)" || exit 1
+
+# ---- 1. secret guard (patterns verbatim from agents/autocommit.sh) ----
+if git diff --cached -U0 2>/dev/null \
+     | grep -qE '^\+.*(sk-(ant-)?[A-Za-z0-9_-]{20,}|xi-[A-Za-z0-9]{24,}|AIza[A-Za-z0-9_-]{30,}|gh[pousr]_[A-Za-z0-9]{30,}|xox[bap]-[A-Za-z0-9-]{20,})'; then
+  echo "BLOCKED: staged diff contains a provider-prefixed token (sk-/sk-ant-/xi-/AIza/ghp_/xoxb-...)." >&2
+  echo "A secret in git history is forever. Unstage it, move it to .env, then commit." >&2
+  echo "False positive? Inspect with: git diff --cached | grep -nE 'sk-|xi-|AIza|gh[pousr]_|xox'" >&2
+  exit 1
+fi
+if git diff --cached -U0 2>/dev/null \
+     | grep -qiE '^\+.*(openai|elevenlabs|eleven|anthropic|brain|guest|ghl)[a-z_]*(api[_-]?key|key|token|secret)["'"'"' ]*[:=]["'"'"' ]*[A-Za-z0-9/+_-]{16,}'; then
+  echo "BLOCKED: staged diff contains a named credential assignment (openai/elevenlabs/anthropic/brain/guest/ghl ...key|token|secret = value)." >&2
+  echo "A secret in git history is forever. Unstage it, move it to .env, then commit." >&2
+  exit 1
+fi
+
+# ---- 2. syntax gate, only when python files are staged (~0.2s) ----
+if git diff --cached --name-only --diff-filter=d | grep -q '\.py$'; then
+  PY=".venv/bin/python"
+  [ -x "$PY" ] || PY="python3"
+  if ! OUT=$("$PY" tools/ast_check.py 2>&1); then
+    echo "BLOCKED: python syntax error in the repo (tools/ast_check.py):" >&2
+    echo "$OUT" >&2
+    exit 1
+  fi
+fi
+
+exit 0

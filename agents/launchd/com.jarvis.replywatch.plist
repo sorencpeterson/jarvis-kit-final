@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key><string>com.jarvis.replywatch</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>[APP_ROOT]/.venv/bin/python</string>
+    <string>[APP_ROOT]/agents/reply_watch.py</string>
+  </array>
+  <key>WorkingDirectory</key><string>[APP_ROOT]</string>
+  <key>StartInterval</key><integer>1800</integer>
+  <key>RunAtLoad</key><false/>
+  <key>StandardErrorPath</key><string>[APP_ROOT]/agents/replywatch.log</string>
+  <key>StandardOutPath</key><string>[APP_ROOT]/agents/replywatch.log</string>
+</dict>
+</plist>

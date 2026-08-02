@@ -1,0 +1,61 @@
+/*
+ * ambient.css — Mission Control ambient background layer.
+ * Apply the `.ambient` class to a positioning-context element (e.g. <body>
+ * or a top-level app shell div). Renders a fixed, full-viewport, subtle
+ * dot-grid backdrop (two offset radial-gradient layers) with one slow
+ * GPU-only drift animation. Sits behind content (z-index: 0) and never
+ * intercepts pointer events. Fully disabled on small screens and when the
+ * user prefers reduced motion.
+ */
+
+.ambient {
+  position: relative;
+}
+
+.ambient::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+
+  background-image:
+    radial-gradient(circle at 1px 1px, rgba(22, 40, 58, 0.4) 1px, transparent 1px),
+    radial-gradient(circle at 1px 1px, rgba(22, 40, 58, 0.4) 1px, transparent 1px);
+  background-size: 26px 26px, 26px 26px;
+  background-position: 0 0, 13px 13px;
+
+  /* Oversize the layer so the drift animation never reveals an edge. */
+  width: 160vw;
+  height: 160vh;
+  left: -30vw;
+  top: -30vh;
+
+  will-change: transform;
+  transform: translate3d(0, 0, 0);
+  animation: ambient-drift 90s linear infinite alternate;
+}
+
+@keyframes ambient-drift {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  100% {
+    transform: translate3d(-40px, 30px, 0);
+  }
+}
+
+/* Disable entirely on small screens: no fixed backdrop, no animation cost. */
+@media (max-width: 767px) {
+  .ambient::before {
+    display: none;
+  }
+}
+
+/* Respect reduced-motion preference: keep the static dot grid but drop the animation. */
+@media (prefers-reduced-motion: reduce) {
+  .ambient::before {
+    animation: none;
+    transform: translate3d(0, 0, 0);
+  }
+}

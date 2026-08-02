@@ -1,0 +1,13 @@
+{
+  "task": "Read the main heading and body text of a web page",
+  "site": "any",
+  "params": ["url"],
+  "steps": [
+    { "tool": "tabs_context_mcp", "input": { "createIfEmpty": true } },
+    { "tool": "navigate", "input": { "url": "{{url}}" } },
+    { "tool": "get_page_text", "input": {} }
+  ],
+  "verify": "page text returned, non-empty",
+  "recorded": "true",
+  "notes": "First recorded skill — proved a cheap Sonnet subagent can drive the real Chrome DOM-first (example.com run, ~14k tokens, 17s). Template for read tasks."
+}

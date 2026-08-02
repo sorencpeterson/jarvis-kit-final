@@ -1,0 +1,18 @@
+{
+  "type": "array",
+  "minItems": 1,
+  "items": {
+    "type": "object",
+    "required": ["real", "intent", "reply"],
+    "properties": {
+      "real": {"type": "boolean"},
+      "intent": {
+        "type": "string",
+        "enum": ["interested", "question", "objection", "not_now", "remove", "wrong_person", "other"]
+      },
+      "reply": {"type": "string"}
+    },
+    "additionalProperties": true
+  },
+  "_note": "C218: a genuine wrong-number reply. Expect real=true (a real human, not spam), intent=wrong_person, reply non-empty and a short gracious close (no pitch, no explanation demanded)."
+}

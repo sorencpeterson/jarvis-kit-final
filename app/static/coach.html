@@ -1,0 +1,401 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>COACH · live</title>
+<link rel="icon" href="/icon-192.png">
+<style>
+:root{--bg:#04070d;--gold:#ffd76a;--ink:#e8f6f6;--mut:#5d7684;--line:#16283a}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);
+  font:14px/1.5 -apple-system,system-ui,sans-serif;height:100vh;display:flex;flex-direction:column;padding:14px;gap:10px}
+#hd{display:flex;align-items:center;gap:10px;font:10px/1 ui-monospace,monospace;letter-spacing:2px;color:var(--mut);flex-wrap:wrap}
+#dot{width:9px;height:9px;border-radius:50%;background:#374151}
+#dot.on{background:#46e0a0;box-shadow:0 0 10px #46e0a0;animation:p 2s infinite}
+@keyframes p{50%{opacity:.3}}
+/* D60: contact name chip */
+#nameChip{display:none;font:700 11px/1 -apple-system,sans-serif;letter-spacing:.3px;color:#04070d;
+  background:var(--gold);padding:5px 10px;border-radius:8px}
+#nameChip.on{display:inline-block}
+/* D73: non-English lane indicator — plumbing-only per the brief ([L], needs real
+   Spanish-audio validation), but worth a quiet visual cue that suggestions are still
+   English while THEM is speaking something else */
+#langChip{display:none;font:700 10px/1 ui-monospace,monospace;letter-spacing:1px;color:#7dd3fc;
+  border:1px solid rgba(125,211,252,.4);background:rgba(125,211,252,.08);padding:5px 8px;border-radius:8px}
+#langChip.on{display:inline-block}
+/* D64/D70: model + framework dropdowns */
+.ctl{font:10px/1 ui-monospace,monospace;letter-spacing:1px;background:rgba(255,255,255,.04);
+  color:var(--mut);border:1px solid var(--line);border-radius:6px;padding:5px 6px}
+#consent{font:10px/1.4 ui-monospace,monospace;color:#c9963f;border:1px solid rgba(255,215,106,.25);border-radius:8px;padding:6px 9px}
+/* D53: waveform meters */
+#meters{display:flex;gap:14px;font:9px/1 ui-monospace,monospace;letter-spacing:1px;color:var(--mut)}
+.meter{display:flex;align-items:center;gap:6px}
+.meter .bars{display:flex;gap:2px;align-items:flex-end;height:16px}
+.meter .bars i{width:4px;border-radius:1px;background:#233246;height:4px;transition:height .12s ease,background .12s ease}
+.meter.me .bars i.hit{background:var(--gold)}
+.meter.them .bars i.hit{background:#7dd3fc}
+/* D54: talk ratio dial */
+#ratio{display:flex;align-items:center;gap:6px;font:9px/1 ui-monospace,monospace;letter-spacing:1px;color:var(--mut)}
+#ratioBar{width:70px;height:6px;border-radius:3px;background:#16283a;overflow:hidden;position:relative}
+#ratioFill{position:absolute;left:0;top:0;bottom:0;width:50%;background:#46e0a0;transition:width .3s ease,background .3s ease}
+#ratioFill.amber{background:#ffb454}#ratioFill.red{background:#ff5d73}
+#say{flex:0 0 auto;min-height:118px;display:flex;flex-direction:column;justify-content:center;background:rgba(255,215,106,.07);
+  border:1px solid rgba(255,215,106,.5);border-radius:16px;padding:16px 18px;position:relative}
+/* D65: confidence styling */
+#say.lowconf{opacity:.62;border-color:rgba(255,215,106,.22)}
+#sayTxt{font:600 22px/1.35 -apple-system,sans-serif;color:#fff3d6}
+#sayWhy{font:10px/1 ui-monospace,monospace;letter-spacing:2px;color:#c9963f;text-transform:uppercase;margin-top:8px}
+#say.flash{animation:fl .5s}
+@keyframes fl{0%{background:rgba(255,215,106,.35)}}
+#flag{display:none;font:700 11px/1 ui-monospace,monospace;letter-spacing:2px;padding:6px 10px;border-radius:9px;align-self:flex-start}
+#flag.objection{display:block;background:rgba(255,93,115,.15);color:#ff8a9a;border:1px solid rgba(255,93,115,.4)}
+#flag.buying-signal{display:block;background:rgba(70,224,160,.15);color:#7fe0b6;border:1px solid rgba(70,224,160,.4)}
+#flag.rambling,#flag.silence{display:block;background:rgba(255,180,84,.14);color:#ffb454;border:1px solid rgba(255,180,84,.4)}
+/* D56: objection flash-card */
+#flashcard{display:none;flex:0 0 auto;background:rgba(255,93,115,.08);border:1px solid rgba(255,93,115,.4);
+  border-radius:16px;padding:16px 18px}
+#flashcard.on{display:block}
+#flashcard .them{font:11px/1.4 ui-monospace,monospace;color:#ff9daa;text-transform:uppercase;letter-spacing:1px}
+#flashcard .them q{font-style:normal}
+#flashcard .counter{font:700 19px/1.35 -apple-system,sans-serif;color:#fff;margin-top:8px}
+/* D57: question quota */
+#qquota{display:none;font:10px/1 ui-monospace,monospace;letter-spacing:1px;color:var(--mut);
+  border:1px solid var(--line);border-radius:8px;padding:6px 9px;align-self:flex-start}
+#qquota.on{display:inline-block}
+#qquota.met{color:#7fe0b6;border-color:rgba(70,224,160,.4)}
+/* D58: silence timer */
+#silence{display:none;font:11px/1.3 -apple-system,sans-serif;color:var(--mut);border:1px solid var(--line);
+  border-radius:10px;padding:8px 12px}
+#silence.on{display:block}
+#silence.breathe{color:#7fe0b6;border-color:rgba(70,224,160,.35);background:rgba(70,224,160,.06)}
+#silence.ask{color:#ffb454;border-color:rgba(255,180,84,.35);background:rgba(255,180,84,.06)}
+/* D59: number chips */
+#numbers{display:flex;gap:6px;flex-wrap:wrap}
+#numbers span{font:700 11px/1 ui-monospace,monospace;background:rgba(255,215,106,.1);color:var(--gold);
+  border:1px solid rgba(255,215,106,.3);border-radius:20px;padding:5px 10px}
+#stage{display:flex;gap:6px;position:relative}
+#stage i{flex:1;height:5px;border-radius:3px;background:#16283a;position:relative}
+#stage i.on{background:var(--gold);box-shadow:0 0 8px rgba(255,215,106,.5)}
+/* D55: stage_auto marker, thin line under the dot the heuristic thinks we're at */
+#stage i.auto::after{content:"";position:absolute;left:0;right:0;bottom:-4px;height:2px;background:#7dd3fc;border-radius:1px}
+#tx{flex:1;overflow-y:auto;font:12.5px/1.7 ui-monospace,monospace;color:#9db9c7;border-top:1px solid var(--line);padding-top:10px}
+#tx .me{color:#ffd76a}#tx .them{color:#7dd3fc}
+#nudge{position:fixed;right:14px;bottom:14px;font:700 13px/1 -apple-system,sans-serif;padding:14px 18px;border-radius:14px;
+  border:none;background:var(--gold);color:#04070d;cursor:pointer;box-shadow:0 10px 30px rgba(0,0,0,.5)}
+#nudge:active{transform:scale(.95)}
+/* D72: export button */
+#exportBtn{font:700 12px -apple-system;padding:12px 15px;border-radius:12px;border:1px solid #7dd3fc;
+  background:rgba(125,211,252,.1);color:#7dd3fc;cursor:pointer}
+#exportBtn:disabled{opacity:.4;cursor:default}
+#exportNote{position:fixed;left:14px;bottom:56px;font:10px/1 ui-monospace,monospace;color:var(--mut)}
+/* D63: replay mode */
+/* margin-bottom reserves room for the fixed EXPORT button row (position:fixed,
+   bottom:14px, ~50px tall) so the slider never sits underneath it */
+#replayBar{display:none;flex:0 0 auto;flex-direction:column;gap:8px;border-top:1px solid var(--line);padding-top:10px;margin-bottom:64px}
+#replayBar.on{display:flex}
+#replaySlider{width:100%}
+#replayLabel{font:10px/1 ui-monospace,monospace;color:var(--mut);display:flex;justify-content:space-between}
+</style></head><body>
+<div id="hd">
+  <span id="dot" aria-hidden="true"></span><span id="st" role="status" aria-live="polite">COACH · CONNECTING</span>
+  <span id="nameChip"></span>
+  <span id="langChip" title="THEM appears to be speaking this language — suggestions stay English"></span>
+  <span style="flex:1"></span>
+  <select id="fwSel" class="ctl" title="framework (hot-swap)"><option value="">FRAMEWORK</option></select>
+  <select id="modelSel" class="ctl" title="whisper model (hot-swap)">
+    <option value="">MODEL</option>
+    <option value="tiny.en">tiny.en</option>
+    <option value="base.en">base.en</option>
+    <option value="small.en">small.en</option>
+  </select>
+</div>
+<div id="consent">⚠ consent: tell them you run an AI notetaker before recording. --no-save mode keeps nothing.</div>
+<div id="meters">
+  <div class="meter me"><span>ME</span><div class="bars" id="meBars"><i></i><i></i><i></i><i></i><i></i></div></div>
+  <div class="meter them"><span>THEM</span><div class="bars" id="themBars"><i></i><i></i><i></i><i></i><i></i></div></div>
+  <div id="ratio"><span>TALK</span><div id="ratioBar"><div id="ratioFill"></div></div><span id="ratioPct">–</span></div>
+</div>
+<div id="say"><div id="flag" role="status" aria-live="polite"></div><div id="sayTxt">Waiting for the coach process…</div><div id="sayWhy"></div></div>
+<div id="flashcard"><div class="them"></div><div class="counter"></div></div>
+<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+  <div id="qquota"></div>
+  <div id="silence"></div>
+</div>
+<div id="numbers"></div>
+<div id="stage"><i></i><i></i><i></i><i></i><i></i></div>
+<div id="tx"></div>
+<div id="replayBar">
+  <input type="range" id="replaySlider" min="0" max="0" value="0">
+  <div id="replayLabel"><span id="replayPos">0 / 0</span><span id="replayTime"></span></div>
+</div>
+<div style="position:fixed;left:14px;bottom:14px;display:flex;gap:8px">
+  <button id="cstart" style="font:700 12px -apple-system;padding:12px 15px;border-radius:12px;border:1px solid #46e0a0;background:rgba(70,224,160,.12);color:#46e0a0;cursor:pointer">▶ START</button>
+  <button id="cstop" style="font:700 12px -apple-system;padding:12px 15px;border-radius:12px;border:1px solid #ff5d73;background:rgba(255,93,115,.1);color:#ff8a9a;cursor:pointer">■ STOP</button>
+  <button id="exportBtn" title="POST transcript to this contact's GHL notes">⇪ EXPORT</button>
+</div>
+<div id="exportNote"></div>
+<button id="nudge" title="or press SPACE, or double-tap CAPS LOCK">FEED ME ⚡</button>
+<script>
+const T="__BRAIN_TOKEN__";
+const _f=window.fetch;window.fetch=(u,o={})=>{o.headers=Object.assign({"X-Brain-Token":T},o.headers||{});return _f(u,o)};
+let lastSay="";
+
+// ---- D63: replay mode — ?replay=<scorecard_ts> reads store/coach_transcripts/<start_ts>.jsonl
+// (server-side: no endpoint for this yet, so replay fetches /api/coach/replay?ts=... and
+// degrades to a clear inline message if that 404s. See CONTRACT note at bottom of file.)
+const REPLAY_TS=new URLSearchParams(location.search).get("replay");
+let replayLines=[],replayIdx=0;
+
+function esc(l){return l.replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]))}
+
+function renderTranscript(el,text){
+  el.innerHTML=(text||"").split("\n").map(l=>{
+    const e=esc(l);
+    return l.startsWith("ME:")?'<div class="me">'+e+'</div>':l.startsWith("THEM:")?'<div class="them">'+e+'</div>':'<div>'+e+'</div>'
+  }).join("");
+  el.scrollTop=1e9;
+}
+
+// D53: waveform meters — level is 0..1, light up floor(level*5) of 5 bars
+function setBars(containerId,level){
+  const bars=document.querySelectorAll("#"+containerId+" i");
+  const lit=Math.max(0,Math.min(5,Math.round((level||0)*5)));
+  bars.forEach((b,i)=>{
+    const on=i<lit;
+    b.classList.toggle("hit",on);
+    b.style.height=on?(6+i*3)+"px":"4px";
+  });
+}
+
+// D54: talk-ratio dial — gold <60%, amber <75%, red >=75% (ME share of recent talk time)
+function setRatio(ratio){
+  const fill=document.getElementById("ratioFill"),pct=document.getElementById("ratioPct"),dial=document.getElementById("ratio");
+  if(ratio===null||ratio===undefined){pct.textContent="–";fill.style.width="0%";fill.className="";
+    if(dial){dial.title="talk ratio unknown";dial.setAttribute("aria-label","talk ratio unknown")}return}
+  const pctVal=Math.round(ratio*100);
+  pct.textContent=pctVal+"%";
+  fill.style.width=Math.min(100,pctVal)+"%";
+  fill.className=pctVal>=75?"red":pctVal>=60?"amber":"";
+  const state=pctVal>=75?"way too much, let them talk":pctVal>=60?"getting high, aim under 60%":"healthy";
+  if(dial){dial.title="you are talking "+pctVal+"% of the time: "+state;dial.setAttribute("aria-label",dial.title)}
+}
+
+// D56: objection flash-card — only shows when the suggestion has a matched playbook pair
+function setFlashcard(match){
+  const el=document.getElementById("flashcard");
+  if(!match||!match.them){el.classList.remove("on");return}
+  el.classList.add("on");
+  el.querySelector(".them").innerHTML='THEY SAID <q>"'+esc(match.them)+'"</q>';
+  el.querySelector(".counter").textContent=match.say||"";
+}
+
+// D57: question quota — only relevant during discovery stages 1-2, target 3
+function setQuota(questions,stage){
+  const el=document.getElementById("qquota");
+  const relevant=(stage||0)>=1&&(stage||0)<=2;
+  if(!relevant){el.classList.remove("on");return}
+  el.classList.add("on");
+  const n=questions||0;
+  el.classList.toggle("met",n>=3);
+  el.textContent="QUESTIONS ASKED: "+n+"/3";
+}
+
+// D58: silence timer — >6s dead air. Below stage 4: gentle nudge to ask something.
+// Stage>=4 (post-price): silence is good, "let it breathe" instead.
+function setSilence(silenceS,stage,active){
+  const el=document.getElementById("silence");
+  if(!active||!silenceS||silenceS<6){el.classList.remove("on","breathe","ask");return}
+  el.classList.add("on");
+  if((stage||0)>=4){
+    el.classList.add("breathe");el.classList.remove("ask");
+    el.textContent="🤫 let it breathe — silence closes";
+  }else{
+    el.classList.add("ask");el.classList.remove("breathe");
+    el.textContent="… ask something";
+  }
+}
+
+// D59: number chips — prices/dates THEY said, deduped, most-recent-last
+function setNumbers(numbers){
+  const el=document.getElementById("numbers");
+  el.innerHTML=(numbers||[]).map(n=>"<span>"+esc(n)+"</span>").join("");
+}
+
+// D60: contact name chip
+function setName(name){
+  const el=document.getElementById("nameChip");
+  if(name){el.textContent=name.toUpperCase();el.classList.add("on")}
+  else{el.classList.remove("on")}
+}
+
+// D73: language lane indicator — plumbing-only, cheap heuristic on the backend
+// (coach.py _detect_lang), shown here so it's not invisible. Only appears for
+// non-English so the common case (lang="en") stays quiet.
+const LANG_NAMES={es:"SPANISH"};
+function setLang(lang){
+  const el=document.getElementById("langChip");
+  if(lang&&lang!=="en"){
+    el.textContent=(LANG_NAMES[lang]||lang.toUpperCase())+" · SUGGESTIONS STAY EN";
+    el.classList.add("on");
+  }else{el.classList.remove("on")}
+}
+
+// D65: confidence styling — dim the say-card when the suggestion isn't a strong playbook hit
+function setConfidence(conf){
+  document.getElementById("say").classList.toggle("lowconf",conf==="low");
+}
+
+async function tick(){
+  if(REPLAY_TS)return; // replay mode owns the render loop below instead
+  try{
+    const s=await(await fetch("/api/coach")).json();
+    document.getElementById("dot").className=s.active?"on":"";
+    document.getElementById("st").textContent=s.active?"COACH · LIVE":"COACH · IDLE (start coach.py)";
+    setName(s.contact_name||"");
+    setLang(s.lang||"en");
+    if(s.say&&s.say!==lastSay){lastSay=s.say;
+      const el=document.getElementById("say");el.classList.remove("flash");void el.offsetWidth;el.classList.add("flash");
+      document.getElementById("sayTxt").textContent=s.say;
+      document.getElementById("sayWhy").textContent=s.why||"";}
+    setConfidence(s.conf);
+    const f=document.getElementById("flag");
+    f.className=(s.flag&&s.flag!=="none")?s.flag:"";f.textContent=(s.flag||"").toUpperCase();f.title=f.textContent;
+    setFlashcard(s.flag==="objection"?s.playbook_match:null);
+    // D55: stage dots use the LLM's own stage; a thin blue underline marks where the
+    // cheap keyword heuristic (stage_auto) independently thinks we are — when they
+    // disagree it's visible at a glance, when they agree the line just confirms it.
+    document.querySelectorAll("#stage i").forEach((el,i)=>{
+      el.classList.toggle("on",i<(s.stage||0));
+      el.classList.toggle("auto",i===((s.stage_auto||1)-1));
+    });
+    setQuota(s.questions,s.stage||s.stage_auto);
+    setSilence(s.silence_s,s.stage||s.stage_auto,s.active);
+    setNumbers(s.numbers);
+    setBars("meBars",s.me_level);
+    setBars("themBars",s.them_level);
+    setRatio(s.talk_ratio);
+    renderTranscript(document.getElementById("tx"),s.transcript_tail);
+    // keep the framework/model dropdowns reflecting live state unless the user is
+    // mid-interaction with them (avoid yanking a menu open under someone's cursor)
+    const fwSel=document.getElementById("fwSel");
+    if(s.framework&&document.activeElement!==fwSel)fwSel.value=s.framework;
+    const modelSel=document.getElementById("modelSel");
+    if(s.model&&document.activeElement!==modelSel)modelSel.value=s.model;
+    document.getElementById("exportBtn").disabled=!s.contact_id;
+  }catch(e){document.getElementById("st").textContent="COACH · SERVER OFFLINE"}
+}
+setInterval(tick,900);tick();
+
+async function nudge(){await fetch("/api/coach/nudge",{method:"POST"}).catch(()=>{});
+  document.getElementById("sayWhy").textContent="thinking…"}
+document.getElementById("nudge").onclick=nudge;
+document.getElementById("cstart").onclick=async()=>{await fetch("/api/coach/start?framework=warm-reactivation",{method:"POST"}).catch(()=>{});document.getElementById("st").textContent="COACH · STARTING…"};
+document.getElementById("cstop").onclick=async()=>{await fetch("/api/coach/stop",{method:"POST"}).catch(()=>{});document.getElementById("st").textContent="COACH · STOPPED · audio restored"};
+addEventListener("keydown",e=>{if(e.code==="Space"){e.preventDefault();nudge()}});
+
+// D66: keyboard-free nudge — double-tap CAPS LOCK within 600ms = FEED ME (hands stay on the desk)
+let lastCapsAt=0;
+addEventListener("keydown",e=>{
+  if(e.code!=="CapsLock")return;
+  const now=Date.now();
+  if(now-lastCapsAt<600){nudge();lastCapsAt=0}
+  else{lastCapsAt=now}
+});
+
+// D64/D70: model + framework hot-swap. Board writes intent; coach.py polls
+// store/coach_cmd.json between segments and hot-reloads. CONTRACT (not yet built,
+// see note at end of file): POST /api/coach/cmd  body {model?, framework?}
+// merges into store/coach_cmd.json exactly like /api/coach/nudge merges "nudge"
+// into coach_state.json. Degrades to a console warning if the endpoint 404s —
+// never breaks the rest of the board.
+async function sendCmd(body){
+  try{
+    const r=await fetch("/api/coach/cmd",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
+    if(!r.ok)throw new Error(r.status);
+  }catch(e){console.warn("coach/cmd endpoint not available yet (D64/D70 contract) — hot-swap UI is wired, backend route TBD",e)}
+}
+document.getElementById("fwSel").addEventListener("change",e=>{if(e.target.value)sendCmd({framework:e.target.value})});
+document.getElementById("modelSel").addEventListener("change",e=>{if(e.target.value)sendCmd({model:e.target.value})});
+// populate the framework dropdown from the same list frameworks are known by (board
+// has no direct file read, so this is a short hardcoded mirror of store/call_frameworks.md
+// headers; extend both places together when a framework is added)
+["warm-reactivation","discovery"].forEach(fw=>{
+  const o=document.createElement("option");o.value=fw;o.textContent=fw.toUpperCase();
+  document.getElementById("fwSel").appendChild(o);
+});
+
+// D72: transcript export to GHL notes. CONTRACT: POST /api/coach/export exists
+// already (server.py, confirmed) — body {contact_id?} optional, falls back to
+// store/coach_ctx.json's contact_id. Button disabled when state has no contact_id.
+document.getElementById("exportBtn").onclick=async()=>{
+  const btn=document.getElementById("exportBtn"),note=document.getElementById("exportNote");
+  btn.disabled=true;note.textContent="exporting…";
+  try{
+    const r=await fetch("/api/coach/export",{method:"POST",headers:{"Content-Type":"application/json"},body:"{}"});
+    const j=await r.json();
+    note.textContent=j.ok?"exported to GHL notes ✓":("export failed: "+(j.error||j.detail||"unknown"));
+  }catch(e){note.textContent="export endpoint unreachable"}
+  setTimeout(()=>{note.textContent="";btn.disabled=false},4000);
+};
+
+// ---- D63 replay mode ----
+if(REPLAY_TS){
+  document.getElementById("consent").style.display="none";
+  document.getElementById("nudge").style.display="none";
+  document.getElementById("cstart").style.display="none";
+  document.getElementById("cstop").style.display="none";
+  document.getElementById("st").textContent="COACH · REPLAY "+REPLAY_TS;
+  (async()=>{
+    try{
+      const r=await fetch("/api/coach/replay?ts="+encodeURIComponent(REPLAY_TS));
+      if(!r.ok)throw new Error(r.status);
+      const j=await r.json();
+      replayLines=j.lines||[];
+    }catch(e){
+      document.getElementById("sayTxt").textContent="Replay endpoint not available yet.";
+      document.getElementById("sayWhy").textContent="CONTRACT: GET /api/coach/replay?ts=<scorecard_ts> -> {lines:[{ts,who,text}]} — reads store/coach_transcripts/<start_ts>.jsonl (start_ts comes from the matching row in coach_scorecards.jsonl). Not yet built server-side.";
+      return;
+    }
+    const bar=document.getElementById("replayBar");bar.classList.add("on");
+    const slider=document.getElementById("replaySlider");
+    slider.max=Math.max(0,replayLines.length-1);
+    function renderAt(i){
+      replayIdx=i;
+      const upTo=replayLines.slice(0,i+1).map(l=>l.who+": "+l.text).join("\n");
+      renderTranscript(document.getElementById("tx"),upTo);
+      document.getElementById("replayPos").textContent=(i+1)+" / "+replayLines.length;
+      const t=replayLines[i];
+      if(t)document.getElementById("replayTime").textContent=new Date(t.ts*1000).toLocaleTimeString();
+    }
+    slider.addEventListener("input",e=>renderAt(parseInt(e.target.value,10)));
+    if(replayLines.length)renderAt(0);
+  })();
+}
+</script>
+</body></html>
+<!--
+ENDPOINT CONTRACTS this board expects (for the main session / server.py owner):
+
+1. POST /api/coach/cmd   body: {"model"?: str, "framework"?: str}
+   Merge-writes into store/coach_cmd.json, same pattern as the existing
+   /api/coach/nudge merging {"nudge": true} into coach_state.json. coach.py already
+   polls this file every loop tick (_poll_cmd_file) and hot-swaps the whisper model /
+   active framework when it changes — this is D64 (model hot-swap) and D70 (framework
+   switcher). Board degrades silently (console.warn) if this 404s; everything else on
+   the board keeps working.
+
+2. GET /api/coach/replay?ts=<scorecard_ts>   ->   {"lines": [{"ts": float, "who": "ME"|"THEM", "text": str}, ...]}
+   Look up the scorecard row in store/coach_scorecards.jsonl matching ts, read its
+   start_ts field, then read+return store/coach_transcripts/<start_ts>.jsonl (already
+   being written today by coach.py's CoachSession.add_line — one JSON object per line,
+   same {ts, who, text} shape /api/coach/export already parses). This is D63 (replay
+   mode). Board shows a clear inline message (not a silent blank page) if this 404s,
+   telling whoever's looking exactly what's missing.
+
+3. POST /api/coach/export — ALREADY EXISTS (server.py, confirmed working: reads the
+   latest store/coach_transcripts/*.jsonl by mtime, posts to GHL contact notes). No
+   change needed; the EXPORT button here calls it as-is. Noted for completeness since
+   it's the sibling of the two contracts above.
+
+Neither #1 nor #2 needs new state on the coach.py side — both read files coach.py
+already writes (coach_cmd.json is polled but never created by coach.py itself; it's
+fine for it to not exist, _poll_cmd_file handles that via try/except). No urgency;
+board works fully without them, just without live hot-swap/replay until they land.
+-->

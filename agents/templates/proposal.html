@@ -1,0 +1,464 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>{{company}} - Website Proposal · [OWNER_COMPANY]</title>
+{{og_tags}}
+<style>
+  :root{--ink:#16181d;--sub:#5a6070;--line:#e6e2d8;--gold:#b8860b;--gold2:#8a6508;--bg:#faf9f6;--card:#ffffff;--sev-lo:#e8c34a;--sev-hi:#d64545}
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
+  body{font:16px/1.65 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+    color:var(--ink);background:var(--bg)}
+  .page{max-width:760px;margin:0 auto;padding:56px 28px 80px}
+  header{display:flex;justify-content:space-between;align-items:baseline;border-bottom:3px solid var(--ink);padding-bottom:18px;margin-bottom:8px}
+  .logo{font-weight:800;letter-spacing:.14em;font-size:14px}
+  .logo span{color:var(--gold)}
+  .date{color:var(--sub);font-size:13px}
+  .prep{color:var(--sub);font-size:14px;margin:14px 0 40px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .prep b{color:var(--ink)}
+  /* A7: signature strip */
+  .sig{display:flex;align-items:center;gap:8px;margin-left:auto;font-size:12.5px;color:var(--sub)}
+  .sig .av{width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--gold2));
+    display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:11px;flex:none}
+  /* A16: version banner */
+  .verbanner{background:#f2e9d0;border:1px solid #e0cf9a;border-radius:10px;padding:10px 16px;font-size:13.5px;
+    color:#5a4a12;margin-bottom:26px;display:flex;align-items:center;gap:8px}
+  .verbanner b{color:#3d3208}
+  h1{font-size:34px;line-height:1.2;letter-spacing:-.01em;margin-bottom:14px}
+  .lede{font-size:18px;color:var(--sub);max-width:56ch}
+  /* A11: expiry countdown chip */
+  .expchip{display:inline-flex;align-items:center;gap:6px;margin-top:18px;background:#fff;border:1px solid var(--line);
+    border-radius:999px;padding:7px 14px;font-size:12.5px;color:var(--sub);font-weight:600}
+  .expchip b{color:var(--gold2)}
+  .expchip .dot{width:6px;height:6px;border-radius:50%;background:#1a7f4e}
+  section{margin-top:52px;scroll-margin-top:24px}
+  h2{font-size:13px;letter-spacing:.18em;color:var(--gold2);text-transform:uppercase;margin-bottom:18px}
+  h2::after{content:"";display:block;width:34px;height:2px;background:var(--gold);margin-top:8px}
+  /* A1: scroll reveal */
+  .reveal{opacity:0;transform:translateY(16px);transition:opacity .5s ease,transform .5s ease}
+  .reveal.in{opacity:1;transform:translateY(0)}
+  .fault{display:flex;gap:14px;padding:13px 0;border-bottom:1px solid var(--line)}
+  .fault:last-child{border-bottom:none}
+  .fno{font-weight:800;color:var(--gold);min-width:22px;font-size:15px}
+  .fault b{display:block;margin-bottom:2px}
+  .fault p{color:var(--sub);font-size:15px}
+  /* A4: severity meter */
+  .sevmeter{height:4px;border-radius:3px;background:var(--line);margin-top:8px;max-width:180px;overflow:hidden}
+  .sevmeter i{display:block;height:100%;border-radius:3px;background:linear-gradient(90deg,var(--sev-lo),var(--sev-hi))}
+  .scope li{list-style:none;padding:9px 0 9px 30px;position:relative;border-bottom:1px solid var(--line)}
+  .scope li:last-child{border-bottom:none}
+  .scope li::before{content:"-";position:absolute;left:2px;color:var(--gold);font-weight:700}
+  .tl{display:flex;gap:0;margin-top:6px;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--card)}
+  .tl div{flex:1;padding:16px 14px;border-right:1px solid var(--line)}
+  .tl div:last-child{border-right:none}
+  .tl b{display:block;font-size:13px;color:var(--gold2);letter-spacing:.06em;margin-bottom:4px}
+  .tl span{font-size:14px;color:var(--sub)}
+  /* A45 style milestone dates reused pattern kept local to timeline only */
+  .invest{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:30px}
+  .invest .row{display:flex;justify-content:space-between;align-items:baseline;padding:10px 0;border-bottom:1px dashed var(--line)}
+  .invest .row:last-of-type{border-bottom:none}
+  .invest .what b{display:block}
+  .invest .what span{color:var(--sub);font-size:14px}
+  .price{font-size:22px;font-weight:800;white-space:nowrap;margin-left:18px;font-variant-numeric:tabular-nums}
+  .total{margin-top:14px;padding-top:16px;border-top:3px solid var(--ink);display:flex;justify-content:space-between;align-items:baseline}
+  /* A5: number roll */
+  .total .n{font-size:32px;font-weight:800;font-variant-numeric:tabular-nums}
+  .total small{display:block;color:var(--sub);font-weight:400;font-size:13px;margin-top:2px}
+  .terms{margin-top:14px;color:var(--sub);font-size:13.5px}
+  /* A14: comparison strip */
+  .cmp{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1px;background:var(--line);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+  .cmp>div{background:var(--card);padding:20px 16px}
+  .cmp .hd{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--sub);font-weight:700;margin-bottom:10px}
+  .cmp .win{background:#fbf6e8}
+  .cmp .win .hd{color:var(--gold2)}
+  .cmp ul{list-style:none;font-size:13.5px}
+  .cmp li{padding:5px 0;color:var(--sub)}
+  .cmp .win li{color:var(--ink)}
+  .cmp li b{color:inherit}
+  .proof{background:var(--ink);color:#f2efe6;border-radius:16px;padding:30px}
+  .proof .big{font-size:22px;font-weight:700;line-height:1.4}
+  .proof .big em{color:#ffd76a;font-style:normal}
+  .proof p{color:#b8bcc8;font-size:14.5px;margin-top:10px}
+  /* A15: testimonial slot */
+  .testi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:22px;margin-top:16px}
+  .testi .stars{color:#f5a623;letter-spacing:2px;font-size:14px;margin-bottom:8px}
+  .testi p{font-size:14.5px;color:var(--ink)}
+  .testi span{display:block;margin-top:10px;font-size:12.5px;color:var(--sub);font-weight:600}
+  /* A12: FAQ accordion */
+  .faq .qa{border-bottom:1px solid var(--line)}
+  .faq .qa:last-child{border-bottom:none}
+  .faq button.q{width:100%;text-align:left;background:none;border:0;padding:16px 0;font:inherit;font-weight:700;
+    color:var(--ink);cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:12px}
+  .faq button.q .car{color:var(--gold);font-size:13px;transition:transform .2s ease;flex:none}
+  .faq button.q[aria-expanded="true"] .car{transform:rotate(180deg)}
+  .faq .a{max-height:0;overflow:hidden;transition:max-height .25s ease}
+  .faq .a p{color:var(--sub);font-size:15px;padding-bottom:16px}
+  .cta{margin-top:60px;text-align:center;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:44px 28px}
+  .cta h3{font-size:24px;margin-bottom:8px}
+  .cta p{color:var(--sub);margin-bottom:24px}
+  .btn{display:inline-block;background:var(--ink);color:#fff;text-decoration:none;font-weight:700;
+    padding:16px 38px;border-radius:10px;font-size:17px;letter-spacing:.01em;border:0;cursor:pointer;font-family:inherit}
+  .btn:hover{background:#000}
+  .expires{margin-top:14px;font-size:13px;color:var(--sub)}
+  footer{margin-top:64px;padding-top:20px;border-top:1px solid var(--line);display:flex;justify-content:space-between;color:var(--sub);font-size:13px}
+  footer a{color:var(--gold2);text-decoration:none}
+  /* A6: sticky mini-CTA */
+  .ministicky{position:fixed;left:0;right:0;bottom:-80px;background:var(--ink);color:#fff;z-index:80;
+    padding:12px 18px;display:flex;align-items:center;justify-content:center;gap:18px;
+    box-shadow:0 -8px 24px rgba(0,0,0,.18);transition:bottom .3s ease;flex-wrap:wrap}
+  .ministicky.show{bottom:0}
+  .ministicky .p{font-weight:800;font-variant-numeric:tabular-nums}
+  .ministicky a{background:var(--gold);color:#fff;text-decoration:none;font-weight:700;padding:9px 18px;border-radius:8px;font-size:14px;white-space:nowrap}
+  /* A8: section progress dots */
+  .dots{position:fixed;right:18px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:10px;z-index:70}
+  .dots a{width:8px;height:8px;border-radius:50%;background:var(--line);display:block;border:0;padding:0;cursor:pointer;transition:background .2s,transform .2s}
+  .dots a.on{background:var(--gold);transform:scale(1.35)}
+  @media(max-width:900px){.dots{display:none}}
+  /* A18: expired state */
+  #expired{display:none;max-width:640px;margin:120px auto;padding:0 24px;text-align:center}
+  #expired h2{font-size:24px;color:var(--ink);letter-spacing:0;text-transform:none;margin-bottom:14px}
+  #expired h2::after{display:none}
+  #expired p{color:var(--sub);font-size:16px;margin-bottom:26px}
+  body.is-expired .page{display:none}
+  body.is-expired #expired{display:block}
+  @media(max-width:560px){
+    .page{padding:34px 18px 60px}h1{font-size:27px}.tl{flex-direction:column}
+    .tl div{border-right:none;border-bottom:1px solid var(--line)}.price{font-size:19px}.total .n{font-size:26px}
+    .cmp{grid-template-columns:1fr}
+    .ministicky{gap:10px;padding:10px 14px}.ministicky .p{font-size:14px}
+  }
+  /* A9: dark mode */
+  @media(prefers-color-scheme:dark){
+    :root{--ink:#f0eee8;--sub:#a3a8b5;--line:#33363f;--bg:#15161a;--card:#1c1e24}
+    .logo{color:var(--ink)}
+    .proof{background:#0c0d10}
+    .verbanner{background:#2b2410;border-color:#4a3d18;color:#e8d896}
+    .verbanner b{color:#fff2c4}
+    .win{background:#241f0d!important}
+    .expchip{background:var(--card)}
+    .btn{background:#eee;color:#111}
+    .btn:hover{background:#fff}
+    .ministicky{background:#000}
+    footer a{color:#e0c05a}
+  }
+  /* A10: print v2 */
+  @media print{
+    body{background:#fff}
+    .page{padding:20px 0}
+    .cta .btn{border:2px solid var(--ink);color:var(--ink)!important;background:#fff!important}
+    .ministicky,.dots,.faq button.q .car{display:none!important}
+    .reveal{opacity:1!important;transform:none!important}
+    .faq .a{max-height:none!important}
+    section{page-break-inside:avoid;break-inside:avoid}
+    .cta{page-break-inside:avoid}
+    .printqr{display:flex!important}
+  }
+  .printqr{display:none;align-items:center;gap:10px;margin-top:16px;font-size:11px;color:#555}
+</style>
+</head>
+<body>
+<div id="expired">
+  <div class="logo">[OWNER] <span style="color:var(--gold)">DIGITAL</span></div>
+  <h2 style="margin-top:26px">This one's expired</h2>
+  <p>The plan above and its price were good through {{expires}}. Prices and scope drift after that,
+  so I'd rather send you a fresh look than let you act on stale numbers.</p>
+  <a class="btn" href="{{book_url}}">Get a fresh proposal</a>
+</div>
+<div class="page">
+  <header>
+    <div class="logo">[OWNER] <span>DIGITAL</span></div>
+    <div class="date">{{date}}</div>
+  </header>
+  <div class="prep">Prepared for <b>{{name}}</b> · {{company}}
+    <div class="sig"><div class="av">{{OWNER_INITIALS}}</div>Prepared by {{OWNER_NAME}}</div>
+  </div>
+  {{version_banner}}
+
+  <h1>{{headline}}</h1>
+  <p class="lede">{{personal_line}}</p>
+  <div class="expchip"><span class="dot"></span>Price holds <b id="expday">-</b> more days</div>
+
+  <section id="diagnosis" class="reveal">
+    <h2>{{diagnosis_title}}</h2>
+    {{faults}}
+  </section>
+
+  <section id="plan" class="reveal">
+    <h2>The plan</h2>
+    <ul class="scope">{{scope}}</ul>
+  </section>
+
+  {{mock_section}}
+
+  <section id="compare" class="reveal">
+    <h2>Let's be honest about the options</h2>
+    <div class="cmp">
+      <div><div class="hd">$200 Fiverr gig</div><ul>
+        <li>Template, swapped logo</li><li>No mobile testing</li><li>You debug it yourself</li>
+        <li>Gone if they stop replying</li></ul></div>
+      <div><div class="hd">DIY builder</div><ul>
+        <li>Your time, not your trade</li><li>Generic layout</li><li>No conversion thinking</li>
+        <li>Support: a help center</li></ul></div>
+      <div class="win"><div class="hd">This</div><ul>
+        <li><b>Built on your evidence</b></li><li><b>Fixed price, fixed scope</b></li>
+        <li><b>Two revision rounds</b></li><li><b>A person who answers</b></li></ul></div>
+    </div>
+  </section>
+
+  <section id="timeline" class="reveal">
+    <h2>Timeline</h2>
+    <div class="tl">
+      <div><b>DAY 0</b><span>You approve. 50% deposit books the build slot.</span></div>
+      <div><b>DAY 3</b><span>You see the working preview. Two revision rounds included.</span></div>
+      <div><b>DAY {{days}}</b><span>Live on your domain. Tested on phone, tablet, desktop.</span></div>
+    </div>
+  </section>
+
+  <section id="investment" class="reveal">
+    <h2>Investment</h2>
+    <div class="invest">
+      <div class="row">
+        <div class="what"><b>{{tier_name}}</b><span>{{tier_desc}}</span></div>
+        <div class="price">{{price}}</div>
+      </div>
+      {{care_row}}
+      <div class="total">
+        <div><b>Today to start</b><small>50% deposit · remainder on delivery · {{days}}-day delivery</small></div>
+        <div class="n" id="depositnum" data-target="{{deposit_num}}">{{deposit}}</div>
+      </div>
+    </div>
+    <p class="terms">Fixed price, fixed scope - no hourly surprises. Two revision rounds included; further rounds $150 each. Need it faster than {{days}} days? Rush delivery is +50%.</p>
+  </section>
+
+  {{roi_section}}
+
+  <section id="proof" class="reveal">
+    <div class="proof">
+      <div class="big">We took one client from <em>[PRIOR_RESULT] a year</em>. Same playbook, sized to {{company}}.</div>
+      <p>[OWNER_COMPANY] builds sites and the marketing systems behind them. You get the same infrastructure our agency runs on, not a template dropped on a domain.
+      <a href="/case/400k-to-1m{{utm_qs}}" style="color:#ffd76a;font-weight:600">Read the full case study →</a></p>
+    </div>
+    {{testimonial}}
+  </section>
+
+  <section id="faq" class="reveal">
+    <h2>Straight answers</h2>
+    <div class="faq">{{faq}}</div>
+  </section>
+
+  <div class="cta">
+    <h3>{{cta_head}}</h3>
+    <p>15 minutes. I walk you through the plan, you decide. No pressure play, no follow-up circus.</p>
+    <a class="btn" href="{{book_url}}{{utm_qs}}">Book the 15-minute call</a>
+    {{cta_buttons}}
+    <div class="expires">This proposal and price are good until {{expires}}.</div>
+    <div class="printqr"><div id="qrbox"></div><span>Scan for the live version + interactive mockup:<br>{{public_prop_url}}</span></div>
+  </div>
+
+  <footer>
+    <div>[OWNER] · [OWNER_COMPANY]</div>
+    <div><a href="[OWNER_SITE]">[OWNER_SITE]</a></div>
+  </footer>
+</div>
+
+<div class="ministicky" id="ministicky">
+  <div class="p">{{price}} · {{tier_name}}</div>
+  <a href="{{book_url}}{{utm_qs}}">Book the call</a>
+</div>
+<nav class="dots" id="dots" aria-hidden="true"></nav>
+
+<script>
+(function(){
+  "use strict";
+  // ---- A17: utm passthrough already baked server-side into {{utm_qs}}; nothing to do here ----
+
+  // ---- A18: expiry graceful swap ----
+  var EXPIRES = "{{expires_iso}}"; // YYYY-MM-DD, baked at render time
+  function checkExpired(){
+    try{
+      var exp = new Date(EXPIRES + "T23:59:59");
+      var now = new Date();
+      if(now > exp){ document.body.classList.add("is-expired"); return true; }
+      var days = Math.max(0, Math.ceil((exp - now) / 86400000));
+      var el = document.getElementById("expday");
+      if(el) el.textContent = days;
+    }catch(e){}
+    return false;
+  }
+  if(checkExpired()) { /* stop wiring interactive stuff on an expired page */ return; }
+
+  // ---- A1: scroll-triggered section reveals ----
+  var reveals = document.querySelectorAll(".reveal");
+  if("IntersectionObserver" in window && reveals.length){
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(en){
+        if(en.isIntersecting){ en.target.classList.add("in"); io.unobserve(en.target); }
+      });
+    }, {threshold: .12, rootMargin: "0px 0px -40px 0px"});
+    reveals.forEach(function(r){ io.observe(r); });
+  } else {
+    reveals.forEach(function(r){ r.classList.add("in"); });
+  }
+
+  // ---- A5: animated number roll on the deposit total, once, when it scrolls into view ----
+  (function(){
+    var el = document.getElementById("depositnum");
+    if(!el) return;
+    var target = parseInt(el.getAttribute("data-target") || "0", 10);
+    var finalText = el.textContent;
+    if(!target || !("IntersectionObserver" in window)) return;
+    var done = false;
+    var io2 = new IntersectionObserver(function(entries){
+      entries.forEach(function(en){
+        if(en.isIntersecting && !done){
+          done = true;
+          var start = null, dur = 900;
+          function step(ts){
+            if(!start) start = ts;
+            var p = Math.min(1, (ts - start) / dur);
+            var eased = 1 - Math.pow(1 - p, 3);
+            var val = Math.round(target * eased);
+            el.textContent = "$" + val.toLocaleString();
+            if(p < 1) requestAnimationFrame(step); else el.textContent = finalText;
+          }
+          requestAnimationFrame(step);
+          io2.unobserve(el);
+        }
+      });
+    }, {threshold: .6});
+    io2.observe(el);
+  })();
+
+  // ---- A6: sticky mini-CTA after 60% scroll ----
+  (function(){
+    var bar = document.getElementById("ministicky");
+    if(!bar) return;
+    var shown = false;
+    function onScroll(){
+      var h = document.documentElement;
+      var pct = (h.scrollTop || document.body.scrollTop) / ((h.scrollHeight || document.body.scrollHeight) - h.clientHeight) * 100;
+      if(pct >= 60 && !shown){ bar.classList.add("show"); shown = true; }
+      else if(pct < 55 && shown){ bar.classList.remove("show"); shown = false; }
+    }
+    document.addEventListener("scroll", onScroll, {passive:true});
+  })();
+
+  // ---- A8: section progress dots ----
+  (function(){
+    var nav = document.getElementById("dots");
+    if(!nav) return;
+    var secs = Array.prototype.slice.call(document.querySelectorAll(".page section[id]"));
+    if(secs.length < 3) return;
+    secs.forEach(function(s){
+      var a = document.createElement("a");
+      a.href = "#" + s.id;
+      a.title = s.id;
+      a.onclick = function(e){ e.preventDefault(); s.scrollIntoView({behavior:"smooth", block:"start"}); };
+      nav.appendChild(a);
+    });
+    var dotEls = nav.querySelectorAll("a");
+    if("IntersectionObserver" in window){
+      var io3 = new IntersectionObserver(function(entries){
+        entries.forEach(function(en){
+          var idx = secs.indexOf(en.target);
+          if(en.isIntersecting && idx > -1) dotEls[idx].classList.add("on");
+          else if(idx > -1) dotEls[idx].classList.remove("on");
+        });
+      }, {threshold: .4});
+      secs.forEach(function(s){ io3.observe(s); });
+    }
+  })();
+
+  // ---- A12: FAQ accordion (+ track open state for the beacon) ----
+  var faqOpenState = {};
+  (function(){
+    var qas = document.querySelectorAll(".faq .qa");
+    qas.forEach(function(qa, i){
+      var btn = qa.querySelector("button.q");
+      var a = qa.querySelector(".a");
+      if(!btn || !a) return;
+      btn.setAttribute("aria-expanded", "false");
+      btn.addEventListener("click", function(){
+        var open = btn.getAttribute("aria-expanded") === "true";
+        btn.setAttribute("aria-expanded", open ? "false" : "true");
+        a.style.maxHeight = open ? "0" : (a.scrollHeight + 20) + "px";
+        faqOpenState["q" + i] = !open;
+      });
+    });
+  })();
+
+  // ---- A2/A3/B38: tracking beacon. Fails SILENTLY: the server route may not exist
+  // yet. Payload: {t: seconds_open, d: max_scroll_pct, s: {section: seconds}}.
+  // Endpoint (see contract in status-templates.md): POST /prop/{pid}/beacon?sig=...
+  (function(){
+    var m = location.pathname.match(/\/prop\/([a-z0-9_]+)/i);
+    var pid = m ? m[1] : "";
+    var qs = location.search || "";
+    if(!pid) return; // template opened standalone/locally: nothing to report to
+    var openedAt = Date.now();
+    var maxScrollPct = 0;
+    var sectionSeconds = {};
+    var curSection = null, curSince = Date.now();
+    var secEls = Array.prototype.slice.call(document.querySelectorAll(".page section[id]"));
+
+    function tickSection(){
+      if(curSection){
+        var dt = (Date.now() - curSince) / 1000;
+        sectionSeconds[curSection] = Math.round((sectionSeconds[curSection] || 0) + dt);
+      }
+      curSince = Date.now();
+    }
+    if("IntersectionObserver" in window && secEls.length){
+      var io4 = new IntersectionObserver(function(entries){
+        entries.forEach(function(en){
+          if(en.isIntersecting && en.intersectionRatio > .5){
+            tickSection();
+            curSection = en.target.id;
+          }
+        });
+      }, {threshold: [.5]});
+      secEls.forEach(function(s){ io4.observe(s); });
+    }
+    document.addEventListener("scroll", function(){
+      try{
+        var h = document.documentElement;
+        var denom = (h.scrollHeight || document.body.scrollHeight) - h.clientHeight;
+        var pct = denom > 0 ? Math.round(((h.scrollTop || document.body.scrollTop) / denom) * 100) : 0;
+        if(pct > maxScrollPct) maxScrollPct = Math.min(100, pct);
+      }catch(e){}
+    }, {passive:true});
+
+    function payload(){
+      tickSection();
+      return JSON.stringify({
+        t: Math.round((Date.now() - openedAt) / 1000),
+        d: maxScrollPct,
+        s: sectionSeconds
+      });
+    }
+    function send(){
+      try{
+        var body = payload();
+        var url = "/prop/" + pid + "/beacon" + qs;
+        if(navigator.sendBeacon){
+          var ok = navigator.sendBeacon(url, new Blob([body], {type:"application/json"}));
+          if(ok) return;
+        }
+        fetch(url, {method:"POST", headers:{"Content-Type":"application/json"}, body: body, keepalive: true}).catch(function(){});
+      }catch(e){ /* silent: the endpoint may not exist yet, page must not care */ }
+    }
+    var beat = setInterval(function(){ try{ send(); }catch(e){} }, 15000);
+    document.addEventListener("visibilitychange", function(){
+      if(document.visibilityState === "hidden") send();
+    });
+    window.addEventListener("pagehide", send);
+  })();
+
+  // ---- A14/A15: nothing to wire, server-filled slots handle presence/absence ----
+})();
+</script>
+</body>
+</html>

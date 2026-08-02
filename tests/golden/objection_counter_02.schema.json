@@ -1,0 +1,20 @@
+{
+  "type": "object",
+  "required": ["objections"],
+  "properties": {
+    "objections": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "items": {
+        "type": "object",
+        "required": ["hear", "say"],
+        "properties": {
+          "hear": {"type": "string", "minLength": 1},
+          "say": {"type": "string", "minLength": 1}
+        }
+      }
+    }
+  },
+  "_note": "\"Already have a guy\" + timeline objections. Same hear/say shape as objection_counter_01, different objection content to catch shape drift independent of content."
+}

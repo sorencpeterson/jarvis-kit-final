@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0"><dict>
+  <key>Label</key><string>com.jarvis.watchdog</string>
+  <key>ProgramArguments</key><array><string>/bin/bash</string><string>[APP_ROOT]/agents/watchdog.sh</string></array>
+  <key>StartInterval</key><integer>300</integer><key>RunAtLoad</key><true/>
+  <!-- D9 #13: self-restart for the watchdog itself. Crashed=true relaunches the job
+       only if the process dies abnormally (killed by a signal). A literal
+       KeepAlive=true would respawn this StartInterval job after EVERY clean exit
+       (launchd throttles to ~10s), turning a 5-minute watchdog into a 6x/minute
+       loop. SuccessfulExit=false would loop too: watchdog.sh's last line is a
+       grep -q WARN chain that exits 1 on the normal no-warning path. -->
+  <key>KeepAlive</key><dict><key>Crashed</key><true/></dict>
+  <key>StandardErrorPath</key><string>[APP_ROOT]/agents/watchdog.log</string>
+</dict></plist>

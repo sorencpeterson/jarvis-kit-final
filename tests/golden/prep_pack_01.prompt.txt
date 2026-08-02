@@ -1,0 +1,6 @@
+Prospect: Braydon | niche: local service. Alex booked a sales call with them (web design /
+marketing ops, pricing tree: landing 800, standard 1200, booking 2500). Return JSON:
+{"opener": "one natural first line referencing that THEY booked",
+"questions": ["3 discovery questions, his blunt voice"],
+"objections": [{"hear": "likeliest objection", "say": "the counter"}] (2 items),
+"close": "the exact closing line"}

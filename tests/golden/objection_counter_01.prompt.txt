@@ -1,0 +1,7 @@
+Alex has a warm sales call booked (web design / marketing ops, pricing tree: landing 800,
+standard 1200, booking 2500). The prospect's likeliest objection on this call is PRICE - they
+already hinted the number feels high compared to a cheap freelancer.
+
+Return ONLY JSON: {"objections": [{"hear": "the likeliest thing they'll say", "say": "Alex's
+exact blunt counter, no em-dashes, no cliches, direct"}]} with exactly 2 items covering price
+and one other likely objection for a local service business.
