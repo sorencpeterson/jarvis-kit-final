@@ -6,10 +6,10 @@
   <key>ProgramArguments</key>
   <array>
     <string>/bin/bash</string>
-    <string>[APP_ROOT]/agents/autocommit.sh</string>
+    <string>__INSTALL_DIR__/agents/autocommit.sh</string>
   </array>
   <key>StartInterval</key><integer>3600</integer>
   <key>RunAtLoad</key><false/>
-  <key>StandardErrorPath</key><string>[APP_ROOT]/agents/autocommit.log</string>
+  <key>StandardErrorPath</key><string>__INSTALL_DIR__/agents/autocommit.log</string>
 </dict>
 </plist>

@@ -20,6 +20,14 @@
 
 PY := .venv/bin/python
 
+# `test` is the one to run on a fresh install: no server, no launchd, no config.
+test: ast-check pytest
+	@echo ""
+	@echo "make test: ALL GREEN"
+
+# `doctor` is the full sweep for a RUNNING system. It additionally checks that the
+# server is up, launchd jobs are loaded and config is populated, so it will fail on
+# a fresh clone by design. Use `make test` until you have the server running.
 doctor: ast-check selftest config-check pytest
 	@echo ""
 	@echo "make doctor: ALL GREEN"

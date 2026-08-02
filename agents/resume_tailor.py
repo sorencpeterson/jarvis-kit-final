@@ -41,6 +41,7 @@ import argparse
 import hashlib
 import html
 import json
+import os
 import re
 import subprocess
 import sys
@@ -54,7 +55,7 @@ import jobs  # noqa: E402
 
 TEMPLATE = ROOT / "store" / "resume-draft.html"
 OUT_DIR = ROOT / "store" / "resume_tailored"
-PW_DIR = Path("[HOME]/Claude/playwright-project")
+PW_DIR = Path(os.environ.get("PLAYWRIGHT_DIR") or (ROOT / "playwright-project"))
 
 # the ONLY two blocks the LLM may rewrite; both regexes match exactly once in
 # the committed template (test_resume_tailor pins this)

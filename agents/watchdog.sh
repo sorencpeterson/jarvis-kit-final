@@ -2,7 +2,7 @@
 # Self-healing watchdog: runs every 5 min. Restarts a dead server, and pushes [OWNER]'s phone
 # on NEWLY-appeared problems (never spams the same alert). Pure shell, zero allowance cost.
 export PATH=/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin
-SB=[APP_ROOT]
+SB="$(cd "$(dirname "$0")/.." && pwd)"
 STATE=$SB/agents/.watchdog-state
 TOPIC=$(grep -o '"ntfy_topic": *"[^"]*"' "$SB/store/config.json" 2>/dev/null | cut -d'"' -f4)
 TOK=$(grep '^BRAIN_TOKEN=' "$SB/.env" 2>/dev/null | cut -d= -f2)
@@ -42,7 +42,7 @@ done
 echo "$cur" > "$STATE"
 
 # runaway-agent tripwire (#100) + stale heartbeats (#43) — quiet unless something's wrong
-cd [APP_ROOT] 2>/dev/null && {
+cd "$(cd "$(dirname "$0")/.." && pwd)" 2>/dev/null && {
   [ -x .venv/bin/python ] && .venv/bin/python agents/tripwire.py >/dev/null 2>&1
   [ -x .venv/bin/python ] && .venv/bin/python agents/hbcheck.py 2>/dev/null | grep -q WARN &&     .venv/bin/python -c "import sys;sys.path.insert(0,'app');import planner;planner.notify('Agent heartbeat stale','An agent has not run on schedule. Check SYSTEM.')" >/dev/null 2>&1
 

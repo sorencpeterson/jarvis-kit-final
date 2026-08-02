@@ -20,7 +20,7 @@
 set -uo pipefail
 
 export PATH="/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin"
-REPO="[APP_ROOT]"
+REPO="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$REPO" || { echo "backup_push: cannot cd to $REPO" >&2; exit 1; }
 
 # ── 1. secret guard ──────────────────────────────────────────────────────────

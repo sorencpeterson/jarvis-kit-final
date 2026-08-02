@@ -8,7 +8,7 @@ import sys
 import urllib.request
 from pathlib import Path
 
-SB = Path("[APP_ROOT]")
+SB = Path(__file__).resolve().parent.parent
 OUT = SB / "content" / "samples"
 CFG = json.loads((SB / "store" / "config.json").read_text())
 sys.path.insert(0, str(SB))

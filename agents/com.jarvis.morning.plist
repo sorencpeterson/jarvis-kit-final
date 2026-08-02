@@ -16,11 +16,11 @@
   <key>ProgramArguments</key>
   <array>
     <string>/bin/bash</string>
-    <string>[APP_ROOT]/agents/morning.sh</string>
+    <string>__INSTALL_DIR__/agents/morning.sh</string>
   </array>
   <key>StartCalendarInterval</key>
   <dict><key>Hour</key><integer>6</integer><key>Minute</key><integer>30</integer></dict>
-  <key>StandardErrorPath</key><string>[APP_ROOT]/agents/morning.err.log</string>
-  <key>StandardOutPath</key><string>[APP_ROOT]/agents/morning.out.log</string>
+  <key>StandardErrorPath</key><string>__INSTALL_DIR__/agents/morning.err.log</string>
+  <key>StandardOutPath</key><string>__INSTALL_DIR__/agents/morning.out.log</string>
 </dict>
 </plist>

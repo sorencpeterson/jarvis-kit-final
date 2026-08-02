@@ -2,7 +2,7 @@
 # Nightly janitor: cap runaway logs and compact the append-only jsonl queues so nothing
 # grows without bound. Safe: loaders already do last-write-wins, so compaction only shrinks.
 export PATH=/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin
-cd [APP_ROOT] || exit 0
+cd "$(cd "$(dirname "$0")/.." && pwd)" || exit 0
 
 # Log rotation is owned by tools/rotate_logs.sh (gzip + 3 generations, now covering
 # root + agents + ingest logs). The old blind `tail -c 4MB` truncate here raced it and

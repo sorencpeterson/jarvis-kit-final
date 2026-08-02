@@ -2,7 +2,7 @@
 # Hourly snapshot so any agent edit or bad hot-edit is rollback-able (git reflog / reset).
 # Commits code + versioned jsonl queues; .env and logs are gitignored.
 export PATH="/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin"
-cd [APP_ROOT] || exit 0
+cd "$(cd "$(dirname "$0")/.." && pwd)" || exit 0
 git add -A 2>/dev/null
 # never immortalize a pasted secret. Scan the WHOLE staged diff (broadened 2026-07-07 audit
 # S2 from the old config.json-only, lowercase-field-name-only guard) for VALUE-shaped

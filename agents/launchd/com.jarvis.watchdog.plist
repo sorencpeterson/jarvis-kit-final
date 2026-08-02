@@ -2,7 +2,7 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0"><dict>
   <key>Label</key><string>com.jarvis.watchdog</string>
-  <key>ProgramArguments</key><array><string>/bin/bash</string><string>[APP_ROOT]/agents/watchdog.sh</string></array>
+  <key>ProgramArguments</key><array><string>/bin/bash</string><string>__INSTALL_DIR__/agents/watchdog.sh</string></array>
   <key>StartInterval</key><integer>300</integer><key>RunAtLoad</key><true/>
   <!-- D9 #13: self-restart for the watchdog itself. Crashed=true relaunches the job
        only if the process dies abnormally (killed by a signal). A literal
@@ -11,5 +11,5 @@
        loop. SuccessfulExit=false would loop too: watchdog.sh's last line is a
        grep -q WARN chain that exits 1 on the normal no-warning path. -->
   <key>KeepAlive</key><dict><key>Crashed</key><true/></dict>
-  <key>StandardErrorPath</key><string>[APP_ROOT]/agents/watchdog.log</string>
+  <key>StandardErrorPath</key><string>__INSTALL_DIR__/agents/watchdog.log</string>
 </dict></plist>

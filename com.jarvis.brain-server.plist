@@ -17,12 +17,12 @@
   <key>ProgramArguments</key>
   <array>
     <string>/bin/bash</string>
-    <string>[APP_ROOT]/serve.sh</string>
+    <string>__INSTALL_DIR__/serve.sh</string>
     <string>127.0.0.1</string>
   </array>
   <key>RunAtLoad</key><true/>
   <key>KeepAlive</key><true/>
-  <key>StandardErrorPath</key><string>[APP_ROOT]/server.err.log</string>
-  <key>StandardOutPath</key><string>[APP_ROOT]/server.out.log</string>
+  <key>StandardErrorPath</key><string>__INSTALL_DIR__/server.err.log</string>
+  <key>StandardOutPath</key><string>__INSTALL_DIR__/server.out.log</string>
 </dict>
 </plist>

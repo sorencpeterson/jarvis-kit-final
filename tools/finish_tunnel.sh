@@ -7,7 +7,7 @@
 # flips public_base_url the moment DNS propagation makes the domain answer. Chain:
 #   his Authorize click -> (this) tunnel up -> NS propagation -> (domain_watch) links flip.
 set -u
-BRAIN="[APP_ROOT]"
+BRAIN="$(cd "$(dirname "$0")/.." && pwd)"
 CF="$HOME/.local/bin/cloudflared"
 STAMP="$BRAIN/store/.tunnel-ready"
 NAME="brain-proposals"
@@ -69,7 +69,7 @@ if pgrep -f "cloudflared tunnel run $NAME" >/dev/null; then
   touch "$STAMP"
   echo "tunnel RUNNING; stamped"
   "$BRAIN/.venv/bin/python" - <<'PY' 2>/dev/null || true
-import sys; sys.path[:0]=['[APP_ROOT]','[APP_ROOT]/app']
+import sys; sys.path[:0]=['$BRAIN','$BRAIN/app']
 import planner
 planner.feed_add("proposals", "Cloudflare tunnel is up (brain-proposals). Waiting on DNS to flip the links.")
 planner.notify("Tunnel running", "Cloudflare tunnel is live. Links flip automatically when DNS propagates.")

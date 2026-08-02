@@ -46,8 +46,12 @@ To check it took:
 
 ```bash
 .venv/bin/python owner.py     # prints your config
-make doctor                   # 2008 tests
+make test                     # 2014 tests, no server needed
 ```
+
+`make doctor` is the fuller sweep, but it also checks that the server is up and
+launchd jobs are loaded, so it fails on a fresh clone by design. Use `make test`
+until you are actually running the server.
 
 ---
 
@@ -190,10 +194,11 @@ Keep it that way.
 ## Verifying
 
 ```bash
-make doctor        # full test sweep
+make test          # tests + syntax. Works on a fresh clone.
+make doctor        # the above plus live-server and launchd checks
 ```
 
-Run it before you trust a change.
+Run `make test` before you trust a change.
 
 ---
 

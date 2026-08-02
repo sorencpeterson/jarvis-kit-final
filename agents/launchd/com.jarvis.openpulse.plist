@@ -8,13 +8,13 @@
   <key>Label</key><string>com.jarvis.openpulse</string>
   <key>ProgramArguments</key>
   <array>
-    <string>[APP_ROOT]/.venv/bin/python</string>
-    <string>[APP_ROOT]/agents/proposal_open_pulse.py</string>
+    <string>__INSTALL_DIR__/.venv/bin/python</string>
+    <string>__INSTALL_DIR__/agents/proposal_open_pulse.py</string>
   </array>
   <key>RunAtLoad</key><false/>
   <key>StartInterval</key><integer>1200</integer>
-  <key>WorkingDirectory</key><string>[APP_ROOT]</string>
-  <key>StandardOutPath</key><string>[APP_ROOT]/agents/openpulse.log</string>
-  <key>StandardErrorPath</key><string>[APP_ROOT]/agents/openpulse.log</string>
+  <key>WorkingDirectory</key><string>__INSTALL_DIR__</string>
+  <key>StandardOutPath</key><string>__INSTALL_DIR__/agents/openpulse.log</string>
+  <key>StandardErrorPath</key><string>__INSTALL_DIR__/agents/openpulse.log</string>
 </dict>
 </plist>

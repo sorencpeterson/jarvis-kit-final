@@ -5,13 +5,13 @@
   <key>Label</key><string>com.jarvis.replywatch</string>
   <key>ProgramArguments</key>
   <array>
-    <string>[APP_ROOT]/.venv/bin/python</string>
-    <string>[APP_ROOT]/agents/reply_watch.py</string>
+    <string>__INSTALL_DIR__/.venv/bin/python</string>
+    <string>__INSTALL_DIR__/agents/reply_watch.py</string>
   </array>
-  <key>WorkingDirectory</key><string>[APP_ROOT]</string>
+  <key>WorkingDirectory</key><string>__INSTALL_DIR__</string>
   <key>StartInterval</key><integer>1800</integer>
   <key>RunAtLoad</key><false/>
-  <key>StandardErrorPath</key><string>[APP_ROOT]/agents/replywatch.log</string>
-  <key>StandardOutPath</key><string>[APP_ROOT]/agents/replywatch.log</string>
+  <key>StandardErrorPath</key><string>__INSTALL_DIR__/agents/replywatch.log</string>
+  <key>StandardOutPath</key><string>__INSTALL_DIR__/agents/replywatch.log</string>
 </dict>
 </plist>

@@ -2,8 +2,8 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0"><dict>
   <key>Label</key><string>com.jarvis.retro</string>
-  <key>ProgramArguments</key><array><string>[APP_ROOT]/.venv/bin/python</string><string>[APP_ROOT]/agents/retro.py</string></array>
-  <key>WorkingDirectory</key><string>[APP_ROOT]</string>
+  <key>ProgramArguments</key><array><string>__INSTALL_DIR__/.venv/bin/python</string><string>__INSTALL_DIR__/agents/retro.py</string></array>
+  <key>WorkingDirectory</key><string>__INSTALL_DIR__</string>
   <key>StartCalendarInterval</key><dict><key>Weekday</key><integer>0</integer><key>Hour</key><integer>9</integer><key>Minute</key><integer>0</integer></dict>
-  <key>StandardErrorPath</key><string>[APP_ROOT]/agents/retro.log</string>
+  <key>StandardErrorPath</key><string>__INSTALL_DIR__/agents/retro.log</string>
 </dict></plist>

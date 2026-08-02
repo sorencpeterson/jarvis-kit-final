@@ -3921,10 +3921,10 @@ def _build_prompt(batch: list) -> str | None:
         # flagged, not fixed, in AUDIT-FINDINGS.md.
         "APPLICANT PROFILE (use these exact answers on every form):\n" + json.dumps(profile) + "\n\n"
         "RESUME FILE to upload for any resume field (browser_file_upload):\n"
-        "[APP_ROOT]/store/resume.pdf\n"
+        f"{ROOT}/store/resume.pdf\n"
         "If a job's line in JOBS carries its own 'RESUME:' path, upload THAT file for that job "
         "instead (same resume, tuned to the role). Never upload any file outside "
-        "[APP_ROOT]/store/. "
+        f"{ROOT}/store/. "
         # R2-41 (code-level note, kept deliberately explicit since it's the only containment
         # that exists): this constraint is PROMPT TEXT ONLY. browser_file_upload executes
         # inside a separate `claude` subprocess talking to its own Playwright MCP server; this

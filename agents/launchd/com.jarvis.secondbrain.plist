@@ -20,15 +20,15 @@
   <key>ProgramArguments</key>
   <array>
     <string>/bin/bash</string>
-    <string>[APP_ROOT]/run.sh</string>
+    <string>__INSTALL_DIR__/run.sh</string>
   </array>
   <key>StartInterval</key>
   <integer>600</integer>
   <key>RunAtLoad</key>
   <true/>
   <key>StandardErrorPath</key>
-  <string>[APP_ROOT]/launchd.err.log</string>
+  <string>__INSTALL_DIR__/launchd.err.log</string>
   <key>StandardOutPath</key>
-  <string>[APP_ROOT]/launchd.out.log</string>
+  <string>__INSTALL_DIR__/launchd.out.log</string>
 </dict>
 </plist>

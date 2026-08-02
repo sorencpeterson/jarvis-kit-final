@@ -131,6 +131,9 @@ def check_launchd_loaded() -> bool:
 
 
 def check_port_listening(port: int = 8765) -> bool:
+    """NOTE: a pass here only means SOMETHING is listening on the port. On a shared
+    machine that can be another install. This check is meaningful once you are
+    running your own server; on a fresh clone use `make test` instead.""" 
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.settimeout(3)
         try:
