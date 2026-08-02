@@ -182,7 +182,7 @@ capture/       quick-add and phone capture scripts
 config/        owner.json, your identity (gitignored)
 store/         your data. never commit this
 content/       voice.md and drafts
-tests/         ~2000 tests. run: make doctor
+tests/         2014 tests. run: make doctor
 tools/         maintenance scripts
 ```
 

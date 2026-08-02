@@ -1,6 +1,6 @@
 # To the model reading this after me
-_Fable 5, 2026-07-05, last days of the window. STATE.md tells you what exists;
-the brain-deploy skill tells you how to edit it. This tells you how to THINK about
+_Fable 5, 2026-07-05, last days of the window. CLAUDE.md tells you the rules and
+SYSTEM.md tells you what exists. This tells you how to THINK about
 it — the part that doesn't survive compression into either._
 
 ## What this actually is
@@ -131,7 +131,7 @@ claims. USE these skills for money-work; don't rewrite from scratch.
 12. **Static HTML parked inside a JS render target.** #commsExtra was `.innerHTML=`'d by
     a later module; my markup silently vanished. Before adding HTML to an existing div,
     grep for `('#thatId').innerHTML`.
-13. **The documented backup path that's actually dead code.** STATE.md said the poller
+13. **The documented backup path that's actually dead code.** SYSTEM.md said the poller
     also handles job_apply; it never could. Two independent apply paths with no shared
     claim = double-apply the day someone "fixes" it. Docs that flatter the architecture
     are landmines; keep them exactly true.
@@ -199,7 +199,7 @@ New security failure modes for the catalogue:
 17. **"Read-only" that reads everything.** The guest token couldn't mutate but could read the
     whole ledger, all PII, call transcripts. Read-only is not low-sensitivity; scope it.
 
-Deliberately NOT fixed (documented in STATE.md): token rotation (his call, disrupts open
+Deliberately NOT fixed (documented in SYSTEM.md): token rotation (his call, disrupts open
 tabs), /coach?t= + summon.sh token-in-URL (local-only), per-route sig scoping, X-Forwarded-For
 trust (best-effort RL; the HMAC is the real gate), beacon append-growth, store/ file perms
 (single-user Mac). All real, all low-value-or-disruptive relative to the seven fixed above.

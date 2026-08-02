@@ -1,5 +1,13 @@
 # DR-RUNBOOK: the laptop dies, restore the second brain
 
+> **Note for this copy.** This runbook was written against the original owner's
+> live machine and reads as their operational history: specific dates, their
+> backup situation, their launchd jobs. It is kept because the *restore
+> sequence* and the dependency map are genuinely useful, and because it documents
+> how the pieces fit together. Treat the specifics as an example, not as
+> instructions about your install. Your setup starts from `install.sh`.
+
+
 Written 2026-07-07 against the live machine. Every path and command below was
 verified against this repo on that date. No em-dashes, no flattery: where the
 system has a hole, this file says so.
@@ -17,17 +25,17 @@ lost" PLUS the entire repo is gone.**
 never pushes, so until a remote exists this runbook has nothing to restore
 from. The `gh` CLI is not installed; use the GitHub web UI:
 
-1. github.com -> New repository -> name `second-brain`, **Private**, no README.
+1. github.com -> New repository -> name `this system`, **Private**, no README.
 2. Then:
 
    ```bash
-   cd ~/Claude/second-brain
-   git remote add origin git@github.com:<your-user>/second-brain.git
+   cd ~/Claude/this system
+   git remote add origin git@github.com:<your-user>/this system.git
    git push -u origin main
    ```
 
    (HTTPS with a fine-grained PAT works too if no SSH key is set up:
-   `git remote add origin https://github.com/<your-user>/second-brain.git`.)
+   `git remote add origin https://github.com/<your-user>/this system.git`.)
 
 3. Prove it restores, not just pushes:
 
@@ -52,8 +60,8 @@ the remote covers the data that matters, not just code.
 ```bash
 mkdir -p ~/Claude
 cd ~/Claude
-git clone git@github.com:<your-user>/second-brain.git second-brain
-cd second-brain
+git clone git@github.com:<your-user>/this system.git this system
+cd this system
 ```
 
 The absolute path matters: every launchd plist, `serve.sh`, `watchdog.sh`,
@@ -71,7 +79,7 @@ cp tools/pre-commit .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit
 
 ```bash
 curl -LsSf https://astral.sh/uv/install.sh | sh    # installs to ~/.local/bin/uv
-cd ~/Claude/second-brain
+cd ~/Claude/this system
 uv venv --python 3.12 .venv
 uv pip install fastapi "uvicorn[standard]" python-dotenv requests pytest \
     pyyaml numpy google-api-python-client google-auth-oauthlib \
@@ -143,7 +151,7 @@ not a literal `KeepAlive=true`).
 Load them (your hands):
 
 ```bash
-cp ~/Claude/second-brain/agents/launchd/*.plist ~/Library/LaunchAgents/
+cp ~/Claude/this system/agents/launchd/*.plist ~/Library/LaunchAgents/
 for l in brain-server secondbrain morning watchdog autocommit replywatch retro; do
   launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.jarvis.$l.plist
 done
@@ -179,7 +187,7 @@ serve -> funnel is [OWNER]'s call, made knowingly.
 ## 7. Verify the restore
 
 ```bash
-cd ~/Claude/second-brain
+cd ~/Claude/this system
 make doctor                        # ast sweep + selftest + config check + full pytest suite
 curl -s 127.0.0.1:8765 | head -5   # server answers (dashboard HTML)
 .venv/bin/python agents/backup_verify.py       # backup loop is closed again
@@ -206,7 +214,7 @@ From `.gitignore` plus a live sweep of the working tree:
   redone by hand, per the no-credentials rail).
 - **`vendor/`** including whisper.cpp (rebuild via `tools/install_whisper.sh`),
   all `node_modules/`, and `.venv/` (rebuild, step 2).
-- **`~/Backups/second-brain/`** store snapshots (tools/snapshot_store.sh
+- **`~/Backups/this system/`** store snapshots (tools/snapshot_store.sh
   rsyncs to the SAME disk; it protects against bad edits, not a dead laptop).
 - **Up to 59 minutes of uncommitted work** (autocommit is hourly), plus
   **everything committed since your last manual `git push`**, because nothing
@@ -259,7 +267,7 @@ ast-parses, and every top-level import resolves in `.venv`. 0 hard failures,
 
 - **The 6-agent mail lane imports `gmail_api` from `~/Claude/gmail/`, OUTSIDE
   this repo** (job_replies, mail_brain, mail_drafts, mail_sender_scores,
-  mail_signals, mail_threads). A second-brain-only restore brings the chain up
+  mail_signals, mail_threads). A this system-only restore brings the chain up
   with the whole Gmail lane crashing at import. Restoring `~/Claude/gmail/`
   (plus its OAuth token) is part of DR whether or not it is in this runbook's
   repo.

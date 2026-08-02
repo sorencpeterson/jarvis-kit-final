@@ -1,11 +1,11 @@
 ---
 name: brain-deploy
-description: The safe edit→deploy→verify ritual for the second-brain codebase (server.py, index.html, agents, sw.js). Use whenever changing code in ~/Claude/second-brain, restarting the brain server, or debugging why a change is not visible.
+description: The safe edit→deploy→verify ritual for the this repo codebase (server.py, index.html, agents, sw.js). Use whenever changing code in this repo, restarting the brain server, or debugging why a change is not visible.
 ---
 
 # Deploying changes to the second brain (do it exactly like this)
 
-**First session here? Read `second-brain/LETTER-TO-THE-NEXT-MODELS.md` before anything.**
+**First session here? Read `LETTER-TO-THE-NEXT-MODELS.md` before anything.**
 
 Distilled at peak intelligence during the Fable window (2026-07). These are paid-for
 lessons; every rule here broke something once.
@@ -71,6 +71,7 @@ lessons; every rule here broke something once.
   cross-boundary endpoints, self-verification required (ast + import + RUN),
   em-dash sweeps as cleanup children. Aggregate statuses from scratchpad files.
 - morning.sh is a shared edit surface: serialize edits, `bash -n` after every one.
-- `make doctor` (Makefile) = the one-command verification sweep. Run before "done."
+- `make test` = the verification sweep for a fresh clone (no server needed).
+  `make doctor` adds live-server and launchd checks. Run one before "done."
 - Test artifacts pollute real queues: every synthetic proposal/acceptance/draft gets
   skipped/stripped immediately after the assertion passes.
