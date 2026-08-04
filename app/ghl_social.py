@@ -6,13 +6,15 @@ multipart-upload media; card images need GHL media hosting — see note in serve
 """
 from __future__ import annotations
 
+import os
 import json
 import re
 import subprocess
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-GHL = Path.home() / "Claude" / "playwright-project/automations/ghl/gohighlevel-cli"
+GHL = Path(os.environ.get("GHL_CLI")
+           or (Path(__file__).resolve().parent.parent / "tools" / "ghl-cli"))
 API = GHL / "api.sh"
 
 

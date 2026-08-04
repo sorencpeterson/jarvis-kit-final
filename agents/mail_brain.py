@@ -37,6 +37,7 @@ Run:  .venv/bin/python agents/mail_brain.py                  # classify pass, pr
 from __future__ import annotations
 
 import argparse
+import os
 import json
 import re
 import sys
@@ -45,7 +46,7 @@ from email.utils import parsedate_to_datetime
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-for p in (ROOT, ROOT / "app", Path.home() / "Claude" / "gmail"):
+for p in (ROOT, ROOT / "app", Path(os.environ.get("GMAIL_LIB") or (ROOT / "gmail"))):
     sys.path.insert(0, str(p))
 from store_lib import now_iso, _flock  # noqa: E402
 import planner  # noqa: E402

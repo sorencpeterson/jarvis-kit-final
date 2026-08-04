@@ -33,7 +33,7 @@ from email.mime.text import MIMEText
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-for p in (ROOT, ROOT / "agents", Path.home() / "Claude" / "gmail"):
+for p in (ROOT, ROOT / "agents", Path(os.environ.get("GMAIL_LIB") or (ROOT / "gmail"))):
     if str(p) not in sys.path:
         sys.path.insert(0, str(p))
 

@@ -51,6 +51,7 @@ from __future__ import annotations
 import argparse
 import csv
 import hashlib
+import os
 import json
 import sys
 from datetime import datetime
@@ -64,7 +65,7 @@ import planner  # noqa: E402
 
 OUT = ROOT / "store" / "quiet_worklist.json"
 CONVO_STATES = ROOT / "store" / "convo_states.json"
-WARM_CSV = Path.home() / "Claude" / "WARM-HITLIST.csv"
+WARM_CSV = Path(os.environ.get("WARM_CSV") or (ROOT / "store" / "warm-hitlist.csv"))
 WARM_DISPO = ROOT / "store" / "warm_dispo.jsonl"
 
 # ---- tunable weights (documented above; change here, nowhere else) ----

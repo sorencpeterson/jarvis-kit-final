@@ -1061,7 +1061,7 @@ def api_jobs_source():
 
 
 # ---- Warm-Call Cockpit: the 58 booked calls, dial-ready. No outward automation — [OWNER] dials. ----
-_WARM_CSV = Path.home() / "Claude" / "WARM-HITLIST.csv"
+_WARM_CSV = Path(os.environ.get("WARM_CSV") or (ROOT / "store" / "warm-hitlist.csv"))
 _WARM_DISPO = ROOT / "store" / "warm_dispo.jsonl"
 _NICHE_PAIN = {  # niche -> the "more X" line, per MONEY-THIS-MONTH §2
     "spa": "more patients booked", "clinic": "more patients booked",
@@ -1330,7 +1330,7 @@ def api_money():
 
 # ---- COLD cockpit: enrichment -> staged -> drip-enrolled. Read-only aggregation. ----
 _COLD_CACHE = {"t": 0.0, "data": None}
-_HOOKS_CSV = Path.home() / "Claude/playwright-project/automations/agency-enrichment/out/wl-hooks.csv"
+_HOOKS_CSV = Path(os.environ.get("HOOKS_CSV") or (ROOT / "store" / "wl-hooks.csv"))
 
 
 @app.get("/api/cold")
@@ -1427,7 +1427,7 @@ def api_comms():
                 for j in jobs.load_jobs() if j.get("status") in ("interview", "replied")]
     mail = []
     try:
-        sys.path.insert(0, str(Path.home() / "Claude" / "gmail"))
+        sys.path.insert(0, os.environ.get("GMAIL_LIB") or str(ROOT / "gmail"))
         import gmail_api
         for m in gmail_api.search("is:unread is:important newer_than:2d -category:promotions",
                                   max_results=6):
@@ -1758,8 +1758,8 @@ def _recall_index():
         if p.exists():
             rows.append((name, "", p.read_text()[:6000]))
     # the Fable-authored judgment library + the whole authored estate (E321)
-    lib = Path.home() / "Claude" / "business-library"
-    ep = Path.home() / "Claude" / "EXECUTION-PACK"
+    lib = Path(os.environ.get("BIZLIB") or (ROOT / "business-library"))
+    ep = Path(os.environ.get("EXEC_PACK") or (ROOT / "kits" / "client-work"))
     estate = (list((lib / "playbooks").glob("*.md"))
               + [lib / "VOICE-SPEC.md", lib / "operating-model.md", lib / "brand-voice.md",
                  lib / "offers.md", lib / "long-game-policies.md"]
@@ -3083,7 +3083,7 @@ async def api_audit(request: Request):
         # threadpool: this crawl can run 7 minutes; inline it froze EVERY route meanwhile
         proc = await anyio.to_thread.run_sync(lambda: subprocess.run(
             [str(ROOT / ".venv" / "bin" / "python"),
-             str(Path.home() / "Claude" / "elementor-recoder" / "qa.py"),
+             str(Path(os.environ.get("QA_DIR") or (ROOT / "tools")) / "qa.py"),
              u, "--max-pages", str(min(int(b.get("pages") or 8), 15))],
             capture_output=True, text=True, timeout=420))
     except subprocess.TimeoutExpired:
@@ -4136,7 +4136,7 @@ def _spawn_operator(prompt: str):
         [_CLAUDE_CLI, "-p", prompt, "--model", _apply_model(),
          "--strict-mcp-config", "--mcp-config", _ISO_MCP,
          "--allowedTools", *_PW_TOOLS],
-        cwd=str(Path.home() / "Claude"), stdout=logf, stderr=subprocess.STDOUT,
+        cwd=str(ROOT), stdout=logf, stderr=subprocess.STDOUT,
         start_new_session=True, env=_env)
     _apply_procs.append(p)
     _ops_write(_ops_pids() + [p.pid])
@@ -4397,7 +4397,7 @@ def api_requests():
 
 
 # ---- Schengen 90/180 visa counter (from ~/Claude/gmail/schengen/tracker.py) ----
-_SCHENGEN = Path.home() / "Claude" / "gmail" / "schengen"
+_SCHENGEN = Path(os.environ.get("GMAIL_LIB") or (ROOT / "gmail")) / "schengen"
 _visa_cache = {"t": 0.0, "data": None}
 
 

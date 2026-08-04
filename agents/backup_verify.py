@@ -15,6 +15,7 @@ silently reporting success for a backup that doesn't exist.
 """
 from __future__ import annotations
 
+import os
 import json
 import shutil
 import subprocess
@@ -23,7 +24,7 @@ import tempfile
 from datetime import datetime
 from pathlib import Path
 
-REPO = Path.home() / "Claude" / "second-brain"
+REPO = Path(__file__).resolve().parent.parent
 STORE = REPO / "store"
 OUT = STORE / "backup_verify.json"
 KEY_FILES = ["app/server.py", "store_lib.py"]

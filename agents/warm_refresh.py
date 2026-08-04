@@ -74,7 +74,7 @@ import ghl_social  # noqa: E402
 import planner  # noqa: E402
 import tzmap  # noqa: E402
 
-CSV_PATH = Path.home() / "Claude" / "WARM-HITLIST.csv"
+CSV_PATH = Path(os.environ.get("WARM_CSV") or (ROOT / "store" / "warm-hitlist.csv"))
 FIELDS = ["tier", "name", "company", "email", "phone", "location", "niche",
           "suggested_offer", "pipeline", "stage", "deal_age_days", "deal_value",
           "tags", "tz", "cluster"]

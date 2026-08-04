@@ -26,12 +26,13 @@ Run: .venv/bin/python -m pytest tests/test_reject_intel.py -v
 """
 from __future__ import annotations
 
+import os
 import json
 import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-for p in (ROOT, ROOT / "app", ROOT / "agents", Path.home() / "Claude" / "gmail"):
+for p in (ROOT, ROOT / "app", ROOT / "agents", Path(os.environ.get("GMAIL_LIB") or (ROOT / "gmail"))):
     sys.path.insert(0, str(p))
 
 import job_fit_signals as jfs  # noqa: E402

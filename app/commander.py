@@ -9,6 +9,7 @@ Streams Server-Sent Events so the console narrates as it works (the JARVIS feel)
 from __future__ import annotations
 
 import json
+import os
 import re
 import subprocess
 import sys
@@ -185,7 +186,7 @@ def a_audit(args):
         return "which site?"
     try:
         p = subprocess.run([str(ROOT / ".venv" / "bin" / "python"),
-                            str(Path.home() / "Claude" / "elementor-recoder" / "qa.py"), u,
+                            str(Path(os.environ.get("QA_SCRIPT") or (ROOT / "tools" / "qa.py"))), u,
                             "--max-pages", "6"], capture_output=True, text=True, timeout=300)
         lines = [ln for ln in p.stdout.splitlines() if ln.startswith(("- **", "pages "))][:9]
         return "teardown of " + u + ":\n" + "\n".join(lines[:9]) if lines else "site unreachable or empty"
@@ -276,7 +277,7 @@ def a_capacity(args):
     from datetime import date
     hours_hist = []
     try:
-        with open(str(Path.home() / "Claude" / "elementor-recoder" / "clients" / "build-log.csv")) as f:
+        with open(str(Path(os.environ.get("BUILD_LOG") or (ROOT / "store" / "build-log.csv")))) as f:
             for row in _csv.DictReader(f):
                 try:
                     hours_hist.append(float(row.get("total") or 0))

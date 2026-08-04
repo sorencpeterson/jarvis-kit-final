@@ -7,13 +7,14 @@ Read-only on Gmail; only writes job statuses locally. Reuses gmail_api (OAuth al
 """
 from __future__ import annotations
 
+import os
 import json
 import re
 import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-for p in (ROOT, ROOT / "app", ROOT / "agents", Path.home() / "Claude" / "gmail"):
+for p in (ROOT, ROOT / "app", ROOT / "agents", Path(os.environ.get("GMAIL_LIB") or (ROOT / "gmail"))):
     sys.path.insert(0, str(p))
 import planner  # noqa: E402
 import jobs  # noqa: E402

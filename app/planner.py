@@ -12,6 +12,7 @@ Runs on the Claude CLI (Max plan, no per-use cost). Falls back gracefully.
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 from datetime import datetime
 from pathlib import Path
@@ -21,7 +22,7 @@ PLAN = ROOT / "store" / "plan.json"
 FEED = ROOT / "store" / "feed.jsonl"
 GOALS = ROOT / "store" / "goals.json"
 CONFIG = ROOT / "store" / "config.json"
-BIZLIB = Path.home() / "Claude" / "business-library"
+BIZLIB = Path(os.environ.get("BIZLIB") or (ROOT / "business-library"))
 
 
 def _config() -> dict:
@@ -96,10 +97,25 @@ def feed_recent(n: int = 30) -> list[dict]:
 
 def _context() -> str:
     bits = []
-    bits.append("WHO: [OWNER] — [OWNER_SITE]. Runs [OWNER_COMPANY]. "
-                "Sells white-label website builds for agencies ($1K+, 48-72h turnaround) and "
-                "agency ops/fractional-COO help. Former agency operator who scaled one to $1M/mo. "
-                "((no personal-domain notes configured))")
+    # WHO comes from the owner config, not a baked description. A copy of this
+    # system must not tell its planner it runs somebody else's business.
+    try:
+        import owner
+        o = owner.load()
+    except Exception:  # noqa: BLE001
+        o = {}
+    who = f"WHO: {o.get('name') or '[OWNER]'}"
+    if o.get("site"):
+        who += f" ({o['site']})"
+    if o.get("company"):
+        who += f". Runs {o['company']}"
+    if o.get("what_you_do"):
+        who += f". {o['what_you_do']}"
+    if o.get("icp"):
+        who += f". Works with: {o['icp']}"
+    if o.get("offer"):
+        who += f". Offer: {o['offer']}"
+    bits.append(who + ".")
     try:
         bits.append("GOALS (across life areas): " + GOALS.read_text())
     except OSError:

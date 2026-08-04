@@ -19,6 +19,7 @@ Usage: tools/selftest.py   (or via `make doctor`)
 from __future__ import annotations
 
 import json
+import os
 import shutil
 import socket
 import subprocess
@@ -29,7 +30,7 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "tools"))
 
-GHL_ENV = Path.home() / "Claude" / "playwright-project" / "automations" / "ghl" / "gohighlevel-cli" / ".env"
+GHL_ENV = Path(os.environ.get("GHL_ENV") or (ROOT / ".ghl.env"))  # optional; only if you use GHL
 LAUNCHD_LABELS = (
     "com.jarvis.morning",
     "com.jarvis.secondbrain",
@@ -113,7 +114,7 @@ def check_templates_exist() -> bool:
 
 
 def check_playbooks_exist() -> bool:
-    pdir = Path.home() / "Claude" / "business-library" / "playbooks"
+    pdir = ROOT / "business-library" / "playbooks"
     files = list(pdir.glob("*.md")) if pdir.is_dir() else []
     return _result("playbooks_exist", bool(files),
                     f"{len(files)} playbook(s) in {pdir}" if files else f"{pdir} missing or empty")

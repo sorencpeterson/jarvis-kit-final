@@ -26,6 +26,7 @@ n=0 lines per niche cleanly rather than fabricating rates. Run standalone:
 from __future__ import annotations
 
 import argparse
+import os
 import json
 import re
 import sys
@@ -39,7 +40,7 @@ from store_lib import now_iso  # noqa: E402
 PROPOSALS = ROOT / "store" / "proposals.jsonl"
 WARM_DISPO = ROOT / "store" / "warm_dispo.jsonl"
 COLD_PIPELINE = ROOT / "store" / "cold_pipeline.jsonl"
-QA_DIR = Path.home() / "Claude" / "elementor-recoder"
+QA_DIR = Path(os.environ.get("QA_DIR") or (ROOT / "tools"))
 OUT = ROOT / "store" / "niche_db.json"
 
 MIN_FOR_RATE = 5  # below this many proposals, don't report a close/open RATE as real

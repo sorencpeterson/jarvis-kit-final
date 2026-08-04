@@ -19,7 +19,7 @@ for p in (ROOT, ROOT / "app", ROOT / "agents"):
     sys.path.insert(0, str(p))
 import planner  # noqa: E402
 
-CSV = Path.home() / "Claude" / "WARM-HITLIST.csv"
+CSV = Path(os.environ.get("WARM_CSV") or (ROOT / "store" / "warm-hitlist.csv"))
 DISPO = ROOT / "store" / "warm_dispo.jsonl"
 OUT = ROOT / "store" / "warm_block.json"
 N = 10

@@ -31,6 +31,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import os
 import json
 import re
 import subprocess
@@ -48,7 +49,7 @@ import planner  # noqa: E402
 PIPELINE = ROOT / "store" / "cold_pipeline.jsonl"
 REPLIES = ROOT / "store" / "replies.jsonl"
 STAGING = ROOT / "store" / "webfix_refresh_staging.jsonl"
-QA_PY = Path.home() / "Claude" / "elementor-recoder" / "qa.py"
+QA_PY = Path(os.environ.get("QA_DIR") or (ROOT / "tools")) / "qa.py"
 VENV_PY = ROOT / ".venv" / "bin" / "python"
 MIN_AGE_DAYS = 85
 

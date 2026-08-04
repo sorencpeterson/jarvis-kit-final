@@ -36,7 +36,7 @@ import proposal_factory  # noqa: E402
 
 OUT = ROOT / "store" / "og"
 SHOOTER = ROOT / "tools" / "shoot_mockup.js"
-PLAYWRIGHT_PROJECT = Path.home() / "Claude" / "playwright-project"
+PLAYWRIGHT_PROJECT = Path(os.environ.get("PLAYWRIGHT_DIR") or (ROOT / "playwright-project"))
 ELIGIBLE_STATUSES = ("staged", "sent")
 SHOT_TIMEOUT_S = 45  # headless chromium launch + networkidle + 800ms settle, generous
 

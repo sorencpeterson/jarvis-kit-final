@@ -13,6 +13,7 @@ The pitch this powers: "3 of your 5 competitors have broken sites. Want the town
 from __future__ import annotations
 
 import argparse
+import os
 import json
 import re
 import subprocess
@@ -26,7 +27,7 @@ for p in (ROOT, ROOT / "app", ROOT / "agents"):
 from store_lib import now_iso  # noqa: E402
 import ghl_social  # noqa: E402
 
-QA = Path.home() / "Claude" / "elementor-recoder" / "qa.py"
+QA = Path(os.environ.get("QA_DIR") or (ROOT / "tools")) / "qa.py"
 VENV = ROOT / ".venv" / "bin" / "python"
 OUT = ROOT / "store" / "sweeps"
 

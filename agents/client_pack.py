@@ -5,6 +5,7 @@ personalized care-plan email + (for happy=y) a testimonial ask, queued as drafts
 todos. Nothing sends itself."""
 from __future__ import annotations
 import csv
+import os
 import json
 import sys
 from pathlib import Path
@@ -14,8 +15,8 @@ for p in (ROOT, ROOT / "app"):
 from store_lib import append_todo, new_id, now_iso  # noqa: E402
 import planner  # noqa: E402
 
-CSV_P = Path.home() / "Claude" / "EXECUTION-PACK" / "past-clients.csv"
-PACK = Path.home() / "Claude" / "EXECUTION-PACK"
+CSV_P = Path(os.environ.get("EXEC_PACK") or (ROOT / "kits" / "client-work")) / "past-clients.csv"
+PACK = Path(os.environ.get("EXEC_PACK") or (ROOT / "kits" / "client-work"))
 OUT = ROOT / "store" / "client_sends.jsonl"
 
 

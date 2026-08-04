@@ -30,7 +30,7 @@ from collections import Counter
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-for p in (ROOT, ROOT / "app", Path.home() / "Claude" / "gmail"):
+for p in (ROOT, ROOT / "app", Path(os.environ.get("GMAIL_LIB") or (ROOT / "gmail"))):
     sys.path.insert(0, str(p))
 import owner  # noqa: E402
 from store_lib import now_iso, _flock  # noqa: E402

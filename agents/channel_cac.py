@@ -33,6 +33,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import os
 import json
 import re
 import sys
@@ -47,7 +48,7 @@ USAGE = ROOT / "store" / "usage.jsonl"
 RUNS = ROOT / "store" / "runs.jsonl"
 EVENTS = ROOT / "store" / "events.jsonl"
 COLD_PIPELINE = ROOT / "store" / "cold_pipeline.jsonl"
-WARM_CSV = Path.home() / "Claude" / "WARM-HITLIST.csv"
+WARM_CSV = Path(os.environ.get("WARM_CSV") or (ROOT / "store" / "warm-hitlist.csv"))
 LEDGER = ROOT / "store" / "ledger.jsonl"
 OUT = ROOT / "store" / "cac.json"
 

@@ -11,6 +11,7 @@ Run:  uv run python agents/content_gen.py            # top up the buffer
 """
 from __future__ import annotations
 
+import os
 import json
 import subprocess
 import sys
@@ -26,7 +27,7 @@ import gen_image  # noqa: E402
 
 POSTS = ROOT / "content" / "posts.jsonl"
 VOICE = ROOT / "content" / "voice.md"
-BIZ = Path.home() / "Claude" / "business-library"
+BIZ = Path(os.environ.get("BIZLIB") or (ROOT / "business-library"))
 MAX_PER_RUN = 8          # per-invocation ceiling (one CLI call carries at most this many)
 DAILY_NEW_DEFAULT = 6    # fresh posts per day (config content_daily_new)
 MAX_FRESH_DEFAULT = 30   # ceiling on live drafts+approved so the review pane stays sane
@@ -269,7 +270,7 @@ Return ONLY a JSON array, nothing else:
 [{"topic":"pillar name","angle":"assigned-angle-key","hook":"the first line","text":"full post with \\n line breaks","score":8,"image_prompt":"a 1:1 square photorealistic cinematic split-screen ... HEADLINE: '...' left labels: ... right labels: ..."}]"""
 
 
-PW = Path.home() / "Claude" / "playwright-project"
+PW = Path(os.environ.get("PLAYWRIGHT_DIR") or (ROOT / "playwright-project"))
 IMGDIR = ROOT / "content" / "images"
 
 

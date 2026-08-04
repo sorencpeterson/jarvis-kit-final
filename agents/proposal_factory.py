@@ -23,6 +23,7 @@ import csv
 import hashlib
 import hmac
 import html as _html
+import os
 import json
 import re
 import sys
@@ -52,7 +53,7 @@ def _fill_owner(html: str) -> str:
     name = owner.get("name", "") or "Your Name"
     initials = "".join(w[0] for w in name.split()[:2]).upper() or "YN"
     return html.replace("{{OWNER_NAME}}", name).replace("{{OWNER_INITIALS}}", initials)
-PLAYBOOK = Path.home() / "Claude" / "business-library" / "playbooks" / "pricing-tree.md"
+PLAYBOOK = Path(os.environ.get("BIZLIB") or (ROOT / "business-library")) / "playbooks" / "pricing-tree.md"
 PAST_CLIENTS = STORE / "past-clients.csv"  # A15: optional, cols name,quote,company (hidden until it exists)
 BOOK_URL = f"{owner.get('site', 'example.com')}/book"
 TRADE_NICHES = ("hvac", "plumbing", "roofing", "electrical", "landscap")

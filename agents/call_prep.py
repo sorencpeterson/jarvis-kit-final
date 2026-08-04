@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import csv
 import hashlib
+import os
 import json
 import re
 import sys
@@ -25,9 +26,9 @@ for p in (ROOT, ROOT / "app", ROOT / "agents"):
     sys.path.insert(0, str(p))
 import proposal_factory as pf  # noqa: E402
 
-HITLIST = Path.home() / "Claude" / "WARM-HITLIST.csv"
-PLAYBOOKS = Path.home() / "Claude" / "business-library" / "playbooks"
-NICHE_BOOKS = Path.home() / "Claude" / "business-library" / "sops" / "niche-books"
+HITLIST = Path(os.environ.get("WARM_CSV") or (ROOT / "store" / "warm-hitlist.csv"))
+PLAYBOOKS = Path(os.environ.get("BIZLIB") or (ROOT / "business-library")) / "playbooks"
+NICHE_BOOKS = Path(os.environ.get("BIZLIB") or (ROOT / "business-library")) / "sops" / "niche-books"
 BLOCK = ROOT / "store" / "warm_block.json"
 OUT = ROOT / "store" / "prep" / "warm"
 

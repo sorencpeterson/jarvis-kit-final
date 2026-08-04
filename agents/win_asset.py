@@ -31,6 +31,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import os
 import json
 import sys
 from datetime import datetime
@@ -46,7 +47,7 @@ LEDGER = ROOT / "store" / "ledger.jsonl"
 WON_PATTERNS = ROOT / "store" / "won_patterns.jsonl"
 CLOSE_PROB = ROOT / "store" / "close_prob.json"
 CONTACT_GRAPH = ROOT / "store" / "contact_graph.json"
-WL_IMPORT = Path.home() / "Claude" / "wl-webdev-import-master.csv"
+WL_IMPORT = Path(os.environ.get("WL_IMPORT") or (ROOT / "store" / "wl-import.csv"))
 DRAFTS = ROOT / "store" / "drafts"
 ONEPAGER = DRAFTS / "win_onepager.md"
 LINKEDIN = DRAFTS / "win_linkedin.md"

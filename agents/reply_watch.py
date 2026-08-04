@@ -31,6 +31,7 @@ logging, spam filter, signed one-tap ntfy actions) is unchanged in substance:
 """
 from __future__ import annotations
 
+import os
 import json
 import re
 import sys
@@ -53,7 +54,7 @@ import convo_meeting  # noqa: E402
 REPLIES = ROOT / "store" / "replies.jsonl"
 SUPPRESS = ROOT / "store" / "suppress.jsonl"
 WEBHOOK_SEEN = ROOT / "store" / "webhook_replies_seen.jsonl"
-PLAYBOOKS = Path.home() / "Claude" / "business-library" / "playbooks"
+PLAYBOOKS = Path(os.environ.get("BIZLIB") or (ROOT / "business-library")) / "playbooks"
 GHL = ghl_social.GHL
 
 # C163: SLA escalation thresholds (hours) for a pending queue record's age.

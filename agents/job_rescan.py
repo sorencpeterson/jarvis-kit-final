@@ -17,11 +17,12 @@ Read-only against Gmail; writes only job statuses (with reason "rescan 2026-07-1
 from __future__ import annotations
 
 import re
+import os
 import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-for p in (ROOT, ROOT / "app", ROOT / "agents", Path.home() / "Claude" / "gmail"):
+for p in (ROOT, ROOT / "app", ROOT / "agents", Path(os.environ.get("GMAIL_LIB") or (ROOT / "gmail"))):
     sys.path.insert(0, str(p))
 import gmail_api  # noqa: E402
 import jobs  # noqa: E402

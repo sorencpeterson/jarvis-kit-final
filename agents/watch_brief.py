@@ -27,6 +27,7 @@ from __future__ import annotations
 
 import argparse
 import html as _html
+import os
 import json
 import subprocess
 import sys
@@ -43,7 +44,7 @@ import planner  # noqa: E402
 STORE = ROOT / "store"
 OUT_HTML = STORE / "watch_brief.html"
 OUT_PNG = STORE / "watch_brief.png"
-PLAYWRIGHT = Path.home() / "Claude" / "playwright-project" / "node_modules" / ".bin" / "playwright"
+PLAYWRIGHT = Path(os.environ.get("PLAYWRIGHT_DIR") or (ROOT / "playwright-project")) / "node_modules" / ".bin" / "playwright"
 ALBUM = "JARVIS"
 
 _PAGE = Template("""<!doctype html><meta charset="utf-8">

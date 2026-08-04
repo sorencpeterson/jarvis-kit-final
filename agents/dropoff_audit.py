@@ -41,6 +41,7 @@ from __future__ import annotations
 import argparse
 import csv
 import hashlib
+import os
 import json
 import re
 import sys
@@ -52,7 +53,7 @@ for p in (ROOT, ROOT / "app", ROOT / "agents"):
 from store_lib import now_iso  # noqa: E402
 import planner  # noqa: E402
 
-HITLIST = Path.home() / "Claude" / "WARM-HITLIST.csv"
+HITLIST = Path(os.environ.get("WARM_CSV") or (ROOT / "store" / "warm-hitlist.csv"))
 DISPO = ROOT / "store" / "warm_dispo.jsonl"
 PROPOSALS = ROOT / "store" / "proposals.jsonl"
 OUT = ROOT / "store" / "dropoff_audit.json"

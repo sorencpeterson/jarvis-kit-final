@@ -36,6 +36,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import os
 import json
 import sys
 from pathlib import Path
@@ -48,7 +49,7 @@ import planner  # noqa: E402
 
 PIPELINE = ROOT / "store" / "cold_pipeline.jsonl"
 SUPPRESS = ROOT / "store" / "suppress.jsonl"
-NO_GO_CANDIDATES = [Path.home() / "Claude" / "NO_GO.csv", Path.home() / "Claude" / "NO_GO.txt"]
+NO_GO_CANDIDATES = [ROOT / "store" / "NO_GO.csv", ROOT / "store" / "NO_GO.txt"]
 BATCH_SIZE = 10
 
 HOOK_PROMPT = """You write short, honest cold-outreach personalization hooks for a

@@ -31,6 +31,7 @@ Run:  .venv/bin/python agents/knowledge_decay.py
 """
 from __future__ import annotations
 
+import os
 import json
 import re
 import sys
@@ -43,7 +44,7 @@ from store_lib import now_iso  # noqa: E402
 import planner  # noqa: E402
 from runlog import track  # noqa: E402
 
-PRICING_TREE_MD = Path.home() / "Claude" / "business-library" / "playbooks" / "pricing-tree.md"
+PRICING_TREE_MD = Path(os.environ.get("BIZLIB") or (ROOT / "business-library")) / "playbooks" / "pricing-tree.md"
 OUT = ROOT / "store" / "knowledge_decay_report.json"
 
 # Matches a markdown table row: | SKU | $Price | When |  (tolerant of extra

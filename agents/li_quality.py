@@ -43,6 +43,7 @@ drop, log, or (for tone) request a rewrite. Nothing here sends anything, ever.
 from __future__ import annotations
 
 import re
+import os
 import sys
 import unicodedata
 from pathlib import Path
@@ -93,7 +94,7 @@ def _competitor_names() -> list[str]:
     if _COMPETITOR_NAMES_CACHE is not None:
         return _COMPETITOR_NAMES_CACHE
     names = []
-    p = Path.home() / "Claude" / "business-library" / "competitors.md"
+    p = Path(os.environ.get("BIZLIB") or (ROOT / "business-library")) / "competitors.md"
     try:
         for line in p.read_text().splitlines():
             line = line.strip().lstrip("-").strip()

@@ -23,6 +23,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import os
 import json
 import sys
 from datetime import datetime, timedelta
@@ -90,7 +91,7 @@ def _warm_row_lookup() -> dict[str, dict]:
     a warm_refresh.py run since), the dispo's own note/id is all we have."""
     import csv
     import hashlib
-    csv_path = Path.home() / "Claude" / "WARM-HITLIST.csv"
+    csv_path = Path(os.environ.get("WARM_CSV") or (ROOT / "store" / "warm-hitlist.csv"))
     out = {}
     if not csv_path.exists():
         return out

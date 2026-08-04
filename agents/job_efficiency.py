@@ -100,6 +100,7 @@ D303 source-quality ranking (which board produced interviews) [BUILT below].
 from __future__ import annotations
 
 import hashlib
+import os
 import json
 import re
 import subprocess
@@ -391,7 +392,7 @@ def funnel_analytics() -> dict:
 
 
 # ---- D302 postmortem auto-rerun scaffold at 2-week marks ----
-POSTMORTEM_MD = Path.home() / "Claude" / "JOBS-POSTMORTEM.md"
+POSTMORTEM_MD = ROOT / "kits" / "job-hunt" / "PRECISION-10-SPRINT.md"
 RERUN_MARK = ROOT / "store" / "job_postmortem_rerun.json"
 
 

@@ -43,6 +43,7 @@ Run:  .venv/bin/python agents/care_upsell.py [--dry-run]
 from __future__ import annotations
 
 import argparse
+import os
 import json
 import re
 import sys
@@ -62,7 +63,7 @@ PROPOSALS = ROOT / "store" / "proposals.jsonl"
 TODOS = ROOT / "store" / "todos.jsonl"
 STATE = ROOT / "store" / "care_upsell_state.json"
 DRAFTS = ROOT / "store" / "drafts"
-PLAYBOOK = Path.home() / "Claude" / "business-library" / "playbooks" / "pricing-tree.md"
+PLAYBOOK = Path(os.environ.get("BIZLIB") or (ROOT / "business-library")) / "playbooks" / "pricing-tree.md"
 
 UPSELL_AFTER_DAYS = 7      # fallback wait when a win's tier can't be resolved (CX8)
 DELIVERY_GRACE_DAYS = 2    # buffer added on top of a KNOWN tier's promised build days (CX8)

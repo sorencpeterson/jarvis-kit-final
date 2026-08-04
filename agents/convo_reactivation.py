@@ -43,6 +43,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import os
 import json
 import re
 import sys
@@ -59,7 +60,7 @@ import proposal_factory  # noqa: E402  (find_contact -- resolves a GHL contact_i
                          # approve click can actually send; read-only)
 import convo_context  # noqa: E402
 
-WARM_CSV = Path.home() / "Claude" / "WARM-HITLIST.csv"
+WARM_CSV = Path(os.environ.get("WARM_CSV") or (ROOT / "store" / "warm-hitlist.csv"))
 SUPPRESS = ROOT / "store" / "suppress.jsonl"
 DEMO_LIMIT = 10
 REACTIVATION_GHL_LOOKUP_CAP = 10  # never more live GHL lookups than the demo batch itself needs

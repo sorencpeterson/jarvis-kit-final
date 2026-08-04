@@ -40,7 +40,7 @@ import planner  # noqa: E402
 WARM_BLOCK = ROOT / "store" / "warm_block.json"
 DISPO = ROOT / "store" / "warm_dispo.jsonl"
 STATE = ROOT / "store" / ".call_escalator_state.json"
-HITLIST = Path.home() / "Claude" / "WARM-HITLIST.csv"
+HITLIST = Path(os.environ.get("WARM_CSV") or (ROOT / "store" / "warm-hitlist.csv"))
 AFTERNOON_HOUR = 15  # first shove
 EOD_HOUR = 20        # receipt filed
 

@@ -26,6 +26,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import os
 import json
 import re
 import sys
@@ -39,7 +40,7 @@ from store_lib import now_iso  # noqa: E402
 import planner  # noqa: E402
 
 COLD_PIPELINE = ROOT / "store" / "cold_pipeline.jsonl"
-WARM_CSV = Path.home() / "Claude" / "WARM-HITLIST.csv"
+WARM_CSV = Path(os.environ.get("WARM_CSV") or (ROOT / "store" / "warm-hitlist.csv"))
 LEDGER = ROOT / "store" / "ledger.jsonl"
 OUT = ROOT / "store" / "source_scores.json"
 

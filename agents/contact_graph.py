@@ -62,11 +62,11 @@ for p in (ROOT, ROOT / "app", ROOT / "agents"):
 from store_lib import now_iso  # noqa: E402
 import brainlib  # noqa: E402
 
-GHL_DIR = Path.home() / "Claude" / "playwright-project" / "automations" / "ghl" / "gohighlevel-cli"
+GHL_DIR = Path(os.environ.get("PLAYWRIGHT_DIR") or (ROOT / "playwright-project")) / "automations" / "ghl" / "gohighlevel-cli"
 API_SH = GHL_DIR / "api.sh"
 JOBS = ROOT / "store" / "jobs.jsonl"
 REPLIES = ROOT / "store" / "replies.jsonl"
-WARM_CSV = Path.home() / "Claude" / "WARM-HITLIST.csv"
+WARM_CSV = Path(os.environ.get("WARM_CSV") or (ROOT / "store" / "warm-hitlist.csv"))
 WARM_DISPO = ROOT / "store" / "warm_dispo.jsonl"
 LI_GRAPH_NODES = ROOT / "store" / "li_graph_nodes.jsonl"
 OUT = ROOT / "store" / "contact_graph.json"

@@ -31,6 +31,7 @@ Run standalone: .venv/bin/python agents/quarterly_deck.py
 from __future__ import annotations
 
 import argparse
+import os
 import json
 import re
 import sys
@@ -48,7 +49,7 @@ GOALS = ROOT / "store" / "goals.json"
 CAC = ROOT / "store" / "cac.json"
 SOURCE_SCORES = ROOT / "store" / "source_scores.json"
 NICHE_DB = ROOT / "store" / "niche_db.json"
-OPERATING_MODEL = Path.home() / "Claude" / "business-library" / "operating-model.md"
+OPERATING_MODEL = Path(os.environ.get("BIZLIB") or (ROOT / "business-library")) / "operating-model.md"
 
 
 def _quarter(d: date) -> tuple[int, int]:
