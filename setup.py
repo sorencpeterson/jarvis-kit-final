@@ -70,6 +70,9 @@ PLANS = {
         "daily_token_budget": 400000,
         "morning_profile": "lite",
         "job_daily_apply_cap": 5,
+        "job_apply_model": "claude-haiku-4-5-20251001",
+        "job_apply_concurrency": 1,
+        "job_apply_batch": 5,
         "network_daily": {"connect": 8, "comment": 4, "like": 15, "dm": 3},
     },
     "max": {
@@ -82,6 +85,9 @@ PLANS = {
         "daily_token_budget": 0,
         "morning_profile": "full",
         "job_daily_apply_cap": 10,
+        "job_apply_model": "claude-sonnet-4-6",
+        "job_apply_concurrency": 3,
+        "job_apply_batch": 30,
         "network_daily": {"connect": 10, "comment": 6, "like": 20, "dm": 5},
     },
 }
@@ -183,6 +189,11 @@ def main() -> int:
             "job_daily_apply_cap": PLANS[plan]["job_daily_apply_cap"],
             "cold_daily_enroll": 0,
             "morning_profile": PLANS[plan]["morning_profile"],
+            "job_apply_model": PLANS[plan]["job_apply_model"],
+            "job_apply_concurrency": PLANS[plan]["job_apply_concurrency"],
+            "job_apply_batch": PLANS[plan]["job_apply_batch"],
+            "_apply_note": "Form-filling model and batching. Retune any time: "
+                           "python3 tools/tune_for_plan.py --pro|--max",
             "daily_token_budget": PLANS[plan]["daily_token_budget"],
             "_budget_note": "Output tokens/day before internal features downgrade to "
                             "the cheap default model. 0 = no cap.",

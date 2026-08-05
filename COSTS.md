@@ -85,3 +85,28 @@ interviews, salary negotiation, and proposals. They cost nothing beyond your
 Claude subscription and need no agents, no server, no keys, no scheduling.
 
 Add the agent machinery later, when you know which parts you actually want.
+
+---
+
+## If job applications are eating your limit
+
+Sourcing is free (plain HTTP, zero LLM calls). Applying is where the cost is:
+each application is a `claude -p` session driving a browser, and the cost is the
+agentic loop, snapshot the page, decide, act, snapshot again.
+
+Retune any time:
+
+```bash
+python3 tools/tune_for_plan.py --show    # current settings
+python3 tools/tune_for_plan.py --pro     # cheapest settings that still work
+python3 tools/tune_for_plan.py --max     # throughput over economy
+```
+
+The Pro profile switches form-filling to Haiku, runs one operator at a time in
+batches of 5, and lets the ATS-friction router skip forms that have walled you
+before, so a session is never spent on a CAPTCHA you cannot pass.
+
+**A note on what "applied" means.** If the operator reports success but no
+confirmation email arrives, treat that as unconfirmed rather than applied. The
+system already marks ambiguous submissions uncertain instead of applied for this
+reason. Open one in the ATS and check before trusting the count.
