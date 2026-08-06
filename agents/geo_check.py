@@ -12,6 +12,7 @@ it resolves to the US, so the apply playbook can STOP before submitting a single
 Fail-closed: if the lookup fails, exit 3 (treat as NOT safe) so a network hiccup never
 silently green-lights a Europe-origin apply run.
 """
+from __future__ import annotations
 import json
 import sys
 import urllib.request

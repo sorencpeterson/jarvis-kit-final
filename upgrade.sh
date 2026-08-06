@@ -41,6 +41,27 @@ if [ ! -d agents ] || [ ! -d app ]; then
 fi
 ok "Found an install at $HERE"
 
+# --- 0. is the existing venv new enough? -------------------------------------
+# The original setup instructions produced a venv from macOS's system Python 3.9,
+# which cannot run this code. Catch that here rather than after a confusing
+# import error.
+if [ -x .venv/bin/python ]; then
+  if .venv/bin/python -c 'import sys; sys.exit(0 if sys.version_info >= (3,11) else 1)' 2>/dev/null; then
+    ok "venv Python $(.venv/bin/python -c 'import sys;print("%d.%d"%sys.version_info[:2])')"
+  else
+    OLDV="$(.venv/bin/python -c 'import sys;print("%d.%d"%sys.version_info[:2])' 2>/dev/null)"
+    no "Your .venv is Python $OLDV. This needs 3.11 or newer."
+    inf "That is what the old setup instructions produced. Rebuilding it now"
+    inf "keeps all of your data, it only replaces the Python environment."
+    printf "    Rebuild the venv? [Y/n]: "
+    read -r ANS < /dev/tty || ANS="y"
+    case "${ANS:-y}" in
+      [Nn]*) no "Stopped. Nothing changed."; exit 1 ;;
+      *) rm -rf .venv; REBUILD_VENV=1; ok "old venv removed, will rebuild after the code lands" ;;
+    esac
+  fi
+fi
+
 # --- 1. back up what is yours ------------------------------------------------
 mkdir -p "$BACKUP"
 for keep in store config/owner.json schedule/credentials content/voice.md; do
@@ -72,10 +93,11 @@ rsync -a \
   "$TMP"/ "$HERE"/ && ok "code updated (your data untouched)"
 
 # --- 4. dependencies, in case new ones landed --------------------------------
-if [ -x .venv/bin/pip ]; then
-  .venv/bin/pip install -q -r requirements.txt 2>/dev/null && ok "dependencies current"
+if [ "${REBUILD_VENV:-0}" = "1" ] || [ ! -x .venv/bin/pip ]; then
+  inf "building the Python environment (one minute)"
+  bash install.sh >/dev/null 2>&1 && ok "environment rebuilt" || no "install.sh failed; run it manually"
 else
-  inf "No .venv found. Run: bash install.sh"
+  .venv/bin/pip install -q -r requirements.txt 2>/dev/null && ok "dependencies current"
 fi
 
 # --- 5. tune for the plan ----------------------------------------------------
