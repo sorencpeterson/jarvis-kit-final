@@ -15,6 +15,7 @@ Two things a fresh clone needs before the suite is meaningful:
    an unconfigured system, not a broken one.
 """
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -62,17 +63,35 @@ def requires_store(*filenames):
         reason=f"needs populated store/ ({', '.join(missing)}); run setup.py first",
     )
 
+def _ghl_configured() -> bool:
+    """True only if this install actually has GoHighLevel wired up."""
+    try:
+        cfg = json.loads((ROOT / "store" / "config.json").read_text())
+    except (OSError, json.JSONDecodeError):
+        return False
+    return bool(cfg.get("ghl_api_key") or os.environ.get("GHL_API_KEY"))
+
+
+# Test classes whose assertions require a live GHL connection. On an install
+# without it, the API call fails and the test is asserting on an error string
+# rather than on behaviour, so it skips instead of failing.
+_GHL_CLASSES = ("TestColdFeederLiveGates", "TestStuckDeals")
+
 
 def pytest_collection_modifyitems(config, items):
-    """Auto-skip tests that read store files which do not exist yet."""
+    """Skip tests that need data or connections this install does not have."""
     store = ROOT / "store"
     guarded = {
         "test_profile_and_bank_no_longer_assert_fixed_salary": "application_profile.json",
         "test_no_sd_location_in_answer_bank": "answer_bank.json",
         "test_css_numbers_do_not_widen_the_whitelist": "application_profile.json",
     }
+    ghl_ok = _ghl_configured()
     for item in items:
         need = guarded.get(item.name)
         if need and not (store / need).exists():
             item.add_marker(pytest.mark.skip(
                 reason=f"needs store/{need}; unconfigured clone"))
+        if not ghl_ok and any(c in str(item.cls) for c in _GHL_CLASSES if item.cls):
+            item.add_marker(pytest.mark.skip(
+                reason="needs a configured GoHighLevel connection"))

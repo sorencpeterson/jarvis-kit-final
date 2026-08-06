@@ -100,6 +100,42 @@ else
   .venv/bin/pip install -q -r requirements.txt 2>/dev/null && ok "dependencies current"
 fi
 
+# --- 4b. backfill config keys an older install predates ----------------------
+# An install from before a knob existed will not have it, and some (the models
+# map) change behaviour silently when missing. Add only what is absent; never
+# overwrite a value already set.
+PY=".venv/bin/python"; [ -x "$PY" ] || PY="python3"
+$PY - <<'BACKFILL' 2>/dev/null && ok "config keys backfilled" || inf "backfill skipped"
+import json, os
+from pathlib import Path
+p = Path("store/config.json")
+if p.exists():
+    cfg = json.loads(p.read_text())
+    plan = "pro"
+    try:
+        plan = json.loads(Path("config/owner.json").read_text()).get("claude_plan", "pro")
+    except Exception:
+        pass
+    haiku, sonnet = "claude-haiku-4-5-20251001", "claude-sonnet-4-6"
+    defaults = {
+        "models": ({r: haiku for r in ("default", "interpret", "plan", "tone_screen",
+                                       "brief", "chat_fast", "quality_grade", "jarvis")}
+                   | {r: sonnet for r in ("content", "networking", "reply",
+                                          "proposal", "tailor")}),
+        "morning_profile": "lite" if plan == "pro" else "full",
+        "daily_token_budget": 400000 if plan == "pro" else 0,
+        "job_auto": False,
+        "cold_daily_enroll": 0,
+    }
+    added = [k for k, v in defaults.items() if k not in cfg]
+    for k in added:
+        cfg[k] = defaults[k]
+    if added:
+        t = p.with_suffix(".json.tmp"); t.write_text(json.dumps(cfg, indent=1)); t.replace(p)
+        os.chmod(p, 0o600)
+        print("added: " + ", ".join(added))
+BACKFILL
+
 # --- 5. tune for the plan ----------------------------------------------------
 echo ""
 b "Tuning"
