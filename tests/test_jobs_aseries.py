@@ -162,6 +162,14 @@ def _wire_rab(tmp_path, monkeypatch, jobs_list, reg=None):
     if reg is not None:
         (tmp_path / "resume_variants.json").write_text(json.dumps(reg))
     monkeypatch.setattr(jobs, "load_jobs", lambda: jobs_list)
+    # resume_ab._status_history() reads jobs.QUEUE DIRECTLY (it needs the full
+    # append-only history, which load_jobs folds away), so patching load_jobs
+    # alone leaks the real store in: a live install with a job id matching a
+    # fixture id fails this class. Point QUEUE at a temp log built from the
+    # fixture so the test is isolated on any machine.
+    q = tmp_path / "jobs.jsonl"
+    q.write_text("".join(json.dumps(j) + "\n" for j in jobs_list))
+    monkeypatch.setattr(jobs, "QUEUE", q)
 
 
 class TestResumeAB:
