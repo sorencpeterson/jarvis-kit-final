@@ -765,6 +765,29 @@ def active_queries() -> list[str]:
             return qs
     except (OSError, json.JSONDecodeError, AttributeError):
         pass
+    # config job_queries: THE titles this owner is actually hunting. Without it the
+    # scanner falls through to DEFAULT_QUERIES, which are one particular person's
+    # target roles, so every scan sources jobs the owner does not want and then
+    # spends fit-scoring on them. Set it in store/config.json (setup.py asks).
+    try:
+        cfg = json.loads((ROOT / "store" / "config.json").read_text())
+        qs = cfg.get("job_queries")
+        if isinstance(qs, list) and qs and all(isinstance(q, str) and q for q in qs):
+            return [q.strip() for q in qs if q.strip()]
+    except (OSError, json.JSONDecodeError, AttributeError):
+        pass
+    # last resort: build from the owner's own title rather than a stranger's list
+    try:
+        import owner
+        title = (owner.get("current_title") or "").strip()
+        if title:
+            base = [title, f"Senior {title}", f"{title} remote"]
+            head = title.split()[-1] if title.split() else ""
+            if head and head.lower() not in ("manager", "director"):
+                base.append(f"{head} Manager")
+            return base
+    except Exception:  # noqa: BLE001
+        pass
     return list(DEFAULT_QUERIES)
 
 

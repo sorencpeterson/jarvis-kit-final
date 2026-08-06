@@ -311,7 +311,47 @@ def prune() -> int:
     return removed
 
 
-def run(limit: int = 60, dry_run: bool = False, only_ids: set[str] | None = None) -> int:
+def _tailor_limit(default: int = 60) -> int:
+    """How many resumes to tailor per run.
+
+    Each one is a separate Sonnet call, so this is the largest LLM cost in the
+    job pipeline. Tailoring 60 when the daily apply cap is 5 spends ~55 calls on
+    jobs that will not be applied to today, and the PDFs are cached anyway, so
+    tomorrow's run would have picked them up for free.
+
+    config resume_tailor_limit wins; otherwise track the apply cap with a little
+    headroom (a couple of jobs get skipped by the preflight/dup guards).
+    """
+    try:
+        cfg = json.loads((ROOT / "store" / "config.json").read_text())
+    except (OSError, json.JSONDecodeError):
+        return default
+    explicit = cfg.get("resume_tailor_limit")
+    if explicit is not None:
+        try:
+            return max(0, int(explicit))
+        except (TypeError, ValueError):
+            pass
+    try:
+        return max(3, int(cfg.get("job_daily_apply_cap", default)) + 2)
+    except (TypeError, ValueError):
+        return default
+
+
+def _tailor_order(all_jobs: list) -> list:
+    """Approved before pending, then best fit first.
+
+    The old order was whatever order the store happened to be in, so a capped
+    run could spend its whole budget tailoring low-fit jobs it will never submit
+    while the high-fit ones went untailored.
+    """
+    def key(j):
+        approved = 0 if j.get("status") == "approved" else 1
+        return (approved, -(j.get("fit") or 0))
+    return sorted(all_jobs, key=key)
+
+
+def run(limit: int | None = None, dry_run: bool = False, only_ids: set[str] | None = None) -> int:
     if not _enabled():
         print("resume_tailor: disabled (job_tailor_resume=0)")
         return 0
@@ -328,8 +368,10 @@ def run(limit: int = 60, dry_run: bool = False, only_ids: set[str] | None = None
     cur_sum = re.sub(r"\s+", " ", _strip_tags(m_sum.group(2))).strip()
     facts = resume_text(template)   # visible text only; also the number whitelist source
 
+    if limit is None:
+        limit = _tailor_limit()
     done = skipped = failed = 0
-    for j in jobs.load_jobs():
+    for j in _tailor_order(jobs.load_jobs()):
         if done >= limit:
             break
         jid = j.get("id")
@@ -367,7 +409,8 @@ def run(limit: int = 60, dry_run: bool = False, only_ids: set[str] | None = None
 
 def main() -> int:
     ap = argparse.ArgumentParser(description="Per-job tailored resume PDFs")
-    ap.add_argument("--limit", type=int, default=60)
+    ap.add_argument("--limit", type=int, default=None,
+                    help="override the config-derived limit")
     ap.add_argument("--dry-run", action="store_true")
     ap.add_argument("--jobs", help="comma-separated job ids to tailor (default: all approved/pending)")
     a = ap.parse_args()

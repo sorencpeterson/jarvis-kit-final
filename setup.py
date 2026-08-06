@@ -35,6 +35,7 @@ FIELDS = [
 
 JOB_FIELDS = [
     ("current_title", "Current/most recent job title", "", False),
+    ("target_roles", "Job titles to search for (comma separated)", "", False),
     ("years_experience", "Years of experience", "", False),
     ("work_authorization", "Work authorization", "US citizen", False),
     ("salary_expectation", "Salary expectation (or 'Open')", "Open", False),
@@ -91,6 +92,28 @@ PLANS = {
         "network_daily": {"connect": 10, "comment": 6, "like": 20, "dm": 5},
     },
 }
+
+
+def _queries_from(cfg: dict) -> list:
+    """Build the scanner's query list from the owner's own target roles.
+
+    The scanner ships with a fallback list of one particular person's target
+    titles. Left unset, every scan sources jobs the owner does not want. Expand
+    each role into a couple of variants so one entry still returns a useful pool.
+    """
+    raw = (cfg.get("target_roles") or cfg.get("current_title") or "").strip()
+    if not raw:
+        return []
+    out = []
+    for role in [r.strip() for r in raw.split(",") if r.strip()]:
+        out += [role, f"Senior {role}"]
+        if "remote" not in role.lower():
+            out.append(f"{role} remote")
+    seen, uniq = set(), []
+    for q in out:
+        if q.lower() not in seen:
+            seen.add(q.lower()); uniq.append(q)
+    return uniq[:24]   # 3s pacing per query, so keep a scan under ~90s
 
 
 def pick_plan(default: str = "pro") -> str:
@@ -189,6 +212,9 @@ def main() -> int:
             "job_daily_apply_cap": PLANS[plan]["job_daily_apply_cap"],
             "cold_daily_enroll": 0,
             "morning_profile": PLANS[plan]["morning_profile"],
+            "job_queries": _queries_from(cfg),
+            "_queries_note": "Titles the job scanner searches. Without this it falls "
+                             "back to a generic list that is probably not your field.",
             "job_apply_model": PLANS[plan]["job_apply_model"],
             "job_apply_concurrency": PLANS[plan]["job_apply_concurrency"],
             "job_apply_batch": PLANS[plan]["job_apply_batch"],

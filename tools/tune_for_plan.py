@@ -37,6 +37,7 @@ PROFILES = {
         "job_apply_concurrency": 1,
         "job_apply_batch": 5,
         "job_daily_apply_cap": 5,
+        "resume_tailor_limit": 7,
         "daily_token_budget": 400000,
         "morning_profile": "lite",
         "why": [
@@ -46,6 +47,9 @@ PROFILES = {
             "and a gentler burst against the 5-hour window.",
             "The ATS-friction router skips forms that have walled you before, so a "
             "session is never spent on a CAPTCHA you cannot pass anyway.",
+            "Resume tailoring is capped near the apply cap. It is one Sonnet call per "
+            "job, so tailoring 60 when you apply to 5 spent ~55 calls on jobs you were "
+            "never going to submit that day. The PDFs cache, so nothing is lost.",
         ],
     },
     "max": {
@@ -54,6 +58,7 @@ PROFILES = {
         "job_apply_concurrency": 3,
         "job_apply_batch": 30,
         "job_daily_apply_cap": 10,
+        "resume_tailor_limit": 12,
         "daily_token_budget": 0,
         "morning_profile": "full",
         "why": ["Throughput over economy: Sonnet, three parallel operators, big batches."],
@@ -61,7 +66,8 @@ PROFILES = {
 }
 
 KEYS = ("job_apply_model", "job_apply_concurrency", "job_apply_batch",
-        "job_daily_apply_cap", "daily_token_budget", "morning_profile")
+        "job_daily_apply_cap", "resume_tailor_limit", "daily_token_budget",
+        "morning_profile")
 
 
 def load() -> dict:

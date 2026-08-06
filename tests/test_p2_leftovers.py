@@ -245,12 +245,30 @@ class TestQueryRotationHandshake:
         assert json.loads(rot.read_text())["generated"]
 
     def test_missing_file_falls_back_to_static(self, tmp_path, monkeypatch):
+        # resolution order is rotation -> config job_queries -> owner title -> static.
+        # Point ROOT at an empty dir so neither config nor owner can answer, which
+        # is what actually exercises the static fallback.
         monkeypatch.setattr(jobs, "ROTATION", tmp_path / "absent.json")
+        monkeypatch.setattr(jobs, "ROOT", tmp_path)
+        import owner
+        monkeypatch.setattr(owner, "_cache", {})
         assert jobs.active_queries() == list(jobs.DEFAULT_QUERIES)
+
+    def test_config_job_queries_win_over_static(self, tmp_path, monkeypatch):
+        """An owner's own target titles must beat the shipped default list."""
+        monkeypatch.setattr(jobs, "ROTATION", tmp_path / "absent.json")
+        monkeypatch.setattr(jobs, "ROOT", tmp_path)
+        (tmp_path / "store").mkdir()
+        (tmp_path / "store" / "config.json").write_text(
+            json.dumps({"job_queries": ["Pet Groomer Marketing", "Local SEO"]}))
+        assert jobs.active_queries() == ["Pet Groomer Marketing", "Local SEO"]
 
     def test_corrupt_empty_or_wrong_shape_falls_back(self, tmp_path, monkeypatch):
         rot = tmp_path / "job_query_rotation.json"
         monkeypatch.setattr(jobs, "ROTATION", rot)
+        monkeypatch.setattr(jobs, "ROOT", tmp_path)
+        import owner
+        monkeypatch.setattr(owner, "_cache", {})
         for bad in ("{not json", json.dumps({"queries": []}),
                     json.dumps({"queries": "nope"}), json.dumps({"queries": ["ok", 5]}),
                     json.dumps(["a", "b"])):

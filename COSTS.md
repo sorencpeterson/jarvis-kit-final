@@ -110,3 +110,31 @@ before, so a session is never spent on a CAPTCHA you cannot pass.
 confirmation email arrives, treat that as unconfirmed rather than applied. The
 system already marks ambiguous submissions uncertain instead of applied for this
 reason. Open one in the ATS and check before trusting the count.
+
+---
+
+## Two things worth checking on the job side
+
+**Is the scanner searching for YOUR roles?**
+
+```bash
+python3 -c "import sys;sys.path[:0]=['.','app','agents'];import jobs;print(jobs.active_queries()[:6])"
+```
+
+If those titles are not what you want, set them:
+
+```json
+"job_queries": ["Your Target Title", "Another Title"]
+```
+
+in `store/config.json`, or re-run `setup.py` and answer the target-roles
+question. Left unset it falls back to a generic list, and every scan then sources
+jobs you do not want and spends fit-scoring on them. Sourcing itself is free, so
+this costs accuracy rather than tokens, but a queue full of wrong roles is worse
+than an empty one.
+
+**Resume tailoring is one Sonnet call per job.** It is the largest LLM cost in
+the pipeline, larger than applying on some days. `resume_tailor_limit` tracks the
+apply cap so it stops tailoring resumes for jobs it will not submit today. The
+PDFs are cached, so tomorrow's run picks up where this one stopped and nothing is
+wasted.
