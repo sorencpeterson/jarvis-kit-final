@@ -16,7 +16,7 @@
 #
 # `make snapshot` / `make rotate` are separate, explicit, safe-to-run-anytime operational
 # tasks (backup store/, rotate oversized agent logs) — not part of the syntax/test gate.
-.PHONY: doctor ast-check selftest config-check pytest golden snapshot rotate
+.PHONY: doctor ast-check selftest config-check pytest golden snapshot rotate server-fresh
 
 PY := .venv/bin/python
 
@@ -28,9 +28,17 @@ test: ast-check pytest
 # `doctor` is the full sweep for a RUNNING system. It additionally checks that the
 # server is up, launchd jobs are loaded and config is populated, so it will fail on
 # a fresh clone by design. Use `make test` until you have the server running.
-doctor: ast-check selftest config-check pytest
+doctor: ast-check selftest config-check server-fresh pytest
 	@echo ""
 	@echo "make doctor: ALL GREEN"
+
+# Is the RUNNING process newer than app/server.py? A green suite proves the file,
+# not the process; a sibling install ran 10-day-old code under a green suite and
+# burned 80 queued jobs on a guard that was fixed on disk but inert in memory
+# (field report 2026-08-12, A3). Cheap, so doctor always runs it.
+server-fresh:
+	@echo "== server-fresh: does the :8765 process postdate app/server.py? =="
+	@$(PY) tools/check_server_fresh.py
 
 ast-check:
 	@echo "== ast-check: parsing every agents/*.py and app/*.py =="

@@ -77,7 +77,8 @@ Comments render inside `<main>`, so they're simpler:
 
 ## Append snippet (confirmed working)
 ```bash
-cd [HOME][OWNER_HANDLE]/Claude/second-brain && .venv/bin/python -c "
+# from the repo root (the folder with agents/ and app/):
+.venv/bin/python -c "
 import json, sys
 sys.path.insert(0, 'app')
 from store_lib import now_iso

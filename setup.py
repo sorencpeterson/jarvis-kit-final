@@ -237,12 +237,20 @@ def main() -> int:
     ap = STORE / "application_profile.json"
     if not ap.exists():
         parts = cfg["name"].split()
+        city = cfg.get("city", "")
+        # 'Austin, TX' -> state_abbrev 'TX'; forms constantly want the bare two-letter
+        # code and a 5-digit ZIP separately, and an operator improvising either was a
+        # real observed failure (ZIP+4 into a 5-digit validator, state left unselected
+        # -- field report 2026-08-12, E7/E8)
+        st = city.rsplit(",", 1)[-1].strip() if "," in city else ""
         ap.write_text(json.dumps({
             "full_name": cfg["name"],
             "first_name": parts[0] if parts else "",
             "last_name": parts[-1] if len(parts) > 1 else "",
             "email": cfg["email"], "phone": "",
-            "city_state": cfg.get("city", ""), "country": "United States",
+            "city_state": city, "country": "United States",
+            "state_abbrev": st if len(st) == 2 else "",
+            "street_address": "", "zip5": "",
             "linkedin": cfg.get("linkedin", ""), "portfolio": cfg.get("site", ""),
             "current_title": cfg.get("current_title", ""),
             "years_experience": cfg.get("years_experience", ""),
@@ -251,6 +259,10 @@ def main() -> int:
             "salary_expectation": cfg.get("salary_expectation", "Open"),
             "availability": cfg.get("availability", "2 weeks"),
             "default_cover": "", "education": "",
+            "eeo": {"_note": "Voluntary EEO answers (gender, race/ethnicity, veteran, "
+                             "disability). Fill what you're comfortable sharing; the "
+                             "operator selects 'decline to answer' for anything left "
+                             "blank here, never guesses."},
         }, indent=1)); made += 1
     print(f"  scaffolded {made} file(s) in store/")
 
@@ -283,8 +295,10 @@ def main() -> int:
     print("  Next:")
     print("    1. python3 connect.py      hook up your accounts (all optional)")
     print("    2. Put your real resume in store/resume-draft.html (job search only)")
-    print("    3. cp -r skills/yours/* ~/.claude/skills/   the fastest win")
-    print("    4. Read README.md for what to turn on first")
+    print("    3. python3 agents/answer_bank.py --seed   1 minute; pre-answers the")
+    print("       standard screeners so applications stop paying an LLM for each one")
+    print("    4. cp -r skills/yours/* ~/.claude/skills/   the fastest win")
+    print("    5. Read README.md for what to turn on first")
     print("\n  Nothing sends anything until you explicitly enable it.\n")
     return 0
 

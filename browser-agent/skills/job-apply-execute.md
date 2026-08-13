@@ -20,7 +20,8 @@ Also: if any ATS page asks for browser location / geolocation permission, DENY i
 
 ## Inputs (load these first)
 ```bash
-cd [HOME][OWNER_HANDLE]/Claude/second-brain && .venv/bin/python -c "import sys,json;[sys.path.insert(0,p) for p in ('.','app','agents')];import jobs;print(json.dumps({'profile':jobs.load_profile(),'jobs':[{k:x.get(k) for k in ('id','title','company','source','apply_url')} for x in jobs.approved_to_apply()]}))"
+# from the repo root (the folder with agents/ and app/):
+.venv/bin/python -c "import sys,json;[sys.path.insert(0,p) for p in ('.','app','agents')];import jobs;print(json.dumps({'profile':jobs.load_profile(),'jobs':[{k:x.get(k) for k in ('id','title','company','source','apply_url')} for x in jobs.approved_to_apply()]}))"
 ```
 This returns the application profile (standard answers) + the approved jobs already trimmed to today's apply cap. Resume PDF to upload lives at `store/resume.pdf`. Full resume text is available via the `get_resume` MCP tool (load via ToolSearch) for writing custom answers.
 
@@ -36,10 +37,12 @@ This returns the application profile (standard answers) + the approved jobs alre
 2. Fill standard fields from the profile: first/last name, email, phone, city/state, country, LinkedIn, portfolio. Upload `store/resume.pdf` to the resume field.
 3. **Custom questions** ("why interested", "describe your experience with X", cover letter): write a SHORT, specific answer in [OWNER]'s voice using his real resume/background. Honest, no fluff, no em-dashes. Use the profile's `default_cover` as the base for generic cover-letter fields.
 4. Set salary/availability/work-authorization from the profile fields exactly.
-5. Submit. Then mark it applied:
+5. Submit, then CONFIRM it landed: look for the confirmation page, banner, or thank-you message. You must SEE a confirmation signal, not assume one. Then mark it applied, quoting what you saw (max ~120 chars) as the reason:
 ```bash
-cd [HOME][OWNER_HANDLE]/Claude/second-brain && .venv/bin/python -c "import sys;[sys.path.insert(0,p) for p in ('.','app','agents')];import jobs;jobs.set_status('JOB_ID','applied')"
+# from the repo root (the folder with agents/ and app/):
+.venv/bin/python -c "import sys;[sys.path.insert(0,p) for p in ('.','app','agents')];import jobs;jobs.set_status('JOB_ID','applied','confirm: QUOTE_OF_THE_CONFIRMATION_YOU_SAW')"
 ```
+If the submit looked clean but NO confirmation appeared anywhere, still mark it applied but with reason `unconfirmed (no confirmation shown; verify in ATS)` — never invent a quote. That exact word routes it to the human verify pile instead of being counted as certain.
 (Use `skipped` instead, with a note in your report, for any you couldn't complete.)
 
 ## Report

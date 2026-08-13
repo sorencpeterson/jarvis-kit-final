@@ -17,7 +17,8 @@ this agent produces that, per approved job, without ever touching the facts:
        - em-dashes/en-dashes and AI cover-letter cliches are banned
        - length bounds on both blocks
     3. Render to a one-page PDF via the playwright-project's chromium
-       (node subprocess), verify page count == 1 and sane size.
+       (node subprocess), or plain headless Chrome when no playwright-project
+       exists; verify page count and sane size.
   Any failure at any step -> NO file is written and the apply operator falls
   back to the static store/resume.pdf. This agent can only ever add a better
   option, never break an apply.
@@ -43,6 +44,7 @@ import html
 import json
 import os
 import re
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -56,6 +58,42 @@ import jobs  # noqa: E402
 TEMPLATE = ROOT / "store" / "resume-draft.html"
 OUT_DIR = ROOT / "store" / "resume_tailored"
 PW_DIR = Path(os.environ.get("PLAYWRIGHT_DIR") or (ROOT / "playwright-project"))
+
+# Fallback renderer when there is no playwright-project checkout: a plain headless
+# Chrome/Chromium --print-to-pdf, no new dependency. The original code ASSUMED the
+# sibling playwright-project existed; on a machine without one, every tailoring run
+# paid its full LLM call and then silently discarded the output -- a sibling install
+# measured 81k tokens burned producing zero files, invisible because a failed render
+# is indistinguishable from "no tailored file" (field report 2026-08-12, C1).
+_CHROME_BINS = (
+    "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+    "/Applications/Chromium.app/Contents/MacOS/Chromium",
+    "google-chrome", "chromium", "chromium-browser", "chrome",
+)
+
+
+def _chrome_bin() -> str | None:
+    for c in _CHROME_BINS:
+        if c.startswith("/"):
+            if Path(c).exists():
+                return c
+        else:
+            w = shutil.which(c)
+            if w:
+                return w
+    return None
+
+
+def _renderer_available() -> str:
+    """Which PDF renderer this machine actually has: 'playwright', 'chrome', or ''
+    for none. Callers MUST check this BEFORE spending LLM tokens on content that
+    cannot be rendered (C1: the render failure is silent by design, so the only
+    cheap place to catch a renderer-less machine is before the spend)."""
+    if PW_DIR.exists() and shutil.which("node"):
+        return "playwright"
+    if _chrome_bin():
+        return "chrome"
+    return ""
 
 # the ONLY two blocks the LLM may rewrite; both regexes match exactly once in
 # the committed template (test_resume_tailor pins this)
@@ -238,8 +276,9 @@ _RENDER_JS = (
 
 
 def render_pdf(doc_html: str, out_pdf: Path) -> bool:
-    """Print html to a one-page Letter PDF with playwright-project's chromium.
-    True only when the render is >20KB and is exactly 1 page. Callers must
+    """Print html to a one-page Letter PDF with playwright-project's chromium,
+    falling back to plain headless Chrome/Chromium when no playwright-project
+    exists (C1). True only when the render is >20KB and one page. Callers must
     build out_pdf from safe_name() -- this function additionally refuses any
     path that resolves outside OUT_DIR (defense in depth).
 
@@ -261,13 +300,35 @@ def render_pdf(doc_html: str, out_pdf: Path) -> bool:
     try:
         out_pdf.parent.mkdir(parents=True, exist_ok=True)
         tmp_html.write_text(doc_html)
-        env = {**os.environ, "RT_HTML": str(tmp_html), "RT_PDF": str(tmp_pdf)}
-        r = subprocess.run(["node", "-e", _RENDER_JS], cwd=PW_DIR, env=env,
+        rendered = False
+        if PW_DIR.exists() and shutil.which("node"):
+            env = {**os.environ, "RT_HTML": str(tmp_html), "RT_PDF": str(tmp_pdf)}
+            r = subprocess.run(["node", "-e", _RENDER_JS], cwd=PW_DIR, env=env,
+                               capture_output=True, text=True, timeout=90)
+            rendered = r.returncode == 0 and tmp_pdf.exists()
+        if not rendered:
+            # no playwright-project (or its render failed): plain headless Chrome (C1)
+            chrome = _chrome_bin()
+            if not chrome:
+                return False
+            subprocess.run([chrome, "--headless", "--disable-gpu",
+                            "--no-pdf-header-footer",
+                            f"--print-to-pdf={tmp_pdf}", tmp_html.as_uri()],
                            capture_output=True, text=True, timeout=90)
-        if r.returncode != 0 or not tmp_pdf.exists() or tmp_pdf.stat().st_size < 20000:
+            rendered = tmp_pdf.exists()
+        if not rendered or tmp_pdf.stat().st_size < 20000:
             return False
         raw = tmp_pdf.read_bytes().decode("latin1")
-        if len(re.findall(r"/Type\s*/Page[^s]", raw)) != 1:
+        # one-page check: count uncompressed /Type /Page objects; when none are visible
+        # (Chrome packs objects into compressed object streams) fall back to the Pages
+        # tree /Count. Reject only a COUNTABLE multi-page render -- an uncountable one
+        # passes, since discarding every Chrome render would recreate exactly the C1
+        # silent-waste this fallback exists to fix.
+        pages = len(re.findall(r"/Type\s*/Page[^s]", raw))
+        if pages == 0:
+            m = re.search(r"/Count\s+(\d+)", raw)
+            pages = int(m.group(1)) if m else 0
+        if pages > 1:
             return False
         os.replace(tmp_pdf, out_pdf)  # atomic: out_pdf only ever becomes a fully-validated render
         return True
@@ -354,6 +415,13 @@ def _tailor_order(all_jobs: list) -> list:
 def run(limit: int | None = None, dry_run: bool = False, only_ids: set[str] | None = None) -> int:
     if not _enabled():
         print("resume_tailor: disabled (job_tailor_resume=0)")
+        return 0
+    if not dry_run and not _renderer_available():
+        # BEFORE any LLM spend: with no renderer, every tailoring call would pay its
+        # full token cost and silently discard the output (field report 2026-08-12, C1)
+        print("resume_tailor: NO PDF renderer on this machine (need node + a "
+              "playwright-project checkout, or any Chrome/Chromium install). "
+              "Skipping so no LLM tokens are spent on renders that would be discarded.")
         return 0
     try:
         template = TEMPLATE.read_text()

@@ -594,6 +594,61 @@ def needs_manual() -> list[dict]:
     return out
 
 
+def needs_verify() -> list[dict]:
+    """Jobs whose TRUE SUBMISSION STATE IS UNKNOWN -- a human should check the ATS
+    directly. Three ways in: the operator died mid-flight (inflight_timeout), it hit
+    the attempt cap after possibly submitting (attempt_cap), or it reported applied
+    without quoting any submission confirmation (the /applied callback tags those
+    'unconfirmed'). Distinct from needs_manual(), which is walls a human can finish;
+    this pile is submissions nobody can prove happened. A sibling install's field
+    report (2026-08-12, 9.1-9.3) found this is the system's biggest epistemic hole:
+    treating these as not-applied risks double-applying, treating them as applied
+    risks abandoning live opportunities, and the count grows on every failed run.
+    Surface them; let the human decide."""
+    out = []
+    for x in load_jobs():
+        st = x.get("status")
+        r = (x.get("reason") or "").lower()
+        uncertain = (
+            (st == "skipped" and (r.startswith("inflight_timeout") or r.startswith("attempt_cap")))
+            or (st == "applied" and r.startswith("unconfirmed"))
+        )
+        if uncertain:
+            out.append({"id": x.get("id"), "title": x.get("title"), "company": x.get("company"),
+                        "status": st, "apply_url": x.get("apply_url"),
+                        "source": x.get("source"), "reason": x.get("reason")})
+    return out
+
+
+def note_fields(job_id: str, **fields) -> None:
+    """Attach small metadata fields to a job record (append-only, last-write-wins),
+    without touching status. First user: _build_prompt stamping resume_file so the
+    applied-callback can attribute the resume that actually went OUT instead of
+    re-deriving it from whatever file exists at callback time (field report
+    2026-08-12, C3)."""
+    from store_lib import _flock
+    with _flock(QUEUE):
+        rec = next((x for x in load_jobs() if x.get("id") == job_id), None)
+        if not rec:
+            return
+        rec.update(fields)
+        QUEUE.parent.mkdir(parents=True, exist_ok=True)
+        with QUEUE.open("a") as f:
+            f.write(json.dumps(rec, ensure_ascii=False) + "\n")
+
+
+def _stated_yoe() -> int:
+    """The owner's stated years of experience, for the auto-reject gate. Read from the
+    owner config at call time -- the previous hardcoded 6 was the ORIGINAL owner's
+    number, so every other install was gating (and phrasing its skip reasons) against
+    a stranger's resume (field report 2026-08-12, B2)."""
+    try:
+        import owner
+        return max(0, int(str(owner.get("years_experience", "6") or "6").strip()))
+    except Exception:  # noqa: BLE001
+        return 6
+
+
 def _target() -> int:
     try:
         return int(json.loads((ROOT / "store" / "config.json").read_text()).get("job_scan_target", 200))
@@ -823,8 +878,9 @@ APPLY_RANK = {"recruitee": 0, "lever": 0, "ashby": 0, "ashbyhq": 0,
 
 
 def preflight_drop(batch: list) -> list:
-    """Cheaply drop clearly-dead listings (HTTP 404/410) before spawning expensive LLM operators.
-    Board listing pages and any non-404/410 response are kept (let the operator decide)."""
+    """Cheaply resolve listings BEFORE spawning expensive LLM operators: HTTP 404/410 =
+    dead (expired), a GET-confirmed 401/403 = bot-walled (diverted to the human pile).
+    Board listing pages and everything else are kept (let the operator decide)."""
     import urllib.error
     alive = []
     for j in batch:
@@ -851,6 +907,28 @@ def preflight_drop(batch: list) -> list:
         except urllib.error.HTTPError as e:
             if e.code in (404, 410):
                 set_status(j["id"], "expired", reason="dead_listing")
+            elif e.code in (401, 403):
+                # Likely bot-blocked, NOT a dead role -- but some ATSes 403 only the HEAD
+                # verb, so confirm with one GET before deciding (a false divert costs a
+                # perfectly automatable job). A confirmed wall goes straight to the manual
+                # pile instead of spending a full operator session rediscovering the same
+                # 403 (field report 2026-08-12, D3). Marking it expired would be wrong too:
+                # a human browser can usually still open it. The 'ats_wall_divert' prefix
+                # is a member of _HUMAN_FINISHABLE, which is what routes it to
+                # needs_manual(); changing the prefix silently drops it from that pile.
+                try:
+                    net_guard.safe_urlopen(u, method="GET", timeout=8)
+                    alive.append(j)
+                except urllib.error.HTTPError as e2:
+                    if e2.code in (401, 403):
+                        set_status(j["id"], "skipped",
+                                   reason=f"ats_wall_divert (HTTP {e2.code} at preflight; "
+                                          "likely bot-blocked, a human browser can usually "
+                                          "still apply)")
+                    else:
+                        alive.append(j)
+                except Exception:  # noqa: BLE001
+                    alive.append(j)
             else:
                 alive.append(j)
         except Exception:  # noqa: BLE001  (network hiccup -> keep, don't drop a live job)
@@ -902,7 +980,7 @@ def approved_to_apply() -> list[dict]:
     Excludes blacklisted sources and jobs that already burned 2 attempts (poison-pill guard).
     Postmortem guards (2026-07-03, 0/135 diagnosis): one submission per EMPLOYER ever
     (21.5% of the first sprint were duplicate-company submissions), no roles asking
-    8+ YOE against his stated 6 (auto-reject territory), fit floor 62 (kills the
+    2+ years past the owner's stated YOE (auto-reject territory), fit floor 62 (kills the
     48-59 tail that was slipping into the queue).
 
     D223/D229/D231/D254 (job_fit_signals.py, 2026-07-03 D-lane build): additive
@@ -965,8 +1043,9 @@ def approved_to_apply() -> list[dict]:
         if age is not None and age > _MAX_AGE:
             return f"stale_at_selection (age {age}d > {_MAX_AGE}d)"
         try:
-            if int(str(x.get("yoe") or 0)) >= 8:
-                return f"yoe_gate ({x.get('yoe')} required vs 6 stated)"
+            _yoe_stated = _stated_yoe()
+            if int(str(x.get("yoe") or 0)) >= _yoe_stated + 2:
+                return f"yoe_gate ({x.get('yoe')} required vs {_yoe_stated} stated)"
         except (ValueError, TypeError):
             pass
         if x.get("fit", 50) < 62:

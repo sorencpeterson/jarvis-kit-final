@@ -338,6 +338,43 @@ def multi_location_dupe_reason(job: dict, all_jobs: list[dict]) -> str:
     return ""
 
 
+# ---- cross-listed requisition guard (sibling field report 2026-08-12, F1) ----
+_REQ_NUM = re.compile(r"\b\d{4,}\b")
+
+
+def _req_numbers(title: str) -> set[str]:
+    """4+ digit requisition numbers in a title, excluding bare years: 'Marketing
+    Manager (32693)' carries a req number; 'Marketing Manager 2026' carries a date."""
+    return {n for n in _REQ_NUM.findall(title or "")
+            if not (1900 <= int(n) <= 2099)}
+
+
+def req_number_dupe_reason(job: dict, all_jobs: list[dict]) -> str:
+    """One requisition posted under TWO company names (a staffing firm and the end
+    client, or two sibling brands) evades every company-keyed dedupe -- two real
+    cases hit a sibling install ('Marketing Manager (32693)' under both the
+    consultancy and the client; adjacent Greenhouse ids for the same role under two
+    Precision-brand names). A shared requisition number in the title is
+    company-AGNOSTIC evidence it is the same req; applying twice reads as careless
+    and burns the one-per-employer guard on a duplicate. Same better-ranked-survivor
+    rule as multi_location_dupe_reason (R2-18) so two still-approved siblings can't
+    mutually block each other into zero candidates."""
+    nums = _req_numbers(job.get("title"))
+    if not nums:
+        return ""
+    my_rank = _dupe_rank(job)
+    for other in all_jobs:
+        if other.get("id") == job.get("id"):
+            continue
+        if other.get("status") not in ("approved", "applied", "confirmed", "interview", "replied"):
+            continue
+        if not (nums & _req_numbers(other.get("title"))):
+            continue
+        if _dupe_rank(other) < my_rank:
+            return f"req_number_dupe (same requisition as {other.get('id')})"
+    return ""
+
+
 # ---- D232 remote-verification (hybrid disguised as remote) ----
 _HYBRID_TELL = re.compile(
     r"\b(hybrid|(\d+)\s*days?\s*(a|per)\s*week\s*(in|on-?site|in-?office)|"
@@ -531,6 +568,9 @@ def extra_block_reason(job: dict, all_jobs: list[dict] | None = None) -> str:
             return r
     if all_jobs is not None:
         r = multi_location_dupe_reason(job, all_jobs)
+        if r:
+            return r
+        r = req_number_dupe_reason(job, all_jobs)
         if r:
             return r
         try:

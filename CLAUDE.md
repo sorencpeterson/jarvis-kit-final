@@ -34,12 +34,26 @@ prints the current one.
 ## Before you say a change works
 
 ```bash
-make test        # syntax + ~2014 tests, no server needed. USE THIS.
+make test        # syntax + ~2040 tests, no server needed. USE THIS.
 make doctor      # the above PLUS live-server and launchd checks
 ```
 
 `make doctor` fails on a fresh clone by design, and on a machine running another
 copy its port check can pass against somebody else's server. Prefer `make test`.
+
+**A green suite proves the file, not the process.** The server is a long-lived
+process; after any `app/server.py` change it keeps running the OLD code from
+memory until restarted, and no test can tell the difference. A sibling install
+shipped fixes into a file a ten-day-old process never re-read and burned 80
+queued jobs on a guard that was correct on disk and inert in memory. After any
+server change: restart it, then
+
+```bash
+python3 tools/check_server_fresh.py
+```
+
+which fails if the process on :8765 predates the file. A change to `app/` is
+not "done" until that passes.
 
 For agents specifically:
 

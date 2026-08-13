@@ -12,6 +12,8 @@ from __future__ import annotations
 
 import json
 import re
+
+import pytest
 from pathlib import Path
 import sys
 
@@ -94,9 +96,13 @@ class TestHuntRegressions:
         # ... AND the same 8-hex sha1(raw id) suffix safe_name appends (CX-G2/R2-45, closed
         # 2026-07-13 by the server agent).
         assert r'sha1(_raw.encode(' in src and "[:8]" in src
-        # api_jobs_applied's attribution calls the real function directly, so it auto-picks up
-        # any future safe_name() fix (no server.py edit needed for that call site).
-        assert "resume_tailor.safe_name(jid)" in src
+        # api_jobs_applied's attribution no longer derives a filename AT ALL: it reads the
+        # resume_file stamp _build_prompt wrote at spawn time (jobs.note_fields), so it
+        # records what actually went out rather than what exists at callback time (field
+        # report 2026-08-12, C3). The intent this line used to guard -- "the callback
+        # attributes the correct file" -- is now carried by the stamp round-trip.
+        assert 'res.get("resume_file")' in src
+        assert "jobs.note_fields" in src
 
         def _server_inline_full(jid: str) -> str:
             # a faithful reconstruction of app/server.py _resume_line's spelling
@@ -131,6 +137,17 @@ class TestRenderPdfAtomicity:
     at >=20KB used to survive, look like "already tailored" on the next run, and get uploaded.
     render_pdf now renders to a PID-scoped temp file and os.replace()s it into place only once
     every check passes; the finally block unlinks the temp file regardless of its size."""
+
+    @pytest.fixture(autouse=True)
+    def _force_node_path(self, tmp_path, monkeypatch):
+        # render_pdf now gates the node renderer on PW_DIR existing + node on PATH, and
+        # otherwise falls back to headless Chrome (field report 2026-08-12, C1). These
+        # tests exercise the NODE path's validation mechanics; force that path so the
+        # mock's env['RT_PDF'] contract holds on machines with no playwright-project
+        # checkout -- without this, the mock crashed inside the Chrome branch and the
+        # False-expecting tests here passed for the wrong reason.
+        monkeypatch.setattr(rt, "PW_DIR", tmp_path)
+        monkeypatch.setattr(rt.shutil, "which", lambda c: "/usr/bin/node")
 
     @staticmethod
     def _fake_run(page_markers: int, size_pad: int = 20000):

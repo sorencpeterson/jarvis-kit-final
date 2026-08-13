@@ -41,6 +41,38 @@ if [ ! -d agents ] || [ ! -d app ]; then
 fi
 ok "Found an install at $HERE"
 
+# --- 0a. refuse to bury local code work --------------------------------------
+# A sibling install ran this upgrader over a tree carrying local commits and lost a
+# working, extended server to an older upstream: -519 lines of server.py, fourteen
+# API routes gone, and the safety test that guarded "nothing sends without a click"
+# failing on a crash instead of the gate (field report 2026-08-12, A1/A2). If you
+# have committed or uncommitted CODE changes, stop and say so; --force proceeds
+# anyway with a copy of every modified file in the backup (and committed work is
+# always recoverable from git history, which this script never touches).
+FORCE=0; for a in "$@"; do [ "$a" = "--force" ] && FORCE=1; done
+if [ -d .git ] && command -v git >/dev/null 2>&1; then
+  DIRTY="$(git status --porcelain 2>/dev/null | grep -v '^??' | head -20)"
+  LOCAL="$(git rev-list --count HEAD --not --remotes 2>/dev/null | tr -d '[:space:]')"
+  if [ -n "$DIRTY" ] || [ "${LOCAL:-0}" -gt 0 ] 2>/dev/null; then
+    no "You have local code work here: ${LOCAL:-0} commit(s) not on any remote$([ -n "$DIRTY" ] && echo ', plus modified files:')"
+    [ -n "$DIRTY" ] && printf '%s\n' "$DIRTY" | sed 's/^/      /'
+    inf "This upgrade replaces code files with upstream's and would bury that work."
+    inf "Either merge upstream yourself (commit everything, then git pull --rebase),"
+    inf "or re-run with --force to proceed anyway."
+    if [ "$FORCE" != "1" ]; then
+      no "Stopped. Nothing changed."
+      exit 1
+    fi
+    git diff --name-only HEAD 2>/dev/null | while IFS= read -r f; do
+      if [ -f "$f" ]; then
+        mkdir -p "$BACKUP/local-code/$(dirname "$f")"
+        cp "$f" "$BACKUP/local-code/$f" 2>/dev/null
+      fi
+    done
+    ok "modified files copied to the backup; proceeding (--force)"
+  fi
+fi
+
 # --- 0. is the existing venv new enough? -------------------------------------
 # The original setup instructions produced a venv from macOS's system Python 3.9,
 # which cannot run this code. Catch that here rather than after a confusing
@@ -172,5 +204,8 @@ echo ""
 echo "  Your data, identity and connections are unchanged."
 echo "  Backup: $BACKUP  (delete it once you are happy)"
 echo ""
-echo "  If the server was running, restart it."
+echo "  IMPORTANT: a running server is still executing the OLD code from memory"
+echo "  until you restart it -- new code on disk changes nothing by itself, and"
+echo "  no test can catch the difference. Restart it now, then verify with:"
+echo "      python3 tools/check_server_fresh.py"
 echo ""

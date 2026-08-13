@@ -35,7 +35,8 @@ operator would retry a missing element or wait on a hung page indefinitely. Non-
 ## Step 1 — Pull the items cleared to run NOW
 This already trims approved items to today's remaining daily caps (and the weekly connect ceiling) across all runs, and orders them low-risk-first. Act ONLY on what it returns:
 ```bash
-cd [HOME][OWNER_HANDLE]/Claude/second-brain && .venv/bin/python -c "import sys,json;[sys.path.insert(0,p) for p in ('.','app','agents')];import networking;print(json.dumps([{k:x.get(k) for k in ('id','kind','author','url','draft')} for x in networking.approved_to_run()]))"
+# from the repo root (the folder with agents/ and app/):
+.venv/bin/python -c "import sys,json;[sys.path.insert(0,p) for p in ('.','app','agents')];import networking;print(json.dumps([{k:x.get(k) for k in ('id','kind','author','url','draft')} for x in networking.approved_to_run()]))"
 ```
 If it returns an empty list, the daily caps are already used up, stop and report that.
 
@@ -47,7 +48,8 @@ If it returns an empty list, the daily caps are already used up, stop and report
 
 After EACH success, mark it done so it leaves the queue:
 ```bash
-cd [HOME][OWNER_HANDLE]/Claude/second-brain && .venv/bin/python -c "import sys;[sys.path.insert(0,p) for p in ('.','app','agents')];import networking;networking.set_status('ITEM_ID','done')"
+# from the repo root (the folder with agents/ and app/):
+.venv/bin/python -c "import sys;[sys.path.insert(0,p) for p in ('.','app','agents')];import networking;networking.set_status('ITEM_ID','done')"
 ```
 If an item fails (button missing, profile gone), skip it and mark it `skipped` instead; keep going.
 

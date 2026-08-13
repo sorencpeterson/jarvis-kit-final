@@ -94,5 +94,61 @@ def run():
     return 0
 
 
+# The universal screeners nearly every ATS asks. Deliberately absent: salary (a per-job
+# directive from the posting's own band overrides the bank) and EEO/veteran/disability
+# (those belong in the application profile's eeo block, answered or declined there).
+_SEED_QS = (
+    ("Are you legally authorized to work in the United States?", "Yes"),
+    ("Will you now or in the future require visa sponsorship?", "No"),
+    ("Are you willing to work remotely?", "Yes"),
+    ("Are you willing to relocate?", "No"),
+    ("What is your notice period / when can you start?", "Two weeks from offer"),
+    ("Have you ever worked for this company before?", "No"),
+    ("How did you hear about this position?", "Job board"),
+    ("Are you at least 18 years of age?", "Yes"),
+    ("Do you have a bachelor's degree?", ""),
+)
+
+
+def seed(auto: bool = False) -> int:
+    """Seed the bank with the universal screeners in one minute: no LLM, no transcripts.
+    A fresh install ships an EMPTY bank and nothing warns; every application then
+    regenerates every screener answer from scratch, the single largest recurring
+    per-application LLM cost after page navigation (field report 2026-08-12, C2 --
+    a sibling install ran at zero pairs for weeks with no symptom but the bill).
+    Interactive by default: Enter keeps the default, '-' skips, anything else is
+    stored verbatim. NEVER store an answer that isn't true for you; skipping beats
+    guessing, the operator handles unknowns per-form."""
+    bank = {"ts": "", "qa": []}
+    try:
+        bank = json.loads(BANK.read_text())
+    except (OSError, json.JSONDecodeError):
+        pass
+    pairs = []
+    if not auto:
+        print("Seeding the screener answer bank. Enter = keep the default, '-' = skip.\n")
+    for q, dflt in _SEED_QS:
+        if auto:
+            a = dflt
+        else:
+            raw = input(f"  {q}\n    [{dflt or 'skip'}] > ").strip()
+            a = dflt if raw == "" else ("" if raw == "-" else raw)
+        if a:
+            pairs.append({"q": q, "a": a})
+    pairs = _clean_qa(pairs)
+    if not pairs:
+        print("answer bank: nothing to seed")
+        return 0
+    seen = {}
+    for x in (bank.get("qa") or []) + pairs:
+        seen[" ".join(x["q"].lower().split())[:60]] = x
+    BANK.parent.mkdir(parents=True, exist_ok=True)
+    BANK.write_text(json.dumps({"ts": now_iso(), "qa": list(seen.values())[:30]}, indent=1))
+    print(f"answer bank: {len(seen)} answers -> store/answer_bank.json")
+    return 0
+
+
 if __name__ == "__main__":
+    if "--seed" in sys.argv:
+        raise SystemExit(seed(auto="--auto" in sys.argv))
     raise SystemExit(run())

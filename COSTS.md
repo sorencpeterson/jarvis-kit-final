@@ -106,10 +106,32 @@ The Pro profile switches form-filling to Haiku, runs one operator at a time in
 batches of 5, and lets the ATS-friction router skip forms that have walled you
 before, so a session is never spent on a CAPTCHA you cannot pass.
 
-**A note on what "applied" means.** If the operator reports success but no
-confirmation email arrives, treat that as unconfirmed rather than applied. The
-system already marks ambiguous submissions uncertain instead of applied for this
-reason. Open one in the ATS and check before trusting the count.
+**Seed the answer bank. One minute, no LLM, pays back every day.**
+
+```bash
+python3 agents/answer_bank.py --seed
+```
+
+A fresh install ships an empty `store/answer_bank.json` and nothing warns you.
+Every application then regenerates every standard screener answer (work
+authorization, sponsorship, notice period, remote...) with an LLM call — the
+largest recurring per-application cost after page navigation. Seeding pre-answers
+the universal ones so the operator pastes instead of reasons. Only store answers
+that are actually true for you; skip anything that is not.
+
+**A note on what "applied" means.** The operator must quote the confirmation it
+saw after submitting; an applied callback with no quote is recorded but tagged
+`unconfirmed`, and `jobs.needs_verify()` lists every submission-uncertain job
+(operator died mid-flight, hit its attempt cap, or reported success without
+evidence):
+
+```bash
+python3 -c "import sys;sys.path[:0]=['.','app','agents'];import jobs;\
+print(*[f'{x[\"status\"]:8} {x[\"company\"]} - {x[\"reason\"]}' for x in jobs.needs_verify()], sep='\n')"
+```
+
+Open those in the ATS and check before trusting the count. If no confirmation
+email arrived either, assume it did not land.
 
 ---
 
