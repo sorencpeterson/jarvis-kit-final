@@ -117,8 +117,35 @@ def match_company(text: str, companies: list[str]) -> str:
     return best
 
 
+# Reasons that mean "we do not know whether this was submitted".
+_UNCERTAIN_SKIP = ("inflight_timeout", "attempt_cap")
+
+
 def _pile() -> list[dict]:
-    return jobs.needs_verify()
+    """Every job whose submission state is unknown, computed HERE rather than taken
+    from jobs.needs_verify().
+
+    That function exists in more than one shape across installs: some return only
+    'skipped' rows, some omit the status field this module needs for its
+    compare-and-swap. Depending on it made this agent silently verify nothing on a
+    tree whose version differed. Scanning load_jobs() directly is a few lines and
+    works everywhere, so the coupling is not worth it.
+    """
+    out = []
+    for x in jobs.load_jobs():
+        st, r = x.get("status"), (x.get("reason") or "").lower()
+        uncertain = (
+            (st == "skipped" and any(r.startswith(w) for w in _UNCERTAIN_SKIP))
+            or (st == "applied" and r.startswith("unconfirmed"))
+        )
+        if uncertain:
+            out.append({"id": x.get("id"), "title": x.get("title"),
+                        "company": x.get("company"), "status": st,
+                        "apply_url": x.get("apply_url"), "source": x.get("source"),
+                        "reason": x.get("reason"),
+                        "applying_at": x.get("applying_at")})
+    out.sort(key=lambda j: j.get("applying_at") or "", reverse=True)
+    return out
 
 
 def _fetch(days: int) -> list[dict]:
