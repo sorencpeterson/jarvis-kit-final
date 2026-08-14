@@ -131,6 +131,10 @@ caffeinate -i -w $$ &
   $RUN agents/jobs.py
   $RUN agents/job_ats_watch.py   # curated-company ATS feeds (the archetype-hiring employers)
   $RUN agents/job_replies.py
+  # settle the unknown-submission pile against employer confirmation mail (0 LLM).
+  # Must run AFTER job_replies: a human status it writes (interview/rejected)
+  # outranks anything a confirmation email says, and job_verify honours that.
+  $RUN agents/job_verify.py
   $RUN agents/job_fit_signals.py    # rebuild geo-blocklist + print state-eligibility would-skip count
   $RUN agents/job_network_bridge.py   # apply->LinkedIn pairing: stage hiring-mgr sourcing for fresh high-fit applies (2026-07-12)
   $RUN agents/company_risk.py         # pre-apply risk flags, local data, 5 LLM notes/run

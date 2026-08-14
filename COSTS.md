@@ -151,9 +151,32 @@ an explicit flag and a config knob:
 .venv/bin/python agents/apply_direct.py --submit --ats greenhouse.io --limit 5
 ```
 
-Supported: Greenhouse (high confidence), Lever (medium), Ashby and Workable (low,
-prove with `--dry-run` first). Workday is deliberately unsupported: it is a
-multi-screen wizard behind mandatory account creation.
+Supported: Greenhouse (high confidence), Lever (medium), Ashby, Workable, Rippling
+and SmartRecruiters (low, prove with `--dry-run` first). Measured against 266 real
+jobs sourced from five broad-marketing queries, that covers **40%** of the queue.
+Workday is deliberately unsupported: a multi-screen wizard behind mandatory account
+creation, which deterministic filling cannot and should not attempt.
+
+## Knowing which applications actually landed
+
+The system used to count applications it could not prove it sent. `job_verify.py`
+settles that against the employer's own confirmation email, which is external
+evidence rather than the operator's self-report:
+
+```bash
+.venv/bin/python agents/job_verify.py --report   # the pile, no mailbox needed
+.venv/bin/python agents/job_verify.py            # verify against mail, 0 LLM calls
+```
+
+It runs in the morning chain after `job_replies.py`. It only moves jobs toward what
+the mailbox supports: an unconfirmed application becomes confirmed, and an
+`inflight_timeout` with a confirmation is **recovered as a real submission** that
+would otherwise have been re-applied to later. Absence of mail changes nothing, and
+a human status (interview, rejected, replied) always outranks it.
+
+Not every employer sends a confirmation, so what remains after a run is unproven
+rather than unsent. That list is short enough to check by hand, which the whole pile
+never was.
 
 **On daily volume.** This removes the token ceiling, not every ceiling. Three remain,
 and they are the ones that decide whether volume is worth anything:

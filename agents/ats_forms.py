@@ -93,7 +93,41 @@ WORKABLE = {
     "required": ("first_name", "last_name", "email"),
 }
 
-SPECS = (GREENHOUSE, LEVER, ASHBY, WORKABLE)
+RIPPLING = {
+    "host_match": ("rippling.com", "ats.rippling.com"),
+    "confidence": "low",
+    "fields": {
+        "first_name": ["input[name='firstName']", "#firstName", "input[name='first_name']"],
+        "last_name": ["input[name='lastName']", "#lastName", "input[name='last_name']"],
+        "email": ["input[name='email']", "input[type='email']"],
+        "phone": ["input[name='phone']", "input[type='tel']"],
+    },
+    "resume": ["input[type='file']"],
+    "submit": ["button[type='submit']"],
+    "required": ("first_name", "last_name", "email"),
+    # Known quirk, carried over from the LLM operator's hard-won notes: after a
+    # clean submit the button can spin forever even though the application landed
+    # server-side. Roughly a quarter of Rippling applies were being logged as
+    # failures because of it. The confirmation check handles this correctly by
+    # reading the page rather than the button, and anything ambiguous falls to
+    # job_verify.py against the confirmation email.
+}
+
+SMARTRECRUITERS = {
+    "host_match": ("smartrecruiters.com", "jobs.smartrecruiters.com"),
+    "confidence": "low",
+    "fields": {
+        "first_name": ["input[name='firstName']", "#firstName"],
+        "last_name": ["input[name='lastName']", "#lastName"],
+        "email": ["input[name='email']", "input[type='email']"],
+        "phone": ["input[name='phoneNumber']", "input[type='tel']"],
+    },
+    "resume": ["input[type='file']"],
+    "submit": ["button[type='submit']", "#submit-application"],
+    "required": ("first_name", "last_name", "email"),
+}
+
+SPECS = (GREENHOUSE, LEVER, ASHBY, WORKABLE, RIPPLING, SMARTRECRUITERS)
 
 # Deliberately absent, and why:
 #   workday        multi-screen wizard behind mandatory account creation. A sibling
