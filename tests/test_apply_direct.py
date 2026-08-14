@@ -7,6 +7,7 @@ submitting a half-filled form, or picking the wrong spec for a lookalike domain.
 """
 from __future__ import annotations
 
+import re
 import sys
 from pathlib import Path
 
@@ -154,6 +155,104 @@ class TestSubmitRails:
         outside.write_text("x")
         assert apply_direct._resume_path({"resume_file": str(outside)}) is None
         assert apply_direct._resume_path({"resume_file": "../../etc/passwd"}) is None
+
+
+class TestConcurrencySafety:
+    """This agent and the LLM apply chain read the same queue. Without claiming,
+    both can select one job and submit it twice to a real employer."""
+
+    def test_it_claims_before_submitting(self):
+        src = (ROOT / "agents" / "apply_direct.py").read_text()
+        claim = src.split("if submit:", 2)[-1]
+        assert "jobs.mark_applying(ids)" in src
+        assert "jobs.bump_attempts(ids)" in src
+        # and it must keep only what it actually won: mark_applying is a CAS
+        assert 'now.get(j["id"]) == "applying"' in src
+
+    def test_it_never_submits_from_a_non_us_ip(self):
+        src = (ROOT / "agents" / "apply_direct.py").read_text()
+        assert "import geo_check" in src
+        assert "not on a US IP" in src
+
+    def test_status_writes_are_compare_and_swap(self):
+        # A late write from the LLM chain must never be clobbered. Checked on the
+        # AST rather than the text: set_status calls span several lines and contain
+        # their own parentheses, which no substring match survives.
+        import ast
+        tree = ast.parse((ROOT / "agents" / "apply_direct.py").read_text())
+        run = next(n for n in ast.walk(tree)
+                   if isinstance(n, ast.FunctionDef) and n.name == "run")
+        calls = [n for n in ast.walk(run)
+                 if isinstance(n, ast.Call)
+                 and isinstance(n.func, ast.Attribute)
+                 and n.func.attr == "set_status"]
+        assert calls, "run() writes no statuses at all"
+        for c in calls:
+            kw = {k.arg for k in c.keywords}
+            assert "expect" in kw, f"set_status at line {c.lineno} is not a CAS"
+
+    def test_a_handed_off_job_returns_to_the_queue(self):
+        # stranded in 'applying' is worse than skipped: invisible to needs_manual()
+        # AND needs_verify(), and approved_to_apply only reads 'approved'
+        src = (ROOT / "agents" / "apply_direct.py").read_text()
+        assert 'jobs.set_status(r["id"], "approved", expect="applying")' in src
+
+    def test_an_attempted_submit_is_never_returned_to_the_queue(self):
+        src = (ROOT / "agents" / "apply_direct.py").read_text()
+        assert 'elif r.get("submit_attempted"):' in src
+        seg = src.split('elif r.get("submit_attempted"):', 1)[1][:400]
+        # strip comments: the branch explains WHY it avoids the approved pool, and
+        # the word appearing in that explanation is not the code doing it
+        code = "\n".join(ln.split("#", 1)[0] for ln in seg.splitlines())
+        assert "inflight_timeout" in code, "an attempted submit must be submission-uncertain"
+        assert '"approved"' not in code.split("print(")[0]
+
+    def test_the_batch_is_released_on_every_exit_path(self):
+        src = (ROOT / "agents" / "apply_direct.py").read_text()
+        tail = src.split("def run(", 1)[1]
+        assert "finally:" in tail
+        fin = tail.split("finally:", 1)[1]
+        assert "inflight_timeout" in fin and 'expect="applying"' in fin
+
+
+class TestResultSurvivesACrash:
+    def test_submit_attempted_is_recorded_before_the_click(self):
+        src = (ROOT / "agents" / "apply_direct.py").read_text()
+        seg = src.split('out["submit_attempted"] = True', 1)
+        assert len(seg) == 2, "submit_attempted is never set"
+        after = seg[1][:120]
+        assert "btn.click()" in after, "it must be set BEFORE the click, not after"
+
+    def test_caller_owns_the_result_dict(self, monkeypatch):
+        # if apply_one built its own, a crash would lose submit_attempted and the
+        # job would be wrongly returned to the queue
+        import apply_direct
+        spec = ats_forms.GREENHOUSE
+        out = apply_direct.new_result({"id": "x", "company": "Acme"}, spec)
+        assert out["submit_attempted"] is False
+        assert out["id"] == "x"
+
+        class _Boom:
+            def goto(self, *a, **k):
+                out["submit_attempted"] = True      # got as far as clicking
+                raise RuntimeError("page died")
+
+        with pytest.raises(RuntimeError):
+            apply_direct.apply_one(_Boom(), {"id": "x", "apply_url": "u"}, spec,
+                                   PROFILE, True, out=out)
+        assert out["submit_attempted"] is True, "crash must not lose this"
+
+
+class TestNeverSendsAnEmptyApplication:
+    def test_no_resume_file_aborts_before_submitting(self):
+        src = (ROOT / "agents" / "apply_direct.py").read_text()
+        assert "no resume file" in src
+        seg = src.split("res = _resume_path(job)", 1)[1][:400]
+        assert 'out["action"] = "handoff"' in seg
+
+    def test_a_missing_resume_field_aborts_a_real_submit(self):
+        src = (ROOT / "agents" / "apply_direct.py").read_text()
+        assert "resume field not found on the page" in src
 
 
 class TestDocumentedHonestly:

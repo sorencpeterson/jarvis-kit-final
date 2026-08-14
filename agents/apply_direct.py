@@ -88,11 +88,23 @@ def _resume_path(job: dict) -> Path | None:
     return RESUME if RESUME.is_file() else None
 
 
-def apply_one(page, job: dict, spec: dict, profile: dict, submit: bool) -> dict:
-    """Fill one application. Returns a result dict; never raises for a page problem."""
+def new_result(job: dict, spec: dict) -> dict:
+    """The result dict, created by the CALLER so its state survives an exception.
+
+    submit_attempted in particular has to outlive a crash: it is the difference
+    between safely returning a job to the queue and applying to the same employer
+    twice.
+    """
+    return {"id": job.get("id"), "company": job.get("company"),
+            "url": job.get("apply_url") or "", "ats": spec["host_match"][0],
+            "filled": [], "action": "", "reason": "", "submit_attempted": False}
+
+
+def apply_one(page, job: dict, spec: dict, profile: dict, submit: bool,
+              out: dict | None = None) -> dict:
+    """Fill one application, recording progress into `out` as it goes."""
     url = job.get("apply_url") or ""
-    out = {"id": job.get("id"), "company": job.get("company"), "url": url,
-           "ats": spec["host_match"][0], "filled": [], "action": "", "reason": ""}
+    out = out if out is not None else new_result(job, spec)
 
     page.goto(url, wait_until="domcontentloaded", timeout=45000)
     page.wait_for_timeout(1500)
@@ -121,16 +133,28 @@ def apply_one(page, job: dict, spec: dict, profile: dict, submit: bool) -> dict:
                 continue
 
     res = _resume_path(job)
-    if res:
-        for sel in spec["resume"]:
-            try:
-                el = page.query_selector(sel)
-                if el:
-                    el.set_input_files(str(res))
-                    out["filled"].append(f"resume={res.name}")
-                    break
-            except Exception:  # noqa: BLE001
-                continue
+    if not res:
+        # Submitting an application with no resume attached is worse than not
+        # applying: it burns the one-per-employer guard on something no recruiter
+        # can act on. Hand it back rather than send an empty-handed application.
+        out["action"] = "handoff"
+        out["reason"] = "no resume file (expected store/resume.pdf)"
+        return out
+    uploaded = False
+    for sel in spec["resume"]:
+        try:
+            el = page.query_selector(sel)
+            if el:
+                el.set_input_files(str(res))
+                out["filled"].append(f"resume={res.name}")
+                uploaded = True
+                break
+        except Exception:  # noqa: BLE001
+            continue
+    if not uploaded and submit:
+        out["action"] = "handoff"
+        out["reason"] = "resume field not found on the page"
+        return out
 
     # Every REQUIRED field must actually have landed on the page. A selector that
     # matched nothing means this page is not the form we think it is, and a form we
@@ -150,6 +174,10 @@ def apply_one(page, job: dict, spec: dict, profile: dict, submit: bool) -> dict:
         try:
             btn = page.query_selector(sel)
             if btn and btn.is_visible():
+                # Recorded BEFORE the click. If the page then dies, the caller has to
+                # know a submit may already have gone through: returning such a job to
+                # the approved pool would apply to the same employer twice.
+                out["submit_attempted"] = True
                 btn.click()
                 page.wait_for_timeout(4000)
                 body = (page.content() or "").lower()
@@ -180,6 +208,22 @@ def run(limit: int = 10, submit: bool = False, only_ats: str = "") -> int:
               "  .venv/bin/pip install playwright && .venv/bin/playwright install chromium")
         return 2
 
+    # GEO GATE, fail closed, same rule the LLM chain enforces: never apply to a
+    # US-remote role from a non-US IP. It contradicts the profile's own address and
+    # gets the application geo-filtered. Only gates SUBMITTING; a dry run reads
+    # public pages and is harmless from anywhere.
+    if submit:
+        try:
+            import geo_check
+            g = geo_check.check()
+        except Exception as e:  # noqa: BLE001 -- unavailable means unknown means stop
+            g = {"ok": False, "error": f"{type(e).__name__}"}
+        if not g.get("ok"):
+            where = g.get("city") or g.get("country") or g.get("error") or "unknown"
+            print(f"apply_direct: held, not on a US IP (currently {where}). "
+                  "Connect the VPN and re-run.")
+            return 2
+
     profile = jobs.load_profile()
     queue = [j for j in jobs.approved_to_apply()
              if ats_forms.detect(j.get("apply_url") or "")]
@@ -192,46 +236,95 @@ def run(limit: int = 10, submit: bool = False, only_ats: str = "") -> int:
               "(everything else stays with the LLM operator)")
         return 0
 
+    # CLAIM the batch before touching it. Without this, this agent and the LLM apply
+    # chain both read approved_to_apply() and can select the SAME job, then both
+    # submit it: a duplicate application to a real employer, which is worse than a
+    # missed one. mark_applying is a compare-and-swap (expect="approved"), so a job
+    # the chain claimed a moment earlier simply does not come back as 'applying'
+    # here and is dropped from this batch. bump_attempts is the poison-pill guard:
+    # without it a job that fails every time is retried forever.
+    if submit:
+        ids = [j["id"] for j in queue]
+        jobs.bump_attempts(ids)
+        jobs.mark_applying(ids)
+        now = {x["id"]: x.get("status") for x in jobs.load_jobs()}
+        queue = [j for j in queue if now.get(j["id"]) == "applying"]
+        if not queue:
+            print("apply_direct: every candidate was claimed elsewhere; nothing to do")
+            return 0
+
     print(f"apply_direct: {len(queue)} job(s), submit={submit}")
     done = handed = skipped = 0
-    with sync_playwright() as pw:
-        browser = pw.chromium.launch(headless=True)
-        ctx = browser.new_context(locale="en-US",
-                                  timezone_id=cfg.get("apply_tz") or "America/Chicago")
-        for i, job in enumerate(queue):
-            spec = ats_forms.detect(job["apply_url"])
-            page = ctx.new_page()
+    try:
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch(headless=True)
+            ctx = browser.new_context(locale="en-US",
+                                      timezone_id=cfg.get("apply_tz") or "America/Chicago")
+            for i, job in enumerate(queue):
+                spec = ats_forms.detect(job["apply_url"])
+                page = ctx.new_page()
+                # created here so a crash inside apply_one still leaves us holding
+                # whatever it managed to record, submit_attempted above all
+                r = new_result(job, spec)
+                try:
+                    apply_one(page, job, spec, profile, submit, out=r)
+                except Exception as e:  # noqa: BLE001 -- one bad page never stops the batch
+                    r["action"] = "handoff"
+                    r["reason"] = f"page error: {type(e).__name__}"
+                finally:
+                    page.close()
+
+                tag = f"[{r['ats']}] {(r.get('company') or '?')[:28]:<28}"
+                if r["action"] == "submitted":
+                    jobs.set_status(r["id"], "applied", r["reason"], expect="applying")
+                    done += 1
+                    print(f"  {tag} SUBMITTED  {r['reason'][:52]}")
+                elif r["action"] == "skip":
+                    jobs.set_status(r["id"], "skipped", r["reason"], expect="applying")
+                    skipped += 1
+                    print(f"  {tag} walled     {r['reason']}")
+                elif r["action"] == "dry-run":
+                    print(f"  {tag} would fill {', '.join(r['filled']) or '(nothing)'}")
+                elif r.get("submit_attempted"):
+                    # a submit may already have landed: never return this to the
+                    # approved pool, or the LLM operator applies to the same
+                    # employer a second time. job_verify settles it from the
+                    # confirmation email.
+                    jobs.set_status(r["id"], "skipped",
+                                    "inflight_timeout (submit attempted, outcome unknown; "
+                                    "verify in ATS before retrying)", expect="applying")
+                    skipped += 1
+                    print(f"  {tag} UNCERTAIN  {r['reason'][:44]}")
+                else:
+                    # nothing was submitted, so hand it straight back to the LLM
+                    # operator by returning it to the approved pool
+                    jobs.set_status(r["id"], "approved", expect="applying")
+                    handed += 1
+                    print(f"  {tag} -> operator {r['reason'][:52]}")
+
+                if submit and i < len(queue) - 1:
+                    time.sleep(_pace(cfg))
+            ctx.close()
+            browser.close()
+    finally:
+        # Release anything from THIS batch still held, whatever the exit path
+        # (browser crash, interrupt, exception). A job stranded in 'applying' is
+        # invisible to needs_manual() and needs_verify() and can never be retried,
+        # which is strictly worse than a skipped one.
+        if submit:
             try:
-                r = apply_one(page, job, spec, profile, submit)
-            except Exception as e:  # noqa: BLE001 -- one bad page never stops the batch
-                r = {"id": job.get("id"), "company": job.get("company"),
-                     "action": "handoff", "reason": f"page error: {type(e).__name__}",
-                     "filled": [], "ats": spec["host_match"][0]}
-            finally:
-                page.close()
-
-            tag = f"[{r['ats']}] {(r.get('company') or '?')[:28]:<28}"
-            if r["action"] == "submitted":
-                jobs.set_status(r["id"], "applied", r["reason"])
-                done += 1
-                print(f"  {tag} SUBMITTED  {r['reason'][:52]}")
-            elif r["action"] == "skip":
-                jobs.set_status(r["id"], "skipped", r["reason"])
-                skipped += 1
-                print(f"  {tag} walled     {r['reason']}")
-            elif r["action"] == "dry-run":
-                print(f"  {tag} would fill {', '.join(r['filled']) or '(nothing)'}")
-            else:
-                handed += 1
-                print(f"  {tag} -> operator {r['reason'][:52]}")
-
-            if submit and i < len(queue) - 1:
-                time.sleep(_pace(cfg))
-        ctx.close()
-        browser.close()
+                held = {x["id"] for x in jobs.load_jobs() if x.get("status") == "applying"}
+                for j in queue:
+                    if j["id"] in held:
+                        jobs.set_status(j["id"], "skipped",
+                                        "inflight_timeout (direct apply exited with this "
+                                        "job in flight; verify in ATS before retrying)",
+                                        expect="applying")
+            except Exception:  # noqa: BLE001 -- cleanup must never mask the real exit
+                pass
 
     print(f"apply_direct: {done} submitted, {handed} handed to the operator, "
-          f"{skipped} walled, 0 LLM calls")
+          f"{skipped} walled or uncertain, 0 LLM calls")
     return 0
 
 
