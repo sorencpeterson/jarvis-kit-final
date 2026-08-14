@@ -144,7 +144,12 @@ caffeinate -i -w $$ &
   $RUN agents/salary_ladder.py        # comp-band conversion table + feed read
   $RUN agents/resume_ab.py            # resume variant outcome rates (scaffold)
   $RUN agents/job_cover.py            # per-job cover_override cache (apply prompt prefers it)
-  $RUN agents/resume_tailor.py        # per-job tailored resume PDFs (apply prompt prefers them)
+  # Per-job tailored PDFs: one Sonnet call per job, the biggest recurring cost in the
+  # job lane. Skipped entirely when a variant library is built, since the library
+  # already covers every role family for free (resume_mode picks which goes out).
+  if [ ! -s store/resume_variants.json ]; then
+    $RUN agents/resume_tailor.py      # per-job tailored resume PDFs
+  fi
   $RUN agents/interview_prep.py
   $RUN agents/interview_war_room.py  # assemble prep+STAR+salary anchor per live interview
   $RUN agents/interview_followup.py  # day-5/day-10 nudge on silent post-interview jobs

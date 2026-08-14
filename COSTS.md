@@ -262,6 +262,33 @@ jobs you do not want and spends fit-scoring on them. Sourcing itself is free, so
 this costs accuracy rather than tokens, but a queue full of wrong roles is worse
 than an empty one.
 
+## The resume variant library (build once, free forever)
+
+Per-job resume tailoring costs one Sonnet call per application, measured at ~27,000
+tokens. Against a 400k daily budget that is roughly half the day gone before a form
+is filled. The variant library replaces it: the same two blocks, pre-written per role
+family and seniority, built **once** from your own resume and then picked by keyword
+score at apply time. Per-application cost is zero.
+
+```bash
+.venv/bin/python agents/resume_library.py --build    # one LLM call per family, once
+.venv/bin/python agents/resume_library.py --render   # PDFs, no LLM
+.venv/bin/python agents/resume_library.py            # inspect + re-validate
+```
+
+Then set `"resume_mode": "library"` in `store/config.json` (it defaults to the
+library once one exists). `llm` keeps the per-job path, `off` always sends the static
+resume.
+
+The variants are generated from *your* resume, not shipped: hardcoding one person's
+taglines would hand you a stranger's career. Every generated block goes through the
+same anti-fabrication gates as the LLM path (no invented numbers, no tools you lack,
+no em-dashes), and a variant that fails is discarded rather than patched. Re-run the
+plain command after editing your resume: a variant written against old facts can
+quietly become a fabrication when a number changes.
+
+Mechanism contributed by Austin Apon, who built and measured it on a copy of this kit.
+
 **Resume tailoring is one Sonnet call per job.** It is the largest LLM cost in
 the pipeline, larger than applying on some days. `resume_tailor_limit` tracks the
 apply cap so it stops tailoring resumes for jobs it will not submit today. The

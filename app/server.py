@@ -3899,37 +3899,30 @@ def _build_prompt(batch: list) -> str | None:
     except (OSError, json.JSONDecodeError, ValueError, TypeError):
         _tail_on = True
 
-    import hashlib as _hashlib_rt
-    import re as _re_rt  # server.py has no module-level `re` (only _re_auth); local per house style
-
     def _resume_line(j) -> str:
         if not _tail_on:
             return ""
-        # sanitizer is a byte-identical copy of agents/resume_tailor.safe_name (job ids
-        # are board-controlled; raw ids in paths = traversal). It MUST include the same
-        # 8-hex sha1(raw id) suffix that safe_name appends (2026-07-13 CX-G2/R2-45 fix):
-        # the bare regex was many-to-one ('role:a' and 'role?a' both -> 'role_a'), so two
-        # jobs collided on one PDF and the wrong-employer resume was uploaded. Without the
-        # suffix here this lookup would compute a STALE filename and miss every tailored
-        # PDF the agent writes. FULL-string parity is pinned by
-        # tests/test_resume_tailor.py::test_server_sanitizer_parity.
-        _raw = j.get("id") or ""
-        _base = _re_rt.sub(r"[^A-Za-z0-9._-]", "_", _raw)[:180].lstrip(".") or "job"
-        safe = f"{_base}_{_hashlib_rt.sha1(_raw.encode('utf-8')).hexdigest()[:8]}"
-        p = ROOT / "store" / "resume_tailored" / f"{safe}.pdf"
+        # ONE place decides which resume goes out. resume_library.resume_for_mode()
+        # honours config resume_mode: the pre-built variant library (free per
+        # application), resume_tailor's per-job PDF (one Sonnet call each), or the
+        # static resume. Before this, the operator prompt looked ONLY for a per-job
+        # tailored file, so a built variant library would have been ignored and every
+        # application would still have uploaded the generic resume.
         try:
-            if p.exists() and p.stat().st_size > 20000:
-                # stamp the record with the file the operator is being HANDED, so the
-                # applied-callback attributes what actually went out rather than
-                # re-deriving it from disk later (field report 2026-08-12, C3)
-                try:
-                    jobs.note_fields(j["id"], resume_file=str(p))
-                except Exception:  # noqa: BLE001 -- attribution must never block an apply round
-                    pass
-                return f" | RESUME: {p}"
-        except OSError:
+            import resume_library
+            kind, path = resume_library.resume_for_mode(j)
+        except Exception:  # noqa: BLE001 -- resume selection must never break an apply round
+            kind, path = "static", ""
+        if kind == "static" or not path:
+            return ""
+        # stamp the record with the file the operator is being HANDED, so the
+        # applied-callback attributes what actually went out rather than re-deriving
+        # it from disk later (field report 2026-08-12, C3)
+        try:
+            jobs.note_fields(j["id"], resume_file=str(path))
+        except Exception:  # noqa: BLE001 -- attribution must never block an apply round
             pass
-        return ""
+        return f" | RESUME: {path}"
 
     listing = "\n".join(
         f"- id={j['id']} | {j['title']} @ {j['company']} ({j['source']}) | {j['apply_url']} | "

@@ -85,17 +85,21 @@ class TestHuntRegressions:
         assert rt.safe_name("board:a") != rt.safe_name("board/a")
         assert rt.safe_name("board:a/b") != rt.safe_name("board:a:b")
 
-    def test_server_sanitizer_parity(self):
-        # app/server.py's _resume_line INLINES the sanitizer (import-weight reasons); it must
-        # stay byte-identical to safe_name -- INCLUDING the sha1 suffix -- or its tailored-file
-        # existence check misses every file the agent writes.
-        import hashlib
+    def test_server_no_longer_duplicates_the_sanitizer(self):
+        # HISTORY: app/server.py's _resume_line used to INLINE a copy of safe_name, and
+        # the copy drifted -- it lacked the sha1 suffix, so its lookup computed a stale
+        # filename and missed every PDF the agent wrote (CX-G2/R2-45). This test used to
+        # pin the two spellings byte-identical.
+        #
+        # That whole class of bug is now gone: _resume_line delegates to
+        # resume_library.resume_for_mode(), which calls safe_name() itself. There is one
+        # implementation again, so there is nothing left to drift. The invariant worth
+        # pinning is the delegation.
         src = (ROOT / "app" / "server.py").read_text()
-        # the base regex spelling is still inlined verbatim ...
-        assert r'sub(r"[^A-Za-z0-9._-]", "_", _raw)[:180].lstrip(".") or "job"' in src
-        # ... AND the same 8-hex sha1(raw id) suffix safe_name appends (CX-G2/R2-45, closed
-        # 2026-07-13 by the server agent).
-        assert r'sha1(_raw.encode(' in src and "[:8]" in src
+        seg = src.split("def _resume_line", 1)[1].split("\n    listing =", 1)[0]
+        assert "resume_library.resume_for_mode(j)" in seg
+        assert "sha1" not in seg, "server.py is re-inlining the sanitizer; delegate instead"
+        assert "[^A-Za-z0-9._-]" not in seg
         # api_jobs_applied's attribution no longer derives a filename AT ALL: it reads the
         # resume_file stamp _build_prompt wrote at spawn time (jobs.note_fields), so it
         # records what actually went out rather than what exists at callback time (field
@@ -104,18 +108,12 @@ class TestHuntRegressions:
         assert 'res.get("resume_file")' in src
         assert "jobs.note_fields" in src
 
-        def _server_inline_full(jid: str) -> str:
-            # a faithful reconstruction of app/server.py _resume_line's spelling
-            raw = jid or ""
-            base = re.sub(r"[^A-Za-z0-9._-]", "_", raw)[:180].lstrip(".") or "job"
-            return f"{base}_{hashlib.sha1(raw.encode('utf-8')).hexdigest()[:8]}"
-
-        # FULL-string parity now (the pre-fix version asserted DIVERGENCE while _resume_line
-        # still lacked the suffix; that gap is closed). Cover the collision-prone ids too, so
-        # the server lookup lands on exactly the file safe_name/the agent produced.
+        # The collision-prone ids that motivated the sha1 suffix are still pinned, but
+        # against safe_name itself now -- there is no second spelling left to compare it
+        # to, which is the point.
         for jid in ("board:jid", "role:a", "role?a", "board:a/b", "", "x" * 500,
                     "normal-id_1.2", "../../etc/passwd"):
-            assert rt.safe_name(jid) == _server_inline_full(jid), jid
+            assert re.fullmatch(r".+_[0-9a-f]{8}", rt.safe_name(jid)), jid
 
     def test_render_pdf_refuses_paths_outside_out_dir(self, tmp_path, monkeypatch):
         monkeypatch.setattr(rt, "OUT_DIR", tmp_path / "jail")
