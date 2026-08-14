@@ -4183,10 +4183,74 @@ def _apply_model() -> str:
         return "claude-sonnet-4-6"
 
 
+_OP_RUNS = ROOT / "store" / "operator_runs"   # one JSON result per operator, then metered
+
+
+def _meter_operator(path) -> dict:
+    """Read one finished operator's JSON result: record its token usage, then fold its
+    text into launch.log and delete the file.
+
+    THE GAP THIS CLOSES. planner._cli meters every internal call to usage.jsonl, but the
+    apply operator is a separate `claude -p` subprocess whose usage appeared NOWHERE. The
+    single biggest consumer in the system was the one thing never counted, which made the
+    daily budget check blind to it and made "what does an application cost" unanswerable.
+    Now it is one line in the same ledger, under feature "job_apply".
+
+    Shape verified against the CLI's own --output-format json output: a result object
+    carrying usage{input_tokens, output_tokens, cache_read_input_tokens,
+    cache_creation_input_tokens}, num_turns, total_cost_usd and is_error.
+    """
+    info = {}
+    try:
+        raw = Path(path).read_text()
+    except OSError:
+        return info
+    try:
+        # the CLI writes one result object; tolerate leading noise from the MCP server
+        start = raw.find('{"type":"result"')
+        data = json.loads(raw[start:] if start >= 0 else raw)
+    except (ValueError, json.JSONDecodeError):
+        data = None
+    if isinstance(data, dict):
+        u = data.get("usage") or {}
+        info = {"turns": data.get("num_turns"), "cost_usd": data.get("total_cost_usd"),
+                "error": bool(data.get("is_error")),
+                "in": u.get("input_tokens", 0), "out": u.get("output_tokens", 0),
+                "cache_read": u.get("cache_read_input_tokens", 0),
+                "cache_write": u.get("cache_creation_input_tokens", 0)}
+        try:
+            planner._log_usage("job_apply", _apply_model(), u)
+        except Exception:  # noqa: BLE001 -- metering must never break an apply round
+            pass
+    # keep launch.log as the human record: answer_bank.py mines it for recurring
+    # screener answers, and it is where anyone debugging a bad application looks
+    try:
+        text = (data or {}).get("result") if isinstance(data, dict) else raw
+        with (ROOT / "agents" / "launch.log").open("a") as f:
+            f.write(f"\n--- operator run {Path(path).name} "
+                    f"({info.get('turns', '?')} turns, "
+                    f"{(info.get('in', 0) or 0) + (info.get('out', 0) or 0)} tokens) ---\n")
+            f.write((text or raw or "")[:20000] + "\n")
+    except OSError:
+        pass
+    try:
+        Path(path).unlink(missing_ok=True)
+    except OSError:
+        pass
+    return info
+
+
 def _spawn_operator(prompt: str):
     """Spawn one apply operator with its own isolated browser. Tracked in-process AND on disk
-    (own process group) so a server restart can find and reap it instead of orphaning it."""
-    logf = open(ROOT / "agents" / "launch.log", "a")
+    (own process group) so a server restart can find and reap it instead of orphaning it.
+
+    Output goes to its OWN file rather than straight into the shared launch.log, because
+    parallel operators interleave and their usage could not otherwise be attributed. The
+    round folds each file into launch.log after metering it.
+    """
+    _OP_RUNS.mkdir(parents=True, exist_ok=True)
+    run_path = _OP_RUNS / f"op-{int(time.time() * 1000)}-{len(_apply_procs)}.json"
+    logf = open(run_path, "w")
     # US timezone/locale on the browser (2026-07-07): [OWNER] applies from Europe behind a US
     # VPN. The VPN fixes the IP, but Chromium's default timezone came from the Mac's real
     # (European) system TZ, so an ATS that fingerprints browser timezone saw a US-IP vs
@@ -4200,11 +4264,16 @@ def _spawn_operator(prompt: str):
         pass
     _env = {**os.environ, "TZ": _tz, "LANG": "en_US.UTF-8", "LC_ALL": "en_US.UTF-8"}
     p = subprocess.Popen(
-        [_CLAUDE_CLI, "-p", prompt, "--model", _apply_model(),
+        # --output-format json is what makes the operator's token usage readable at all.
+        # Tradeoff, stated: its narration no longer streams into launch.log live, it
+        # lands there when the round folds the result in. Worth it -- the alternative is
+        # continuing to run the system's largest consumer entirely unmetered.
+        [_CLAUDE_CLI, "-p", prompt, "--model", _apply_model(), "--output-format", "json",
          "--strict-mcp-config", "--mcp-config", _ISO_MCP,
          "--allowedTools", *_PW_TOOLS],
         cwd=str(ROOT), stdout=logf, stderr=subprocess.STDOUT,
         start_new_session=True, env=_env)
+    p._run_path = run_path      # noqa: SLF001 -- read back by the round for metering
     _apply_procs.append(p)
     _ops_write(_ops_pids() + [p.pid])
     return p
@@ -4377,6 +4446,17 @@ def _apply_chain():
             for p in procs:
                 if p.poll() is None:
                     _kill_tree(p.pid)
+            # meter what each operator actually cost, now that they are all finished.
+            # Reaped operators write no JSON result, so they simply record nothing;
+            # a silent death costs tokens we cannot see, and that is itself the signal.
+            _round_tok = 0
+            for p in procs:
+                info = _meter_operator(getattr(p, "_run_path", "")) or {}
+                _round_tok += (info.get("in") or 0) + (info.get("out") or 0) \
+                    + (info.get("cache_read") or 0) + (info.get("cache_write") or 0)
+            if _round_tok:
+                print(f"apply chain: round used {_round_tok:,} operator tokens "
+                      f"across {len(procs)} operator(s)")
             # release this round's orphans: any job still 'applying' after the reap had its
             # operator end (timeout/kill/silent-exit) without firing a callback, so retire it
             # NOW to skipped instead of leaving it stranded in 'applying' until a much-later

@@ -546,6 +546,78 @@ def test_archive_split_is_a_noop_without_dated_sections():
     assert "stuff" in live
 
 
+# ------------------------------------------------- operator token metering
+# The apply operator is a separate `claude -p` subprocess. Its usage appeared in no
+# ledger, so the system's largest consumer was the one thing never counted: the daily
+# budget check could not see it, and "what does an application cost" had no answer.
+
+def test_operator_is_spawned_with_a_readable_result_format():
+    seg = SERVER_SRC.split("def _spawn_operator", 1)[1].split("\ndef ", 1)[0]
+    assert '"--output-format", "json"' in seg, "usage is unreadable without this"
+    # its own file, or parallel operators interleave and usage cannot be attributed
+    assert "run_path" in seg and "_OP_RUNS" in seg
+
+
+def test_meter_parses_the_verified_cli_shape(monkeypatch):
+    sys.path.insert(0, str(ROOT / "app"))
+    import planner
+    import server
+
+    # _meter_operator writes a real usage row as a side effect. Without this the test
+    # pollutes the owner's own store/usage.jsonl with fabricated numbers, which then
+    # skew the budget check and every token report.
+    logged = []
+    monkeypatch.setattr(planner, "_log_usage", lambda *a: logged.append(a))
+    monkeypatch.setattr(server, "_apply_model", lambda: "test-model")
+
+    payload = {
+        "type": "result", "subtype": "success", "is_error": False, "num_turns": 14,
+        "result": "applied 2, skipped 1 (captcha)", "total_cost_usd": 0.42,
+        "usage": {"input_tokens": 120, "output_tokens": 340,
+                  "cache_read_input_tokens": 900, "cache_creation_input_tokens": 50},
+    }
+    import tempfile
+    with tempfile.TemporaryDirectory() as d:
+        p = Path(d) / "op.json"
+        p.write_text(json.dumps(payload))
+        info = server._meter_operator(p)
+    assert info["in"] == 120 and info["out"] == 340
+    assert info["cache_read"] == 900 and info["cache_write"] == 50
+    assert info["turns"] == 14 and info["error"] is False
+    assert not p.exists(), "the run file should be consumed"
+    assert logged and logged[0][0] == "job_apply", "usage must be metered"
+
+
+def test_meter_survives_a_reaped_operator_that_wrote_nothing():
+    sys.path.insert(0, str(ROOT / "app"))
+    import server
+    # a killed operator leaves no JSON; that must record nothing, not raise
+    assert server._meter_operator("/nonexistent/op.json") == {}
+    import tempfile
+    with tempfile.TemporaryDirectory() as d:
+        p = Path(d) / "op.json"
+        p.write_text("chromium crashed, not json at all")
+        assert server._meter_operator(p) == {}
+
+
+def test_the_round_meters_every_operator_it_spawned():
+    seg = SERVER_SRC.split("def _apply_chain", 1)[1][:14000]
+    assert "_meter_operator(getattr(p" in seg
+    # metered AFTER the reap, so a timed-out operator is included rather than skipped
+    assert seg.index("_kill_tree(p.pid)") < seg.index("_meter_operator")
+
+
+def test_usage_rows_land_under_a_distinct_feature():
+    assert 'planner._log_usage("job_apply"' in SERVER_SRC
+
+
+def test_launch_log_still_receives_the_operator_text():
+    # answer_bank.py mines launch.log for recurring screener answers; switching the
+    # operator to JSON output must not silently starve it
+    seg = SERVER_SRC.split("def _meter_operator", 1)[1].split("\ndef ", 1)[0]
+    assert 'launch.log' in seg and '.get("result")' in seg
+
+
 def test_a3_stale_server_check_exists_and_doctor_runs_it():
     import ast
     tool = ROOT / "tools" / "check_server_fresh.py"
