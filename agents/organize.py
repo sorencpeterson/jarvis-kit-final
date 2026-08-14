@@ -143,7 +143,7 @@ DOMAINS (use these exact keys): %s
 - career: Upwork, Indeed, COO/job applications
 - finance: money, revenue, payments, subscriptions
 - health: fitness, gym, sleep, diet, body
-- relationships: partner (Maddy), family, friends
+- relationships: partner, family, friends
 - mind: mental health, inner work, reset
 - personal: learning, languages, travel, dreams
 

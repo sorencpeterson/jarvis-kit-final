@@ -34,14 +34,26 @@ trap 'kill "$HEARTBEAT_PID" 2>/dev/null; rmdir "$SELFLOCK" 2>/dev/null' EXIT
 # agent can't stall the chain (red-team). It resolves the venv python itself; falls back
 # to the bare interpreter if the wrapper is somehow missing.
 
-# ---- plan profile (lite keeps a $20 Claude plan alive) ----------------------
-# store/config.json "morning_profile": lite | full   (default: full)
-# lite runs only the lanes that produce something you act on today, because a
-# Pro plan cannot absorb 100+ LLM-calling agents before breakfast.
+# ---- plan profile (keeps a $20 Claude plan alive) ---------------------------
+# store/config.json "morning_profile":  jobs | lite | full   (default: full)
+#
+#   jobs   core housekeeping + the find/apply/interview steps. Nothing else.
+#          For a live job hunt on a small plan: the search runs, the analytics
+#          and the outreach and content lanes do not.
+#   lite   the above plus job analytics. No money lane, no outreach, no content.
+#   full   everything.
+#
+# 2026-08-13: `lane` was declared here but only ONE lane (money) was ever gated,
+# so `lite` skipped the money lane and then ran 53 ungated steps anyway --
+# including content generation, the weekly deep-analytics block, and
+# tests/run_golden.py, which makes ~12 REAL LLM calls. A profile that silently
+# runs almost everything is worse than no profile: it reads as tuned while
+# spending like it isn't. Every lane below is gated now.
 PROFILE="$(.venv/bin/python -c "import json;print(json.load(open('store/config.json')).get('morning_profile','full'))" 2>/dev/null || echo full)"
 lane() {  # lane <name>  -> 0 if this lane should run under the current profile
   case "$PROFILE" in
-    lite) case "$1" in core|jobs) return 0;; *) return 1;; esac ;;
+    jobs) case "$1" in core|jobs) return 0;; *) return 1;; esac ;;
+    lite) case "$1" in core|jobs|jobsx) return 0;; *) return 1;; esac ;;
     *)    return 0 ;;
   esac
 }
@@ -104,12 +116,18 @@ caffeinate -i -w $$ &
   $RUN agents/sleep_aware.py
   $RUN agents/owner_report.py
   $RUN agents/morning_chain.py    # config-gated apply kick (ships 0; evening chain is the live lane)
-  $RUN agents/daily_brief.py      # <=== BRIEF READY
   hb morning-money                # heartbeat: money lane completed (brief freshness signal)
 
   fi  # end MONEY LANE
 
+  # The brief is the OUTPUT SURFACE, not a lane: it is the one thing you read every
+  # morning, so it runs under every profile. It reads whatever stores exist and
+  # degrades to a thinner brief when a lane did not run, which is the correct
+  # behaviour -- a profile that produces no brief looks like a broken system.
+  $RUN agents/daily_brief.py      # <=== BRIEF READY
+
   # ============ JOBS LANE ============
+  if lane jobs; then
   $RUN agents/jobs.py
   $RUN agents/job_ats_watch.py   # curated-company ATS feeds (the archetype-hiring employers)
   $RUN agents/job_replies.py
@@ -123,12 +141,23 @@ caffeinate -i -w $$ &
   $RUN agents/resume_ab.py            # resume variant outcome rates (scaffold)
   $RUN agents/job_cover.py            # per-job cover_override cache (apply prompt prefers it)
   $RUN agents/resume_tailor.py        # per-job tailored resume PDFs (apply prompt prefers them)
-  $RUN agents/job_pipeline_quality.py # funnel analytics
-  $RUN agents/job_efficiency.py       # velocity governance
-  $RUN agents/job_answer_growth.py    # answer-bank growth tracking
   $RUN agents/interview_prep.py
   $RUN agents/interview_war_room.py  # assemble prep+STAR+salary anchor per live interview
   $RUN agents/interview_followup.py  # day-5/day-10 nudge on silent post-interview jobs
+  fi  # end JOBS LANE
+
+  # ---- job ANALYTICS: measure the pipeline rather than advance it. Real value on a
+  # pipeline with history, pure spend on one that has not run yet, so the `jobs`
+  # profile skips it and `lite` keeps it.
+  if lane jobsx; then
+  $RUN agents/job_pipeline_quality.py # funnel analytics
+  $RUN agents/job_efficiency.py       # velocity governance
+  $RUN agents/job_answer_growth.py    # answer-bank growth tracking
+  $RUN agents/atsstats.py
+  fi  # end JOBS ANALYTICS
+
+  # ============ OUTREACH LANE (cold/warm campaigns; nothing to do with the job hunt) ====
+  if lane outreach; then
   $RUN agents/ghost_check.py
   $RUN agents/cold_import.py
   $RUN agents/cold_feeder.py
@@ -137,32 +166,39 @@ caffeinate -i -w $$ &
   $RUN agents/campaign_guard.py
   # H164: SPF/DKIM/DMARC + DNSBL blacklist probe, logs to store/domain_health.jsonl.
   $RUN agents/cold_preflight.py --daily
-  $RUN agents/atsstats.py
   $RUN agents/referral_timer.py
+  fi  # end OUTREACH LANE
 
-  # ============ ANALYTICS / OTHER ============
+  # ============ CORE HOUSEKEEPING (cheap, no LLM; runs under every profile) ======
   $RUN agents/organize.py         # board.json for the dashboard; MUST stay before build_dashboard
-  $RUN agents/standup.py
-  $RUN agents/content_gen.py
-  $RUN agents/content_readback.py
-  $RUN agents/portfolio_teardown.py   # 8 gated fetches/day walks the candidate list
   $RUN dashboard/build_dashboard.py
   bash agents/janitor.sh
-  $RUN agents/metrics_rollup.py
-  $RUN agents/selflint.py
-  $RUN agents/load_forecast.py
   $RUN agents/archiver.py
-  $RUN agents/daily_insight.py
-  $RUN agents/postmortem.py
   $RUN agents/snapshot.py
   # J190: nightly backup of store/ to a second disk location (30-day retention).
   bash tools/snapshot_store.sh
   # J192: gzip any agents/*.log that crossed 5MB (3 generations kept).
   bash tools/rotate_logs.sh
+  # answer_bank mines the operator transcripts for recurring screener answers, which
+  # makes every later application cheaper. It belongs to the job hunt, not analytics.
+  if lane jobs; then
+  $RUN agents/answer_bank.py
+  fi
+
+  # ============ ANALYTICS / CONTENT / INTEL ============
+  if lane analytics; then
+  $RUN agents/standup.py
+  $RUN agents/content_gen.py
+  $RUN agents/content_readback.py
+  $RUN agents/portfolio_teardown.py   # 8 gated fetches/day walks the candidate list
+  $RUN agents/metrics_rollup.py
+  $RUN agents/selflint.py
+  $RUN agents/load_forecast.py
+  $RUN agents/daily_insight.py
+  $RUN agents/postmortem.py
   $RUN agents/travel_mode.py
   $RUN agents/thread_memory.py
   $RUN agents/template_learn.py
-  $RUN agents/answer_bank.py
   $RUN agents/defib.py
   $RUN agents/thankyou.py
   $RUN agents/meeting_prep.py
@@ -172,10 +208,19 @@ caffeinate -i -w $$ &
   $RUN agents/niche_db.py
   $RUN agents/close_prob.py
   $RUN agents/anomaly_watch.py
-  # weekly deep checks (Sundays)
+  fi  # end ANALYTICS
+
+  # weekly deep checks (Sundays). job_rescan and rejection_digest are job-lane work
+  # (they replay real submissions against real mail), so they run whenever the job
+  # lane does; the rest is analytics.
   if [ "$(date +%u)" = "7" ]; then
-    $RUN agents/rejection_digest.py         # weekly rejection-pattern read (self-gated too)
-    $RUN agents/job_rescan.py                # weekly funnel re-scan: replay submitted jobs vs real mail (2026-07-12)
+    if lane jobs; then
+      $RUN agents/rejection_digest.py       # weekly rejection-pattern read (self-gated too)
+      $RUN agents/job_rescan.py             # weekly funnel re-scan: submitted jobs vs real mail
+      $RUN agents/salary_intel.py
+    fi
+  fi
+  if [ "$(date +%u)" = "7" ] && lane analytics; then
     $RUN agents/prospect_trigger_watch.py   # open-deal trigger watch (self-gates 6d)
     $RUN agents/egress_audit.py
     $RUN agents/backup_verify.py
@@ -183,7 +228,6 @@ caffeinate -i -w $$ &
     $RUN agents/correlate.py
     $RUN agents/voice_drift.py
     $RUN agents/contact_graph.py
-    $RUN agents/salary_intel.py
     $RUN agents/win_loss.py
     $RUN agents/bakeoff.py
     $RUN agents/competitor_watch.py
@@ -196,8 +240,10 @@ caffeinate -i -w $$ &
     $RUN agents/ltv_model.py
   fi
   # J182: golden shape-test set (Mondays) — 12 frozen prompt->shape cases, catches
-  # model-router / prompt drift. Real LLM calls (~12 x few seconds), so weekly not daily.
-  if [ "$(date +%u)" = "1" ]; then
+  # model-router / prompt drift. These make ~12 REAL LLM calls, which is why they are
+  # weekly and why they are gated: on a small plan a drift check is a luxury next to
+  # actually applying to jobs.
+  if [ "$(date +%u)" = "1" ] && lane analytics; then
     $RUN tests/run_golden.py
     $RUN tests/run_quality.py
   fi

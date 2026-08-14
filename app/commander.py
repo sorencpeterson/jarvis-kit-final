@@ -701,12 +701,26 @@ def interpret(message: str, history=None, defer_converse: bool = False) -> dict:
     state = (_jarvis_memory() + "CURRENT STATE (answer any 'what's queued / what happened today / replies waiting / "
              "how many' question directly from these real numbers, never guess):\n" + world_state() + "\n\n")
     low = message.lower()
-    if re.search(r"\bmadd(y|ie|alena)\b|\bmy partner\b|\bgirlfriend\b", low):
+    # People files: store/people/<name>.md, loaded only when that person is named in the
+    # message. This was hardcoded to the ORIGINAL owner's partner by first name, which
+    # meant every copy of this kit carried a stranger's private relationship file path
+    # and pattern-matched on her name. Config-driven now:
+    #   "people": {"store/people/partner.md": ["alex", "my partner", "girlfriend"]}
+    try:
+        _people = json.loads((ROOT / "store" / "config.json").read_text()).get("people") or {}
+    except (OSError, json.JSONDecodeError, TypeError):
+        _people = {}
+    for _path, _aliases in (_people.items() if isinstance(_people, dict) else []):
         try:
-            state += ("ABOUT MADDY (his partner, the real file, speak of her warmly):\n"
-                      + (ROOT / "store" / "maddy.md").read_text()[:2600] + "\n\n")
-        except OSError:
-            pass
+            if not any(re.search(rf"\b{re.escape(str(a).lower())}\b", low) for a in _aliases):
+                continue
+            _f = ROOT / str(_path)
+            if _f.resolve().is_relative_to((ROOT / "store").resolve()) and _f.is_file():
+                state += (f"ABOUT {Path(_path).stem.upper()} (from the owner's own notes, "
+                          "speak warmly and never repeat this outside this conversation):\n"
+                          + _f.read_text()[:2600] + "\n\n")
+        except (OSError, ValueError, TypeError):
+            continue
     # INBOX TRIAGE = rung-1 read, answered straight from the morning mail digest, NOT a live
     # agentic Gmail crawl. Before 2026-07-08 "triage my inbox" fell through to the chat brain,
     # which reached for the Gmail MCP and looped forever asking a permission it could never get

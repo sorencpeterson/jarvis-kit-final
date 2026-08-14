@@ -88,6 +88,43 @@ Add the agent machinery later, when you know which parts you actually want.
 
 ---
 
+## If the job hunt is the priority, run only that
+
+The morning chain has ~112 steps. Most of them serve a business you may not be
+running yet: content generation, cold outreach, weekly deep analytics, and a
+Monday drift check that makes about twelve real LLM calls. On a $20 plan that is
+the whole budget, spent before the job search runs.
+
+```bash
+python3 tools/tune_for_plan.py --jobhunt
+```
+
+That sets `morning_profile: jobs`, which runs ~29 steps: source jobs, score them,
+tailor the resume, prep interviews, mine the answer bank, and produce the brief.
+The brief always runs, under every profile. Move back up with `--pro` (adds job
+analytics) or `--max` (everything) whenever you want.
+
+| profile | morning steps | what it drops |
+|---|---|---|
+| `jobs` | ~29 | outreach, content, analytics, intel, golden set |
+| `lite` | ~33 | same, but keeps job funnel analytics |
+| `full` | ~112 | nothing |
+
+## Make the scanner search YOUR field
+
+`job_queries` in `store/config.json` is what gets searched. Unset, it falls back
+to a generic list. For a broad marketing search, something like:
+
+```json
+"job_queries": ["Marketing Manager", "Marketing Operations Manager",
+                "Growth Marketing Manager", "Digital Marketing Manager",
+                "SEO Manager", "Demand Generation Manager",
+                "Lifecycle Marketing Manager", "Marketing Automation Manager"]
+```
+
+Sourcing is free (plain HTTP, zero LLM calls), so a wider list costs nothing per
+scan. It only changes what lands in the queue.
+
 ## If job applications are eating your limit
 
 Sourcing is free (plain HTTP, zero LLM calls). Applying is where the cost is:

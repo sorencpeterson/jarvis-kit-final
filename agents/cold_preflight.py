@@ -34,12 +34,20 @@ DNSBLS = ("zen.spamhaus.org", "b.barracudacentral.org")
 # get.* is the cold sending subdomain [OWNER] actually configured in GHL/Mailgun;
 # [OWNER_SITE] is listed informationally for the warm/nurture sends.
 DEFAULT_DOMAINS = [owner.get("site", "example.com")]
-# TODO: stale, hand-maintained, single-domain snapshot of "a client we've built for"
-# (dates to the dropped medspa lane -- see business-library no-medspas rule). A new
-# client's domain silently slips through this hardcoded gate unless someone remembers
-# to add it here by hand. Should source this dynamically (client roster / GHL) instead
-# of a hardcoded tuple; left as-is rather than guessing at a safe dynamic source.
-CLIENT_DOMAINS = ("aestheticsofamerica.com",)  # never send [OWNER]'s outreach as a client
+# Domains of clients you have built for: outreach must never go out as one of THEM.
+# Config-sourced, because this used to be a hardcoded tuple holding the original
+# owner's real client, which then shipped to every copy of this kit and gated every
+# other owner's outreach on a company they have never heard of. Set it in
+# store/config.json:  "client_domains": ["clientone.com", "clienttwo.com"]
+def _client_domains() -> tuple:
+    try:
+        v = json.loads((ROOT / "store" / "config.json").read_text()).get("client_domains") or []
+        return tuple(str(d).strip().lower() for d in v if str(d).strip())
+    except (OSError, json.JSONDecodeError, TypeError):
+        return ()
+
+
+CLIENT_DOMAINS = _client_domains()
 
 
 def _config() -> dict:

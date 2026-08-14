@@ -338,6 +338,111 @@ def test_retarget_audit_never_writes():
         assert banned not in src.split('"""', 2)[2], f"audit tool must be read-only: {banned}"
 
 
+# --------------------------------------------- morning-chain lane gating
+# `lane` was declared but only the money lane was ever gated, so `lite` skipped
+# money and then ran 53 ungated steps anyway, including tests/run_golden.py and
+# its ~12 real LLM calls. On a $20 plan that is the whole budget, gone before the
+# job search runs.
+
+def _morning_steps(profile: str) -> int:
+    """Count steps morning.sh would run under a profile, honouring lane gates."""
+    def lane(n):
+        if profile == "jobs":
+            return n in ("core", "jobs")
+        if profile == "lite":
+            return n in ("core", "jobs", "jobsx")
+        return True
+
+    stack, count = [], 0
+    for ln in (ROOT / "agents" / "morning.sh").read_text().splitlines():
+        m = re.match(r"\s*if lane (\w+); then", ln)
+        m2 = re.match(r'\s*if \[ "\$\(date \+%u\)" = "\d" \] && lane (\w+); then', ln)
+        if m or m2:
+            stack.append(lane((m or m2).group(1)))
+            continue
+        if re.match(r"\s*fi\s+# end", ln):
+            if stack:
+                stack.pop()
+            continue
+        if ln.strip().startswith("#"):
+            continue
+        if "$RUN " in ln or "bash agents/" in ln or "bash tools/" in ln:
+            if all(stack):
+                count += 1
+    return count
+
+
+def test_lane_gates_actually_reduce_the_morning_chain():
+    jobs, lite, full = (_morning_steps(p) for p in ("jobs", "lite", "full"))
+    assert jobs < lite < full, (jobs, lite, full)
+    # the whole point: a small-plan profile must be a LARGE reduction, not a trim
+    assert jobs < full * 0.45, f"jobs profile runs {jobs}/{full}; barely a saving"
+
+
+def test_every_declared_lane_actually_gates_something():
+    src = (ROOT / "agents" / "morning.sh").read_text()
+    for lane_name in ("money", "jobs", "jobsx", "outreach", "analytics"):
+        assert f"if lane {lane_name}" in src or f"&& lane {lane_name}" in src, \
+            f"lane '{lane_name}' is declared but never gates anything"
+
+
+def test_real_llm_calls_never_run_under_a_small_profile():
+    # tests/run_golden.py makes ~12 real LLM calls; on a $20 plan that is the budget
+    assert "run_golden.py" not in _reachable_steps("jobs")
+    assert "run_golden.py" not in _reachable_steps("lite")
+    assert "run_golden.py" in _reachable_steps("full")
+    # content generation is the other big spender with no job-hunt value
+    assert "content_gen.py" not in _reachable_steps("jobs")
+
+
+def _reachable_steps(profile: str) -> set:
+    """Which step scripts a profile would actually execute."""
+    def lane(n):
+        if profile == "jobs":
+            return n in ("core", "jobs")
+        if profile == "lite":
+            return n in ("core", "jobs", "jobsx")
+        return True
+
+    stack, out = [], set()
+    for ln in (ROOT / "agents" / "morning.sh").read_text().splitlines():
+        m = re.match(r"\s*if lane (\w+); then", ln)
+        m2 = re.match(r'\s*if \[ "\$\(date \+%u\)" = "\d" \] && lane (\w+); then', ln)
+        if m or m2:
+            stack.append(lane((m or m2).group(1)))
+            continue
+        if re.match(r"\s*fi\s+# end", ln):
+            if stack:
+                stack.pop()
+            continue
+        if ln.strip().startswith("#"):
+            continue
+        hit = re.search(r"(?:\$RUN|bash) ([A-Za-z0-9/_.]+)", ln)
+        if hit and all(stack):
+            out.add(Path(hit.group(1)).name)
+    return out
+
+
+def test_the_brief_survives_every_profile():
+    # a profile that produces no daily brief reads as a broken system
+    src = (ROOT / "agents" / "morning.sh").read_text()
+    brief = next(l for l in src.splitlines() if "daily_brief.py" in l and "$RUN" in l)
+    before = src.split(brief)[0]
+    opened = len(re.findall(r"^\s*if lane ", before, re.M))
+    closed = len(re.findall(r"^\s*fi\s+# end", before, re.M))
+    assert opened == closed, "daily_brief.py is inside a lane gate; it must run always"
+
+
+def test_jobhunt_profile_exists_and_selects_the_jobs_lane():
+    sys.path.insert(0, str(ROOT / "tools"))
+    import tune_for_plan as t
+    assert "jobhunt" in t.PROFILES
+    assert t.PROFILES["jobhunt"]["morning_profile"] == "jobs"
+    assert t.PROFILES["jobhunt"]["job_apply_model"].startswith("claude-haiku")
+    for k in t.KEYS:
+        assert k in t.PROFILES["jobhunt"], f"jobhunt profile missing {k}"
+
+
 def test_a3_stale_server_check_exists_and_doctor_runs_it():
     import ast
     tool = ROOT / "tools" / "check_server_fresh.py"

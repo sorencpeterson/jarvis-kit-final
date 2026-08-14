@@ -31,6 +31,27 @@ Two rules that follow from that:
 Owner config lives in `config/owner.json` (gitignored). `python3 owner.py`
 prints the current one.
 
+### Inheriting a copy from someone else
+
+If this install came from another person, two things need clearing before the
+system is really yours, and an agent working here will (correctly) hedge until
+they are:
+
+```bash
+python3 tools/depersonalize.py --from "Previous Owner" --scan
+python3 tools/retarget_audit.py
+```
+
+The first finds their literal name, handle, and domains in the source and can
+rewrite them to yours. The second finds their *business model*. Neither touches
+`store/`. Private-life mentions and named clients are reported but never
+auto-edited: those are judgment calls, not substitutions.
+
+This matters beyond tidiness. A tree full of a different real person's name,
+clients, and relationships is genuinely ambiguous about whose identity is being
+acted on, and the reasonable response to that ambiguity is caution. Clearing it
+is what makes the system unambiguously yours.
+
 ### What the identity layer does NOT fix
 
 `owner.py` retargets *identity*: name, site, company, email. It does not

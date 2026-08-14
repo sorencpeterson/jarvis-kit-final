@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Tune the job-apply chain for your Claude plan.
 
+    python3 tools/tune_for_plan.py --jobhunt # $20 plan, job hunt is the priority
     python3 tools/tune_for_plan.py --pro     # $20 plan: cheapest settings that still work
     python3 tools/tune_for_plan.py --max     # Max plan: throughput over economy
     python3 tools/tune_for_plan.py --show    # what is set right now
@@ -31,6 +32,25 @@ ROOT = Path(__file__).resolve().parent.parent
 CONFIG = ROOT / "store" / "config.json"
 
 PROFILES = {
+    "jobhunt": {
+        "label": "Claude Pro, job hunt only",
+        "job_apply_model": "claude-haiku-4-5-20251001",
+        "job_apply_concurrency": 1,
+        "job_apply_batch": 5,
+        "job_daily_apply_cap": 8,
+        "resume_tailor_limit": 10,
+        "daily_token_budget": 400000,
+        "morning_profile": "jobs",
+        "why": [
+            "morning_profile=jobs runs ~29 morning steps instead of ~112: the search, "
+            "the applier, the interview prep, the brief. No content generation, no cold "
+            "outreach, no weekly deep analytics, no golden-set LLM calls.",
+            "Everything the $20 profile does for the apply chain itself (Haiku fills "
+            "forms, one operator at a time, the friction router skips known walls).",
+            "A slightly higher apply cap than the general Pro profile, because the "
+            "budget freed by the skipped lanes goes to applications.",
+        ],
+    },
     "pro": {
         "label": "Claude Pro ($20/mo)",
         "job_apply_model": "claude-haiku-4-5-20251001",
