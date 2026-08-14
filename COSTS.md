@@ -125,6 +125,53 @@ to a generic list. For a broad marketing search, something like:
 Sourcing is free (plain HTTP, zero LLM calls), so a wider list costs nothing per
 scan. It only changes what lands in the queue.
 
+## Applying without spending tokens
+
+One application through the LLM operator is a full agentic browser session: snapshot,
+reason, act, snapshot, per field. That is why the daily cap has been single digits.
+
+Most of that reasoning is wasted. A Greenhouse form asks for a first name in the same
+box every time. `agents/apply_direct.py` fills the known boards from a table with
+**zero LLM calls**, and leaves everything it does not recognise to the operator.
+
+```bash
+.venv/bin/pip install playwright && .venv/bin/playwright install chromium
+.venv/bin/python agents/apply_direct.py --dry-run --ats greenhouse.io
+```
+
+Read what it says it would fill. Only then enable submitting, which needs **both**
+an explicit flag and a config knob:
+
+```json
+"direct_apply": true,
+"direct_apply_pace_s": [45, 90]
+```
+
+```bash
+.venv/bin/python agents/apply_direct.py --submit --ats greenhouse.io --limit 5
+```
+
+Supported: Greenhouse (high confidence), Lever (medium), Ashby and Workable (low,
+prove with `--dry-run` first). Workday is deliberately unsupported: it is a
+multi-screen wizard behind mandatory account creation.
+
+**On daily volume.** This removes the token ceiling, not every ceiling. Three remain,
+and they are the ones that decide whether volume is worth anything:
+
+1. **Queue composition.** Only jobs on a supported board take the cheap path. In one
+   measured queue that was roughly a third; the rest still cost operator sessions.
+2. **Velocity filters.** Greenhouse, Lever and Workday score submissions for speed
+   and uniformity before a human reads them. Applications sent faster than a person
+   could type are worth *less*, not more. That is what the pacing window is for, and
+   why it is not a knob worth turning to zero.
+3. **How many jobs actually fit.** Sourcing is free, so widening `job_queries` costs
+   nothing. Applying to roles you do not fit costs your reply rate.
+
+The honest framing: this makes fifty applications a day *affordable*. Whether fifty
+poorly-matched applications beat ten good ones is a different question, and the
+published numbers on mass applying (one documented run: 5,000 applications, 5
+interviews) suggest they do not.
+
 ## If job applications are eating your limit
 
 Sourcing is free (plain HTTP, zero LLM calls). Applying is where the cost is:
