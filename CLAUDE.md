@@ -31,6 +31,32 @@ Two rules that follow from that:
 Owner config lives in `config/owner.json` (gitignored). `python3 owner.py`
 prints the current one.
 
+### What the entry context teaches
+
+The root documents are read before any work happens, by you and by every agent
+that opens this repo. They set a prior. When they are mostly incident logs, leak
+post-mortems, `UNVERIFIED` tags on things later settled, and sentences like
+"assume more remains", the prior is *this system is compromised and its own
+claims are unreliable* — and the reasonable response to that is to hedge, refuse,
+and over-check. A sibling install reached ~84,000 tokens of entry context across
+29 root documents and its agent grew visibly reluctant to act.
+
+```bash
+python3 tools/context_hygiene.py --detail       # volume + what it teaches
+python3 tools/archive_changelog.py REMINDERS.md # move history out, lossless
+```
+
+Two rules that follow:
+
+- **Settled facts get stated flat.** Hedge language in an always-read document
+  does not stay put; it propagates into generated copy and into willingness to
+  act. If something is settled, say so and delete the reasoning that made it look
+  uncertain. A "closed, but with residual doubt" entry re-teaches the doubt every
+  time it is read. Genuinely open questions belong in one labelled open list.
+- **Keep security guidance, archive security history.** "Red-team your own output
+  before calling it done" earns its tokens. A catalogue of past credential leaks
+  does not, and reads as evidence the environment is unsafe.
+
 ### Inheriting a copy from someone else
 
 If this install came from another person, two things need clearing before the

@@ -443,6 +443,109 @@ def test_jobhunt_profile_exists_and_selects_the_jobs_lane():
         assert k in t.PROFILES["jobhunt"], f"jobhunt profile missing {k}"
 
 
+# ------------------------------------------------------ entry-context hygiene
+
+def test_context_hygiene_reads_entry_docs_and_stays_read_only():
+    sys.path.insert(0, str(ROOT / "tools"))
+    import context_hygiene as ch
+
+    rows = ch.audit()
+    assert rows, "no entry documents found"
+    names = {r["path"] for r in rows}
+    assert "CLAUDE.md" in names
+    assert all("/" not in p or p in ch.ENTRY_ALWAYS for p in names), \
+        "entry audit must cover repo-root docs only"
+    src = (ROOT / "tools" / "context_hygiene.py").read_text()
+    body = src.split('"""', 2)[2]
+    for banned in ("write_text(", "unlink(", "rmtree", "os.replace"):
+        assert banned not in body, f"hygiene tool must never write: {banned}"
+
+
+def test_entry_context_stays_small_enough_to_read_every_session():
+    sys.path.insert(0, str(ROOT / "tools"))
+    import context_hygiene as ch
+
+    words = sum(r["words"] for r in ch.audit())
+    # This kit sits near 10k words. A sibling install reached 63k across 29 root
+    # docs, which is ~84k tokens of prior loaded before any work on a $20 plan.
+    # The ceiling is deliberately generous; it exists to catch drift toward that.
+    assert words < 30000, (
+        f"entry context is {words} words. Root docs are read every session: "
+        "move history and dated changelogs into an -ARCHIVE.md.")
+
+
+def test_every_doubt_pattern_explains_its_own_false_positives():
+    sys.path.insert(0, str(ROOT / "tools"))
+    import context_hygiene as ch
+
+    # a linter that cannot be argued with gets ignored, then disabled
+    for _pat, kind, why in ch.PATTERNS:
+        assert len(why) > 80, f"{kind} needs a real explanation, not a label"
+
+
+# ------------------------------------------------------ changelog archiving
+
+DOC = """# NOTES
+
+Preamble stays.
+
+## PART 1 - OPEN TO-DOS
+
+### 1.1 Still broken
+Fix the thing.
+
+## PART 3 - DONE / RESOLVED
+
+### old item
+It got fixed.
+
+## 2026-08-12 - the day it broke
+A long story about an incident.
+
+### sub-detail of that day
+More of the story.
+
+## PART 4 - LIMITATIONS
+
+Deliberate, not bugs.
+"""
+
+
+def test_archive_split_keeps_open_work_and_moves_history():
+    sys.path.insert(0, str(ROOT / "tools"))
+    import archive_changelog as ac
+
+    live, arch = ac.split(DOC)
+    assert "PART 1 - OPEN TO-DOS" in live
+    assert "Fix the thing." in live
+    assert "PART 4 - LIMITATIONS" in live
+    assert "Preamble stays." in live
+    assert "PART 3 - DONE / RESOLVED" in arch
+    assert "2026-08-12" in arch
+    # a deeper heading under a dated section belongs to that section
+    assert "sub-detail of that day" in arch
+    assert "sub-detail of that day" not in live
+
+
+def test_archive_split_loses_nothing():
+    sys.path.insert(0, str(ROOT / "tools"))
+    import archive_changelog as ac
+
+    live, arch = ac.split(DOC)
+    kept = set((live + arch).splitlines())
+    lost = [ln for ln in DOC.splitlines() if ln.strip() and ln not in kept]
+    assert not lost, f"content lost in the split: {lost}"
+
+
+def test_archive_split_is_a_noop_without_dated_sections():
+    sys.path.insert(0, str(ROOT / "tools"))
+    import archive_changelog as ac
+
+    live, arch = ac.split("# Doc\n\n## Open\n\nstuff\n")
+    assert arch.strip() == ""
+    assert "stuff" in live
+
+
 def test_a3_stale_server_check_exists_and_doctor_runs_it():
     import ast
     tool = ROOT / "tools" / "check_server_fresh.py"
