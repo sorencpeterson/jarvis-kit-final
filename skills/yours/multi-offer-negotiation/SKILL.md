@@ -67,7 +67,7 @@ When both are live, compare on the real total, not the base sticker:
 ## Voice (hard rules)
 No em-dashes or en-dashes, ever. Short sentences, 9-13 words. Contractions always. Warm,
 transparent, immovable on the number. No apology anywhere near the money. Sign "[OWNER]."
-Full spec: `~/Claude/business-library/VOICE-SPEC.md`.
+Full spec: `business-library/VOICE-SPEC.md`.
 
 ## Output structure (produce this)
 1. **Timeline plan:** what to say to each company to get both live in one window.

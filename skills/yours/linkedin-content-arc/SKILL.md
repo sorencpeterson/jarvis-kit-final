@@ -53,7 +53,7 @@ The arc plan itself is internal, so it can be plain notes. But every finished po
 full spec: no em-dashes, short sentences, contractions, 0-2 hashtags, and the five banned
 AI-LinkedIn patterns (cliche hooks, rule-of-three crutch, "here's what I learned," broetry line
 breaks, emoji bullets). Enforced by `linkedin-post-writer`. Full spec:
-`~/Claude/business-library/VOICE-SPEC.md`.
+`business-library/VOICE-SPEC.md`.
 
 ## Output structure (produce this)
 1. **The spine**, one sentence.

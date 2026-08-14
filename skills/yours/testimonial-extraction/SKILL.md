@@ -62,7 +62,7 @@ site.
 No em-dashes or en-dashes, ever, in [OWNER]'s ask. (The client's own quote keeps their
 punctuation, lightly cleaned.) Short sentences, 9-13 words. Contractions always. The ask is
 email under 90 words or SMS 1-3 sentences. Full spec:
-`~/Claude/business-library/VOICE-SPEC.md`.
+`business-library/VOICE-SPEC.md`.
 
 ## Output structure (produce this)
 1. **The +14-day ask** (email and SMS versions), ready to send.

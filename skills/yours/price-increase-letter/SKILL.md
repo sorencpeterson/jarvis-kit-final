@@ -68,7 +68,7 @@ existing-client variants:
 ## Voice (hard rules)
 No em-dashes or en-dashes, ever. Short sentences, 9-13 words. Contractions always. No
 emojis. Under 160 words, every line load-bearing. Confident, warm, unapologetic. Sign
-"[OWNER]" alone. Full spec: `~/Claude/business-library/VOICE-SPEC.md`.
+"[OWNER]" alone. Full spec: `business-library/VOICE-SPEC.md`.
 
 ---
 

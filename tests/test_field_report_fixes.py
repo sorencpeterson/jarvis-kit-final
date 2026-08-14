@@ -618,6 +618,37 @@ def test_launch_log_still_receives_the_operator_text():
     assert 'launch.log' in seg and '.get("result")' in seg
 
 
+# ------------------------------------------- skills must not point at one machine
+# Same bug class as B1 (tokens in executable bash): a path that only resolves on the
+# original owner's Mac. A sibling install found four of these by hitting them; there
+# were 48 across 33 skill files.
+
+def test_no_skill_points_into_a_home_directory():
+    bad = []
+    for p in (ROOT / "skills" / "yours").rglob("SKILL.md"):
+        for i, line in enumerate(p.read_text().splitlines(), 1):
+            if re.search(r"~/(Claude|Users)/|/Users/[a-z]+/", line):
+                bad.append(f"{p.parent.name}:{i}")
+    assert not bad, f"skills hardcode a machine-specific path: {bad[:6]}"
+
+
+def test_win_templates_ship_without_a_client_in_them():
+    for name in ("win_onepager.md", "win_linkedin.md"):
+        p = ROOT / "store-templates" / name
+        assert p.is_file(), f"{name} must ship as a template"
+        text = p.read_text()
+        # these existed only as GENERATED output naming a real client, which is what
+        # made them unshareable; the template carries structure and nothing else
+        assert "@" not in text.replace("agents/", ""), f"{name} carries an address"
+        assert not re.search(r"\$\d[\d,]*", text), f"{name} carries a real deal value"
+        assert "{" in text, f"{name} should be a fill-in template"
+
+
+def test_setup_seeds_the_win_drafts():
+    src = (ROOT / "setup.py").read_text()
+    assert "win_onepager.md" in src and 'STORE / "drafts"' in src
+
+
 def test_a3_stale_server_check_exists_and_doctor_runs_it():
     import ast
     tool = ROOT / "tools" / "check_server_fresh.py"

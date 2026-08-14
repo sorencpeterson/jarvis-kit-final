@@ -34,7 +34,7 @@ text-back in under a minute, day or night, so they don't lose it to whoever call
 
 Speed-to-Lead Mini-Install is [SPEED_TO_LEAD] (offers.md marks it PROPOSED-v2, quote it in this pitch
 where the need is clearly a speed leak; the number holds for this lane). Confirm the exact
-build scope against `~/Claude/business-library/offers.md` §A2 before promising specifics
+build scope against `business-library/offers.md` §A2 before promising specifics
 beyond the text-back core. **[CONFIRM WITH THE OWNER: the precise deliverable list for the
 [SPEED_TO_LEAD] install, offers/a2 one-pager.]**
 
@@ -54,7 +54,7 @@ The pitch is a diagnosis, not hype. No em-dashes or en-dashes, ever. Short sente
 9-13 words. Contractions always. No emojis. The 5-minute number and their job value do
 the talking. Name the leak, name the fix, name the price, then stop. Banned: unlock,
 leverage, seamless, elevate, excited, circle back. Full spec:
-`~/Claude/business-library/VOICE-SPEC.md`.
+`business-library/VOICE-SPEC.md`.
 
 ## True facts you may state
 Six years doing this. Fractional COO who scaled a marketing agency [PRIOR_RESULT] per

@@ -58,7 +58,7 @@ No em-dashes or en-dashes, ever. Short sentences, 9-13 words. Contractions alway
 0-2 hashtags on LinkedIn, no engagement bait. The five AI-LinkedIn patterns from
 `linkedin-post-writer` are banned here too: no "here's what I learned," no broetry line
 breaks, no cliche hooks, no rule-of-three crutch, no emoji bullets. Full spec:
-`~/Claude/business-library/VOICE-SPEC.md`.
+`business-library/VOICE-SPEC.md`.
 
 ## Output structure (produce this)
 1. **The teardown post** (LinkedIn / portfolio), ready to paste.

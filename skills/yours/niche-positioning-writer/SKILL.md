@@ -59,7 +59,7 @@ Produce these building blocks, each in his voice, so every later asset stays con
 ## Voice (hard rules)
 No em-dashes or en-dashes, ever. Short sentences, 9-13 words. Contractions always. The
 building blocks read like an operator who studied the business, not a marketer guessing.
-Numbers do the talking. Full spec: `~/Claude/business-library/VOICE-SPEC.md`.
+Numbers do the talking. Full spec: `business-library/VOICE-SPEC.md`.
 
 ## Output structure (produce this)
 1. **The wedge sentence.**

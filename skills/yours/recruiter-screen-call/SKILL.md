@@ -53,7 +53,7 @@ fast." Never fake tool-years.
 ## Voice (hard rules)
 No em-dashes or en-dashes, ever. Short sentences, 9-13 words. Contractions always. Sounds
 like a competent operator on the phone, not a candidate performing. No throat-clearing, no
-over-explaining. Full spec: `~/Claude/business-library/VOICE-SPEC.md`.
+over-explaining. Full spec: `business-library/VOICE-SPEC.md`.
 
 ## Output structure (produce exactly this, half a page)
 1. **2-line company read:** what they do and stage · what this screen is really checking.

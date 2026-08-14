@@ -7,7 +7,7 @@ description: A deal just closed and money is confirmed. Turn the win into three 
 
 ## When to use
 The same day money confirms (deposit cleared or paid in full, logged per
-`~/Claude/business-library/sops/log-a-win.md`). Input is the win: who, what SKU, the
+`business-library/sops/log-a-win.md`). Input is the win: who, what SKU, the
 dollar amount, and any real numbers around it. Output is three ready artifacts.
 Nothing posts or sends without [OWNER]'s click. Not for delivered-build proof pieces,
 that's `case-study-writer`. This skill fires at the CLOSE, while the win is fresh and
@@ -67,7 +67,7 @@ No em-dashes or en-dashes, ever. Short sentences, 9-13 words. Contractions alway
 emojis, no hashtag piles (0-2 max on LinkedIn). First line carries the number. Banned:
 excited, thrilled, milestone, humbled, journey, unlock, leverage, seamless. Read it
 aloud: HubSpot template means kill it, contractor on the phone means ship it. Full
-spec: `~/Claude/business-library/VOICE-SPEC.md`.
+spec: `business-library/VOICE-SPEC.md`.
 
 ## True facts you may state
 Six years doing this. Fractional COO who scaled an agency [PRIOR_RESULT] per year. 35+

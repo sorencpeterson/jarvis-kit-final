@@ -10,7 +10,7 @@ The moment a deposit clears on any build tier: Landing [LANDING_PAGE], Standard 
 E-com/Booking [ECOM_PRICE], White-Glove [WHITE_GLOVE], Agency first build [FIRST_BUILD], Webfix [WEBFIX].
 Output is the intake message, ready to send. The rule behind it comes from the delivery
 SOP: **missing intake items = the build does not start.** This message exists to clear
-Stage 0 in one pass. Source: `~/Claude/business-library/sops/deliver-a-site.md`.
+Stage 0 in one pass. Source: `business-library/sops/deliver-a-site.md`.
 
 ## Inputs
 1. **The deal**: client name, tier, price, what they bought, deposit date.
@@ -46,7 +46,7 @@ Stage 0 in one pass. Source: `~/Claude/business-library/sops/deliver-a-site.md`.
 No em-dashes or en-dashes, ever. Short sentences, 9-13 words. Contractions always. No
 emojis. One congratulations, zero exclamation points. Plain deadline talk beats polite
 deadline talk. Sign "[OWNER]" alone. Full spec:
-`~/Claude/business-library/VOICE-SPEC.md`.
+`business-library/VOICE-SPEC.md`.
 
 ## True facts you may state
 Day-3 working preview. Live 7 days from deposit (agency builds: 48-72 hr first draft).

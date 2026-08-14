@@ -12,7 +12,7 @@ channel and whether this objection has come up before. Output is the reply, read
 say or send. Nothing sends without [OWNER]'s click.
 
 ## The bank (match here first, always)
-`~/Claude/business-library/playbooks/objections.md` holds 50 counters in his voice,
+`business-library/playbooks/objections.md` holds 50 counters in his voice,
 word-for-word usable. Categories:
 - **Price** 1-12 ("too expensive," Fiverr, "cheaper?", payment plans)
 - **Timing** 13-20 ("not right now," busy season, "send me info")
@@ -47,7 +47,7 @@ are [CARE_GROWTH]. "Remove me" gets instant, clean compliance (bank #47), and a 
 No em-dashes or en-dashes, ever, subject lines included. Short sentences, 9-13 words. Contractions always. No
 emojis. Numbers do the talking ([STANDARD_SITE], [PROJECT_EXAMPLE] a year, 14 days). Never defensive,
 never groveling, never a discount as an apology. Full spec:
-`~/Claude/business-library/VOICE-SPEC.md`.
+`business-library/VOICE-SPEC.md`.
 
 ## True facts you may state
 Six years doing this. Fractional COO who scaled an agency [PRIOR_RESULT] per year. 35+

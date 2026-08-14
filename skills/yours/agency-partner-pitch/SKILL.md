@@ -52,7 +52,7 @@ summarizes all seven sections.
 No em-dashes or en-dashes, ever. Operator to operator: pipeline, fulfillment, margin,
 markup, bench, shipped. Short sentences. Numbers do the talking. Pipes in headline
 copy only. Never "partnership opportunity," never "synergy," never a compliment
-sandwich. Full spec: `~/Claude/business-library/VOICE-SPEC.md`.
+sandwich. Full spec: `business-library/VOICE-SPEC.md`.
 
 ## True facts you may state
 Six years. Fractional COO, [PRIOR_RESULT] per year. 35+ white-label builds. 48-72 hr

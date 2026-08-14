@@ -57,7 +57,7 @@ No em-dashes or en-dashes, ever. Short sentences, 9-13 words. Contractions alway
 0-2 hashtags, no engagement bait. The five banned AI-LinkedIn patterns apply (cliche hooks,
 rule-of-three crutch, "here's what I learned," broetry line breaks, emoji bullets). The finished
 post should read exactly like `linkedin-post-writer` output, because it goes through the same voice
-bar. Full spec: `~/Claude/business-library/VOICE-SPEC.md`.
+bar. Full spec: `business-library/VOICE-SPEC.md`.
 
 ## Output structure (produce this)
 1. **The post**, ready to paste.

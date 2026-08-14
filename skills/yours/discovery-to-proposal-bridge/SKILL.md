@@ -37,7 +37,7 @@ Route on what they actually said, not on what's easiest to sell. One SKU, not a 
 4+ structural faults on an existing site flips Webfix to a Standard rebuild, say why in
 one line. Speed-to-Lead ([SPEED_TO_LEAD]) and White-Glove-for-men's-health are the two lanes to
 watch: quote them where the notes clearly point there, and White-Glove is confirmed at
-[WHITE_GLOVE]. Full routing: `~/Claude/business-library/playbooks/pricing-tree.md`.
+[WHITE_GLOVE]. Full routing: `business-library/playbooks/pricing-tree.md`.
 
 ## Step 3: write the brief (the handoff, 6 lines)
 The proposal writer needs these six things and nothing else:
@@ -57,7 +57,7 @@ The brief is for [OWNER] and the proposal writer, but every quoted client-facing
 survive being said out loud. No em-dashes or en-dashes, ever. Short sentences, 9-13
 words. Contractions always. No emojis. Numbers do the talking. Banned: unlock, leverage,
 seamless, elevate, excited, circle back. Full spec:
-`~/Claude/business-library/VOICE-SPEC.md`.
+`business-library/VOICE-SPEC.md`.
 
 ## True facts you may state
 Six years doing this. Fractional COO who scaled a marketing agency [PRIOR_RESULT] per

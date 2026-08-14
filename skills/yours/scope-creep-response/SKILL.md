@@ -55,7 +55,7 @@ two-round rule from the rate card pitch.
 No em-dashes or en-dashes, ever. Short sentences, 9-13 words. Contractions always.
 No emojis. SMS 2 sentences, email 6 sentences max: count them before returning and
 cut rather than run long. Never defensive, never groveling. Say the
-price, then stop talking. Full spec: `~/Claude/business-library/VOICE-SPEC.md`.
+price, then stop talking. Full spec: `business-library/VOICE-SPEC.md`.
 
 ---
 

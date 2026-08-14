@@ -65,7 +65,7 @@ No em-dashes or en-dashes, ever. Short sentences, 9-13 words. Contractions alway
 emojis. Numbers do the talking. The two voices differ in vocabulary, not in the rules:
 local leads on customer/patient/job value, agency leads on pipeline/margin/markup/
 invisibility. Banned in both: unlock, leverage, seamless, elevate, excited, circle back.
-Full spec: `~/Claude/business-library/VOICE-SPEC.md`.
+Full spec: `business-library/VOICE-SPEC.md`.
 
 ## True facts you may state
 Six years doing this. Fractional COO who scaled a marketing agency [PRIOR_RESULT] per

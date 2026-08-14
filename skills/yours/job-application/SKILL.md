@@ -42,7 +42,7 @@ tailoring gets heavy, so front-load the high-fit ones and don't grind the tail.
 Formula: mirror THEIR exact job title (ATS ranks title-match heavily) + the [PRIOR_BASELINE]→$1M
 number + the 2-3 skills their JD leads with. Shape: "{Their title} operator who {their
 core mandate}: scaled a marketing agency [PRIOR_BASELINE]→$1M/yr, {their top 2-3 JD skills} end to
-end." Rest of the resume stays as `~/Claude/JOBS-KIT/MASTER-RESUME.md`. Never re-add
+end." Rest of the resume stays as `kits/job-hunt/MASTER-RESUME.md`. Never re-add
 retail history or the 200-item skill dump; they dragged the old profile down.
 
 ## Part 2 — the cover (six rules, every time)
@@ -58,7 +58,7 @@ retail history or the 200-item skill dump; they dragged the old profile down.
 
 Pick the chassis: **Version A story-led** (default for ops/growth/RevOps roles) or
 **Version B skills-led** (for checklist-style JDs), from
-`~/Claude/JOBS-KIT/COVER-LETTERS.md`, and swap in the matching archetype opener (agency
+`kits/job-hunt/COVER-LETTERS.md`, and swap in the matching archetype opener (agency
 ops, GHL-ecosystem, AI-native, first marketing hire, RevOps, retention...).
 
 ## Part 3 — screener answers (the canonical bank, all true)
@@ -69,7 +69,7 @@ leading: ~4. GoHighLevel: expert. HubSpot/Salesforce/Marketo: "Deep in GoHighLev
 concepts transfer directly and I ramp fast." Never claim years on a tool he hasn't used.
 SEO/paid/email-SMS/GA4/WordPress/CRO/AI automation: Yes, genuinely.
 Free-text stock answers (why this role, biggest accomplishment, automation experience,
-why leaving) live in `~/Claude/JOBS-KIT/ANSWER-BANK.md`; tailor the first sentence to
+why leaving) live in `kits/job-hunt/ANSWER-BANK.md`; tailor the first sentence to
 their JD, keep the number.
 
 ## Part 4 — flags (never auto-answer, route to [OWNER])

@@ -29,7 +29,7 @@ a call sheet with no real detail is a horoscope.
 
 Hard terms that ride along: 50% deposit books the slot. Rush +50%. Two revision rounds
 included. Price holds 14 days. Max discount 15% and only traded. Never hourly.
-Full tree: `~/Claude/business-library/playbooks/pricing-tree.md`.
+Full tree: `business-library/playbooks/pricing-tree.md`.
 
 ## The call sheet (5 parts, always this order)
 1. **The read.** Three lines on their actual situation. What they sell, what their web
@@ -38,7 +38,7 @@ Full tree: `~/Claude/business-library/playbooks/pricing-tree.md`.
    "what's a job/patient/client worth to you?" gets THEIR number on the table before any
    price of ours does. Their number does the selling. Each question earns a note on what
    it sets up. Medspa wedge questions live in
-   `~/Claude/business-library/sops/niche-books/medspa.md`.
+   `business-library/sops/niche-books/medspa.md`.
 3. **The tier steer.** One tier, one price, one line of why, from the table above. Name
    the ROI anchor in their units (one missed job, two retained patients, their markup).
 4. **The close plan.** Define what a yes looks like on THIS call. Hot lead: deposit link
@@ -53,7 +53,7 @@ The sheet is for [OWNER]'s eyes but every quoted line must survive being said ou
 No em-dashes or en-dashes, ever. Short sentences, 9-13 words. Contractions always. No
 emojis. Numbers do the talking. Banned: unlock, leverage, seamless, elevate, excited,
 delve, circle back. Say the counter or the price, then stop talking. Full spec:
-`~/Claude/business-library/VOICE-SPEC.md`.
+`business-library/VOICE-SPEC.md`.
 
 ## True facts you may state
 Six years doing this, never rounded up. Fractional COO who scaled a marketing agency

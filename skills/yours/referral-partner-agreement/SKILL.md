@@ -75,7 +75,7 @@ Short, plain English, explicitly **not legal advice** (bigger arrangements route
 No em-dashes or en-dashes, ever. Short sentences, 9-13 words. Contractions always. No emojis.
 The pitch reads like one operator offering another a clean deal, not a network-marketing
 recruit. No hype, no "passive income" language. Sign "[OWNER]." Full spec:
-`~/Claude/business-library/VOICE-SPEC.md`.
+`business-library/VOICE-SPEC.md`.
 
 ## Output structure (produce this)
 1. **The recruit pitch** (email or DM), ready to send to a specific partner.

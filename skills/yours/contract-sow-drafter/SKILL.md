@@ -57,7 +57,7 @@ this one goes out.
 No em-dashes or en-dashes, ever. Plain English a client reads in 3 minutes. Short
 sentences. No whereas, no heretofore, no party-of-the-first-part. Numbered sections,
 bulleted scope. It should read like a competent contractor wrote it, because one did.
-Full spec: `~/Claude/business-library/VOICE-SPEC.md`.
+Full spec: `business-library/VOICE-SPEC.md`.
 
 ---
 

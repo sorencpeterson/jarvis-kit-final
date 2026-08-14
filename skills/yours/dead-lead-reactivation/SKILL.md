@@ -51,7 +51,7 @@ No em-dashes or en-dashes, ever, subject lines included. Email under 90 words, o
 sign "[OWNER]" alone. SMS 1-3 sentences, only if they've texted before, never cold SMS.
 Short sentences, 9-13 words. Contractions always. No emojis. First line carries it, zero
 throat-clearing. End on the ask, then stop. Banned: unlock, leverage, seamless, elevate,
-excited, circle back. Full spec: `~/Claude/business-library/VOICE-SPEC.md`.
+excited, circle back. Full spec: `business-library/VOICE-SPEC.md`.
 
 ## True facts you may state
 Six years doing this. Fractional COO who scaled a marketing agency [PRIOR_RESULT] per

@@ -57,7 +57,7 @@ about their business, not about impressing a grader.
 No em-dashes or en-dashes, ever. Short sentences, 9-13 words. Contractions always. The
 framing note reads like an operator explaining his choices, not a student justifying them.
 Confident, dry, no apology for the time box. Full spec:
-`~/Claude/business-library/VOICE-SPEC.md`.
+`business-library/VOICE-SPEC.md`.
 
 ## Output structure (produce this)
 1. **Scope read:** the real question behind the prompt, in one line.

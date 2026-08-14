@@ -289,6 +289,15 @@ def main() -> int:
     if r_src.exists() and not r_dst.exists():
         r_dst.write_text(r_src.read_text())
         print("  copied resume template -> store/resume-draft.html (edit it with your real resume)")
+    # win-asset drafts: agents/win_asset.py and the case-study skill both expect these
+    # to exist. They ship as TEMPLATES with no client in them; the agent overwrites
+    # them with real drafts from the ledger once a win is logged.
+    (STORE / "drafts").mkdir(exist_ok=True)
+    for name in ("win_onepager.md", "win_linkedin.md"):
+        src, dst = ROOT / "store-templates" / name, STORE / "drafts" / name
+        if src.exists() and not dst.exists():
+            dst.write_text(src.read_text())
+            print(f"  copied {name} -> store/drafts/")
 
     print("\n  " + "-" * 40)
     print(f"  Done. You are set up as: {cfg['name']}\n")

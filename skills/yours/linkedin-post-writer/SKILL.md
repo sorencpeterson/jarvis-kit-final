@@ -52,7 +52,7 @@ No em-dashes or en-dashes, ever. Short sentences, 9-13 words, a 3-word sentence 
 feature. Contractions always. Numbers do the talking. Banned words: unlock, leverage,
 seamless, elevate, delve, game-changing, journey, thrilled. Litmus: read it aloud, if
 it could come from a HubSpot template, kill it. Full spec:
-`~/Claude/business-library/VOICE-SPEC.md`.
+`business-library/VOICE-SPEC.md`.
 
 ## True facts you may state
 Six years building sites. Fractional COO who scaled a marketing agency [PRIOR_RESULT]

@@ -50,14 +50,14 @@ The fork depends on this cut.
 - **A Fresha/Vagaro/Linktree/bare-Calendly-only page is an automatic rebuild.** There's
   nothing to fix. Say it plainly and route to White-Glove (medspa/clinic) or Booking.
 
-Webfix is confirmed at [WEBFIX]. Full routing: `~/Claude/business-library/playbooks/pricing-tree.md`.
+Webfix is confirmed at [WEBFIX]. Full routing: `business-library/playbooks/pricing-tree.md`.
 
 ## Voice (hard rules)
 The fault list is a diagnosis, not a roast. Plain, specific, no gloating. No em-dashes or
 en-dashes, ever. Short sentences, 9-13 words. Contractions always. No emojis. Name the
 fault and what it costs, then the fork. Numbers do the talking. Banned: unlock, leverage,
 seamless, elevate, excited, circle back. Full spec:
-`~/Claude/business-library/VOICE-SPEC.md`.
+`business-library/VOICE-SPEC.md`.
 
 ## True facts you may state
 Six years doing this. The teardown plus one mockup is the only free spec work, the mockup

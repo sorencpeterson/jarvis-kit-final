@@ -28,7 +28,7 @@ Existing clients moving UP a care tier never pay the $250 onboarding again. All 
 confirmed except Growth+ [CARE_PREMIUM] and AI Ops Install [AI_OPS_PRICE] scope: quote Growth+ in the
 medspa/men's-health lane per the niche book, and confirm the install scope against
 offers.md before promising specifics. Full path:
-`~/Claude/business-library/playbooks/pricing-tree.md` (upsell path).
+`business-library/playbooks/pricing-tree.md` (upsell path).
 
 ## The timing gates (fire the right rung at the right time)
 - **At delivery:** the care attach, inside the delivery email (care-plan-pitch skill).
@@ -56,7 +56,7 @@ This is an existing relationship, so warm but never salesy. No em-dashes or en-d
 ever. Short sentences, 9-13 words. Contractions always. No emojis. Anchor to what the
 last rung delivered, in real numbers from the logs where you have them. One tier, one
 ask, then stop. Banned: unlock, leverage, seamless, elevate, excited, circle back. Full
-spec: `~/Claude/business-library/VOICE-SPEC.md`.
+spec: `business-library/VOICE-SPEC.md`.
 
 ## True facts you may state
 Six years doing this. Fractional COO who scaled a marketing agency [PRIOR_RESULT] per

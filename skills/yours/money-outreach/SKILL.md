@@ -45,7 +45,7 @@ supplement and a test, not the engine.
 No em-dashes or en-dashes, ever. Short sentences, 9-13 words. Contractions always. No
 emojis. Numbers do the talking ([STANDARD_SITE], 48-72 hrs, 35+ builds, [PRIOR_RESULT]). Banned:
 unlock, leverage, seamless, elevate, excited, thrilled, circle back, touch base. End on
-a short imperative or a hard stop. Full spec: `~/Claude/business-library/VOICE-SPEC.md`.
+a short imperative or a hard stop. Full spec: `business-library/VOICE-SPEC.md`.
 His proven shapes to reuse: the diagnosis flip ("agencies don't have a sales problem.
 They have a website fulfillment bottleneck."), the flat offer statement ("$1k
 white-label builds for agencies. That's the offer."), the receipt ("handed off Monday,

@@ -43,7 +43,7 @@ without [OWNER]'s click.
 No em-dashes or en-dashes, ever. Short sentences, 9-13 words. Contractions always. No
 emojis. Never "just checking in," never "following up on my last email," never
 apologize for following up. Numbers and dates do the talking. End on an ask or a hard
-stop. Full spec: `~/Claude/business-library/VOICE-SPEC.md`.
+stop. Full spec: `business-library/VOICE-SPEC.md`.
 
 ## True facts you may state
 Price holds 14 days from send, then requote (real rule, not a tactic). 50% deposit

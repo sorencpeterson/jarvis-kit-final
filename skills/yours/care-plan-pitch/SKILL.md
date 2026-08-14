@@ -72,7 +72,7 @@ Existing clients moving up never pay the $250 onboarding, they're already onboar
 No em-dashes or en-dashes, ever. Short sentences, 9-13 words. Contractions always. No
 emojis. The pitch is 3-5 sentences inside the delivery email, never a brochure. Two
 paths offered plainly, one clear next step, then stop. Full spec:
-`~/Claude/business-library/VOICE-SPEC.md`.
+`business-library/VOICE-SPEC.md`.
 
 ## True facts you may state
 The QA report is real and attached (deliver-a-site SOP). Edits turn around in 48

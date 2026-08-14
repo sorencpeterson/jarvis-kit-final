@@ -34,7 +34,7 @@ text itself, ready to paste. It must read in 2 minutes. One page. No deck.
 Routing: local service → Standard [STANDARD_SITE] (booking-based business → [ECOM_PRICE]). Agency →
 first build [FIRST_BUILD] flat, then rate card; 3+ orders/mo earns 10% partner pricing.
 Salvageable site → [WEBFIX] webfix, BUT 4+ structural faults → recommend rebuild and say why
-in one line. Full tree: `~/Claude/business-library/playbooks/pricing-tree.md`.
+in one line. Full tree: `business-library/playbooks/pricing-tree.md`.
 
 Hard terms in every proposal: **50% deposit books the slot, remainder on delivery. Two
 revision rounds included, round 3+ is [CARE_GROWTH]. Price holds 14 days, then requote. Rush +50%.
@@ -68,7 +68,7 @@ No em-dashes or en-dashes, ever. Sentences 9-13 words, shorter is fine. Contract
 always. No emojis. Numbers do the talking. Banned: unlock, leverage, seamless, elevate,
 excited, thrilled, delve, cutting-edge, "I hope this finds you well." Operator talking to
 operator. Litmus test: if it could come from a HubSpot template, kill it. Full spec:
-`~/Claude/business-library/VOICE-SPEC.md`.
+`business-library/VOICE-SPEC.md`.
 
 ## True facts you may state (never go beyond these)
 Fractional COO, scaled a marketing agency [PRIOR_RESULT]/yr. 35+ white-label builds,

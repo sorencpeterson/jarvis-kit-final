@@ -78,7 +78,7 @@ in one reply.
 No em-dashes or en-dashes, ever. Short sentences, 9-13 words. Contractions always. No
 emojis. Numbers do the talking. One favor, stated once, no pressure language and no
 apology for asking. Email under 90 words where possible; SMS 1-3 sentences (clients
-are opted in, SMS is fine). Full spec: `~/Claude/business-library/VOICE-SPEC.md`.
+are opted in, SMS is fine). Full spec: `business-library/VOICE-SPEC.md`.
 
 ## True facts you may state
 Their build's real tier, timeline, and any number from their own care report. Day-3

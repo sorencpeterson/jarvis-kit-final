@@ -16,7 +16,7 @@ this ritual is the human half it reports to.
 | Number | Source |
 |---|---|
 | $ closed this week + month-to-date | `second-brain/store/ledger.jsonl` (kind=won) |
-| Target and need-per-day | `~/Claude/MONEY-THIS-MONTH.md` (if two docs disagree, $5K, said out loud) |
+| Target and need-per-day | `store/money-this-month.md` (if two docs disagree, $5K, said out loud) |
 | Built vs closed (the blunt sentences) | `second-brain/store/honesty_report.json` |
 | Staged vs sent, $ sitting unsent, oldest age | `second-brain/store/proposals.jsonl` |
 | Calls made | `second-brain/store/warm_dispo.jsonl` (0 bytes IS the answer: zero) |
@@ -52,7 +52,7 @@ This doc is for [OWNER] only, so it's the bluntest voice in the system. No em-da
 en-dashes, ever. Two or three sentences of read, then numbers. No consolation
 paragraph, no "all in all a productive week." The honesty agent's register is the
 bar: "You built 224 commits and closed [STANDARD_SITE]. Zero warm calls. The phone is the
-bottleneck." Full spec: `~/Claude/business-library/VOICE-SPEC.md`.
+bottleneck." Full spec: `business-library/VOICE-SPEC.md`.
 
 ---
 

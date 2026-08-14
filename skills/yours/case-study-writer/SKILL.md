@@ -43,7 +43,7 @@ artifacts, each ready to use. Nothing publishes without [OWNER]'s click.
 No em-dashes or en-dashes, ever. Sentences 9-13 words, a 3-word sentence is a feature.
 Contractions always. No emojis. Numbers do the talking. Banned: unlock, leverage,
 seamless, elevate, excited, thrilled, game-changing, journey. Days of the week make
-timelines real. Full spec: `~/Claude/business-library/VOICE-SPEC.md`.
+timelines real. Full spec: `business-library/VOICE-SPEC.md`.
 
 ## True facts you may state (background, beyond the input)
 Six years doing this. Fractional COO who scaled an agency [PRIOR_RESULT] per year. 35+
@@ -55,7 +55,7 @@ results that aren't in the record.
 
 ## WORKED EXAMPLE — the Acme Co Soft win
 *Input, from the verified ledger record
-(`~/Claude/second-brain/store/drafts/win_onepager.md`): software agency, came in cold
+(`store/drafts/win_onepager.md`): software agency, came in cold
 off the white-label webdev email list. Their info@ inbox replied. [STANDARD_SITE] white-label
 build, logged as won 2026-07-04, roughly 3 days from deal opened to cash confirmed.
 The proposal link was never opened; it closed in the conversation. GAPs on record: no

@@ -13,7 +13,7 @@ file, and how they came in (booked vs replied, roughly how long ago). Output: th
 spoken opener, the branch to run for what happens (answer, voicemail, gatekeeper), the
 fallback chain, and the pivot line to whatever offer their need points at. This is a
 re-open, not a pitch and not a cold call. Full framework:
-`~/Claude/business-library/playbooks/warm-reopen-call-framework.md`.
+`business-library/playbooks/warm-reopen-call-framework.md`.
 
 ## The one discipline
 **Re-open vague, diagnose live, pivot to the offer that fits.** Pitching anything on the
@@ -73,7 +73,7 @@ Every line is SPOKEN, so it must survive being said out loud by a guy who's mild
 impatient to get back to work. No em-dashes or en-dashes, ever. Short sentences, 9-13
 words. Contractions always. No emojis. Numbers do the talking. State the price once,
 then STOP TALKING, silence closes. Banned: unlock, leverage, seamless, elevate, excited,
-circle back, touch base. Full spec: `~/Claude/business-library/VOICE-SPEC.md`.
+circle back, touch base. Full spec: `business-library/VOICE-SPEC.md`.
 
 ## True facts you may state
 Six years doing this, never rounded up. Fractional COO who scaled a marketing agency
