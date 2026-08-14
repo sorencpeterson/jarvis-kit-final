@@ -298,7 +298,11 @@ def main() -> int:
     print("    3. python3 agents/answer_bank.py --seed   1 minute; pre-answers the")
     print("       standard screeners so applications stop paying an LLM for each one")
     print("    4. cp -r skills/yours/* ~/.claude/skills/   the fastest win")
-    print("    5. Read README.md for what to turn on first")
+    print("    5. python3 tools/retarget_audit.py   IMPORTANT: this kit's prompts")
+    print("       still describe the original owner's business (what he sold, to")
+    print("       whom, at what price). Your name is swapped in automatically, the")
+    print("       business model is not. Work tier 1 and 2 before trusting output.")
+    print("    6. Read README.md for what to turn on first")
     print("\n  Nothing sends anything until you explicitly enable it.\n")
     return 0
 

@@ -31,6 +31,23 @@ Two rules that follow from that:
 Owner config lives in `config/owner.json` (gitignored). `python3 owner.py`
 prints the current one.
 
+### What the identity layer does NOT fix
+
+`owner.py` retargets *identity*: name, site, company, email. It does not
+retarget the *business model* — what this system assumes you sell, to whom, at
+what price. That is baked into agent prompts and `business-library/` as ordinary
+prose, so a fresh install signs its output with the new owner's name while still
+reasoning from the original owner's business. Nothing errors; the output is
+fluent and aimed at the wrong market, which is why it survives for weeks.
+
+```bash
+python3 tools/retarget_audit.py       # ranked by runtime impact, read-only
+```
+
+Tier 1 (agent prompts) and tier 2 (`business-library/`) are what a human
+actually reads. Work one tier at a time; changing business assumptions is the
+owner's call, not a cleanup you do unasked.
+
 ## Before you say a change works
 
 ```bash

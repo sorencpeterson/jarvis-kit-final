@@ -300,6 +300,44 @@ def test_a1_upgrade_refuses_to_bury_local_commits():
     assert r.returncode == 0, r.stderr
 
 
+# ------------------------------------------------- inherited-business audit
+# owner.py retargets IDENTITY. It cannot retarget the BUSINESS MODEL, which is
+# baked into agent prompts and business-library/ as prose. A second install ran
+# for weeks generating fluent, correct-sounding output aimed at the original
+# owner's market, and its handoff doc recorded "a recurring task all session was
+# finding and retargeting his data" -- done by hand, with no map. That is what
+# tools/retarget_audit.py produces.
+
+def test_retarget_audit_finds_and_ranks_by_runtime_impact():
+    sys.path.insert(0, str(ROOT / "tools"))
+    import retarget_audit as ra
+
+    hits = ra.scan()
+    assert hits, "audit found nothing; the term list has probably rotted"
+    # an agent prompt outranks a doc, regardless of hit count
+    assert ra._tier("agents/content_gen.py")[0] == 1
+    assert ra._tier("business-library/offers.md")[0] == 2
+    assert ra._tier("skills/yours/money-proposal/SKILL.md")[0] == 3
+    assert ra._tier("README.md")[0] == 4
+
+
+def test_retarget_audit_ignores_identity_and_vendored_skills():
+    sys.path.insert(0, str(ROOT / "tools"))
+    import retarget_audit as ra
+
+    # identity tokens are owner.py's job; flagging them here would bury the signal
+    pats = " ".join(p for p, _ in ra.TERMS)
+    assert "OWNER" not in pats
+    # third-party skills are not ours to retarget
+    assert not any(f.startswith("skills/third-party/") for f in ra._tracked_files())
+
+
+def test_retarget_audit_never_writes():
+    src = (ROOT / "tools" / "retarget_audit.py").read_text()
+    for banned in ("write_text(", "open(", "unlink(", "replace(", "rmtree"):
+        assert banned not in src.split('"""', 2)[2], f"audit tool must be read-only: {banned}"
+
+
 def test_a3_stale_server_check_exists_and_doctor_runs_it():
     import ast
     tool = ROOT / "tools" / "check_server_fresh.py"
