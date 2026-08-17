@@ -222,6 +222,68 @@ def wall_reason(page_text: str) -> str:
     return ""
 
 
+# Phrases that mean "we RECEIVED it", checked only against text that was NOT on the
+# page before the click. Deliberately narrower than they first look: "thank you" and
+# "your application" were in this list and are the reason it failed. Both appear on
+# UNSUBMITTED forms as ordinary boilerplate ("Thank you for your interest in...",
+# "Your application will be reviewed..."), so a failed submit that left the form on
+# screen matched them and was recorded as confirmed. 17 applications were marked
+# confirmed that way with zero confirmation emails behind them.
+_RECEIPT = (
+    "application received", "application submitted", "we have received",
+    "we've received", "successfully submitted", "thank you for applying",
+    "thanks for applying", "your application has been received",
+    "application complete", "we received your application",
+)
+
+# A form that rejected us stays on screen and says so. This is NOT a submission and
+# must never be recorded as one, but it IS safe to retry, unlike an ambiguous outcome.
+_REJECTED = (
+    "please complete", "is required", "required field", "this field is required",
+    "please fill", "please correct", "there was a problem", "please enter",
+    "invalid email", "fix the errors", "cannot be blank", "must be provided",
+)
+
+
+def _norm(text: str) -> str:
+    return " ".join((text or "").lower().split())
+
+
+def confirmation_delta(before: str, after: str) -> str:
+    """A receipt phrase present AFTER the click that was NOT there before, or ''.
+
+    The delta is the whole point. Matching against the post-click page alone cannot
+    distinguish "the employer confirmed receipt" from "the form we failed to submit
+    happens to contain the word application".
+    """
+    b, a = _norm(before), _norm(after)
+    for phrase in _RECEIPT:
+        if phrase in a and phrase not in b:
+            return phrase
+    return ""
+
+
+def validation_error(before: str, after: str) -> str:
+    """A validation complaint that appeared after the click, or ''. Means NOT submitted."""
+    b, a = _norm(before), _norm(after)
+    for phrase in _REJECTED:
+        if phrase in a and phrase not in b:
+            return phrase
+    return ""
+
+
+def page_changed(before_url: str, after_url: str, before: str, after: str) -> bool:
+    """Did anything actually happen? A click that changes neither the URL nor the page
+    text did nothing at all, whatever the button looked like."""
+    if (before_url or "") != (after_url or ""):
+        return True
+    b, a = _norm(before), _norm(after)
+    if not b or not a:
+        return False
+    # a real transition replaces most of the page; a re-render of the same form does not
+    return abs(len(a) - len(b)) > max(200, len(b) * 0.15) or a[:400] != b[:400]
+
+
 def summary() -> str:
     rows = []
     for s in SPECS:

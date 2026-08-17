@@ -173,22 +173,54 @@ def apply_one(page, job: dict, spec: dict, profile: dict, submit: bool,
     for sel in spec["submit"]:
         try:
             btn = page.query_selector(sel)
-            if btn and btn.is_visible():
-                # Recorded BEFORE the click. If the page then dies, the caller has to
-                # know a submit may already have gone through: returning such a job to
-                # the approved pool would apply to the same employer twice.
-                out["submit_attempted"] = True
-                btn.click()
-                page.wait_for_timeout(4000)
-                body = (page.content() or "").lower()
-                ok = any(w in body for w in
-                         ("thank you", "application received", "we have received",
-                          "successfully submitted", "your application"))
+            if not (btn and btn.is_visible()):
+                continue
+            # Snapshot BEFORE the click. Everything below is a comparison against this,
+            # because the post-click page ALONE cannot tell "the employer confirmed
+            # receipt" from "the form we failed to submit contains the word
+            # application". That conflation marked 17 applications confirmed with zero
+            # confirmation emails behind them.
+            before_url = page.url
+            before = page.inner_text("body")
+            # Recorded BEFORE the click: if the page then dies, the caller must know a
+            # submit may already have gone through, or returning this job to the queue
+            # applies to the same employer twice.
+            out["submit_attempted"] = True
+            btn.click()
+            page.wait_for_timeout(4000)
+            after_url, after = page.url, page.inner_text("body")
+
+            hit = ats_forms.confirmation_delta(before, after)
+            if hit:
                 out["action"] = "submitted"
-                out["reason"] = ("confirm: page showed a confirmation"
-                                 if ok else
-                                 "unconfirmed (no confirmation text found; verify in ATS)")
+                out["reason"] = f"confirm: {hit}"
                 return out
+
+            bad = ats_forms.validation_error(before, after)
+            if bad:
+                # the form rejected us and is still on screen. Nothing was submitted,
+                # so this is safe to hand back rather than leave submission-uncertain.
+                out["action"] = "handoff"
+                out["submit_attempted"] = False
+                out["reason"] = f"form rejected the submission ({bad}); needs a human"
+                return out
+
+            if ats_forms.page_changed(before_url, after_url, before, after):
+                # something happened, but the employer never said "received". Real for
+                # ATSes that redirect to a bare status page; recorded honestly so
+                # job_verify settles it against the confirmation email.
+                out["action"] = "submitted"
+                out["reason"] = ("unconfirmed (page advanced but showed no receipt; "
+                                 "verify in ATS)")
+                return out
+
+            # The click changed NOTHING: no URL move, no new text, no complaint. It
+            # did not submit. Marking this applied is what produced a 5% real rate
+            # behind a much higher reported one.
+            out["action"] = "uncertain"
+            out["reason"] = ("submit clicked but the page did not change; "
+                             "likely not submitted, verify in ATS")
+            return out
         except Exception:  # noqa: BLE001
             continue
     out["action"], out["reason"] = "handoff", "no submit control found"
@@ -285,7 +317,7 @@ def run(limit: int = 10, submit: bool = False, only_ats: str = "") -> int:
                     print(f"  {tag} walled     {r['reason']}")
                 elif r["action"] == "dry-run":
                     print(f"  {tag} would fill {', '.join(r['filled']) or '(nothing)'}")
-                elif r.get("submit_attempted"):
+                elif r["action"] == "uncertain" or r.get("submit_attempted"):
                     # a submit may already have landed: never return this to the
                     # approved pool, or the LLM operator applies to the same
                     # employer a second time. job_verify settles it from the

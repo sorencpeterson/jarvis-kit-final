@@ -199,8 +199,9 @@ class TestConcurrencySafety:
 
     def test_an_attempted_submit_is_never_returned_to_the_queue(self):
         src = (ROOT / "agents" / "apply_direct.py").read_text()
-        assert 'elif r.get("submit_attempted"):' in src
-        seg = src.split('elif r.get("submit_attempted"):', 1)[1][:400]
+        anchor = 'elif r["action"] == "uncertain" or r.get("submit_attempted"):'
+        assert anchor in src
+        seg = src.split(anchor, 1)[1][:400]
         # strip comments: the branch explains WHY it avoids the approved pool, and
         # the word appearing in that explanation is not the code doing it
         code = "\n".join(ln.split("#", 1)[0] for ln in seg.splitlines())
@@ -241,6 +242,64 @@ class TestResultSurvivesACrash:
             apply_direct.apply_one(_Boom(), {"id": "x", "apply_url": "u"}, spec,
                                    PROFILE, True, out=out)
         assert out["submit_attempted"] is True, "crash must not lose this"
+
+
+class TestSubmitIsProvenNotAssumed:
+    """A sibling install ran this live: 17 applications recorded as CONFIRMED, and a
+    search of the owner's real mailbox (400 messages, spam and trash included) found
+    zero matching confirmation emails. Three defects combined to produce that."""
+
+    def test_receipt_phrases_exclude_ordinary_form_boilerplate(self):
+        # "thank you" and "your application" were in this list, and both appear on
+        # UNSUBMITTED forms ("Thank you for your interest in...", "Your application
+        # will be reviewed..."), so a failed submit matched and was called confirmed
+        assert "thank you" not in ats_forms._RECEIPT
+        assert "your application" not in ats_forms._RECEIPT
+        for p in ats_forms._RECEIPT:
+            assert any(w in p for w in ("receiv", "submitted", "applying", "complete"))
+
+    def test_confirmation_must_be_NEW_text(self):
+        form = "Thank you for your interest. Your application will be reviewed."
+        # same boilerplate before and after = a click that proved nothing
+        assert ats_forms.confirmation_delta(form, form) == ""
+        assert ats_forms.confirmation_delta(form, form + " Application received.") \
+            == "application received"
+
+    def test_a_receipt_already_on_the_page_is_not_a_confirmation(self):
+        page = "Application received notice: we received your application last time."
+        assert ats_forms.confirmation_delta(page, page) == ""
+
+    def test_validation_complaints_are_detected_as_rejection(self):
+        before = "First name Last name Submit"
+        after = before + " This field is required"
+        # which phrase matches first is an implementation detail; that it detects a
+        # rejection at all is the contract
+        assert "required" in ats_forms.validation_error(before, after)
+        assert ats_forms.validation_error(before, before) == ""
+        assert ats_forms.validation_error(before, before + " Please enter a phone") \
+            == "please enter"
+
+    def test_an_unchanged_page_is_not_a_submission(self):
+        p = "First name Last name Email Submit application"
+        assert ats_forms.page_changed("u", "u", p, p) is False
+        assert ats_forms.page_changed("u", "u2", p, p) is True
+        assert ats_forms.page_changed("u", "u", p, "Application received. Thanks.") is True
+
+    def test_submitted_is_no_longer_set_unconditionally(self):
+        src = (ROOT / "agents" / "apply_direct.py").read_text()
+        seg = src.split('for sel in spec["submit"]:', 1)[1].split("no submit control", 1)[0]
+        # every 'submitted' must be guarded by evidence, and the do-nothing click
+        # must land on 'uncertain' rather than being recorded as an application
+        assert '"uncertain"' in seg
+        assert seg.count('out["action"] = "submitted"') == 2      # confirmed + advanced
+        assert "confirmation_delta" in seg and "page_changed" in seg
+
+    def test_a_rejected_form_is_safe_to_retry(self):
+        # nothing was submitted, so it must NOT be left submission-uncertain
+        src = (ROOT / "agents" / "apply_direct.py").read_text()
+        seg = src.split("validation_error(before, after)", 1)[1][:400]
+        assert 'out["submit_attempted"] = False' in seg
+        assert '"handoff"' in seg
 
 
 class TestNeverSendsAnEmptyApplication:
