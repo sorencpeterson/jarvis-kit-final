@@ -75,8 +75,23 @@ def _pace(cfg: dict) -> float:
 
 
 def _resume_path(job: dict) -> Path | None:
-    """The resume this job should upload: its own tailored/variant file if one was
-    stamped, else the static resume."""
+    """The resume this job should upload: the role-matched variant when one exists,
+    then any stamped per-job file, then the static resume.
+
+    resume_for_mode() is the ONE place that decides which resume goes out, honouring
+    config resume_mode. Without asking it, this path uploaded the generic resume even
+    when a variant matched to the role was sitting rendered on disk -- the same class
+    of miss as pasting a generic cover letter over a tailored one.
+    """
+    try:
+        import resume_library
+        kind, path = resume_library.resume_for_mode(job)
+        if kind != "static" and path:
+            p = Path(path)
+            if p.is_file() and p.resolve().is_relative_to((ROOT / "store").resolve()):
+                return p
+    except Exception:  # noqa: BLE001 -- resume choice must never break an apply round
+        pass
     rf = (job.get("resume_file") or "").strip()
     if rf:
         p = Path(rf) if Path(rf).is_absolute() else ROOT / rf
@@ -109,7 +124,19 @@ def _answer_bank() -> list:
         return []
 
 
-def _answer_screeners(page, profile: dict, out: dict) -> list:
+def _cover_for(job: dict, profile: dict) -> str:
+    """This job's OWN cover letter if one was written for it, else the generic one.
+
+    job_cover.py generates and caches cover_override per job during the morning batch,
+    so the customisation is already paid for; pasting it here costs nothing. Without
+    this the zero-token path submitted a generic application when a tailored one was
+    sitting on the record.
+    """
+    return ((job.get("cover_override") or "").strip()
+            or (profile.get("default_cover") or "").strip())
+
+
+def _answer_screeners(page, job: dict, profile: dict, out: dict) -> list:
     """Fill the form's OWN questions from answers the owner already gave.
 
     Only touches controls that are still EMPTY, so nothing the spec filled is
@@ -134,6 +161,13 @@ def _answer_screeners(page, profile: dict, out: dict) -> list:
             if (el.input_value() or "").strip():
                 continue                            # already filled by the spec
             label = el.evaluate(_LABEL_JS) or ""
+            # a cover-letter box gets THIS job's cover, not a screener answer
+            if ats_forms.is_cover_field(label):
+                cov = _cover_for(job, profile)
+                if cov:
+                    el.fill(cov)
+                    done.append(f"cover letter ({len(cov)} chars)")
+                continue
             ans = ats_forms.answer_for(label, profile, bank)
             if not ans:
                 continue
@@ -244,7 +278,7 @@ def apply_one(page, job: dict, spec: dict, profile: dict, submit: bool,
     # required -- work authorization, sponsorship, location, notice period, a screener
     # or two -- and pressing submit with those blank produces a validation error, not
     # an application. That is the largest single reason a run does not land.
-    out["answered"] = _answer_screeners(page, profile, out)
+    out["answered"] = _answer_screeners(page, job, profile, out)
 
     if not submit:
         out["action"] = "dry-run"

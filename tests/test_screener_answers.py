@@ -112,6 +112,51 @@ class TestAnswerBank:
         assert af.answer_for("Why are you interested in this role?", PROFILE, []) is None
 
 
+class TestCustomisationIsUsed:
+    """The customisation already exists and is already paid for: job_cover.py writes a
+    per-job cover during the morning batch and resume_library matches a variant to the
+    role. The zero-token path was submitting generic applications anyway."""
+
+    def test_cover_letter_fields_are_recognised(self):
+        for label in ("Cover Letter", "Why are you interested in this role?",
+                      "Tell us why you want to work here", "Additional information",
+                      "What excites you about this opportunity?"):
+            assert af.is_cover_field(label), label
+
+    def test_ordinary_screeners_are_not_treated_as_cover_fields(self):
+        for label in ("First Name", "Are you authorized to work in the US?",
+                      "Zip Code", "Years of experience"):
+            assert not af.is_cover_field(label), label
+
+    def test_this_jobs_cover_beats_the_generic_one(self):
+        import apply_direct as ad
+        job = {"cover_override": "Written for THIS role."}
+        prof = {"default_cover": "Generic."}
+        assert ad._cover_for(job, prof) == "Written for THIS role."
+        assert ad._cover_for({}, prof) == "Generic."
+        assert ad._cover_for({}, {}) == ""
+
+    def test_a_blank_override_falls_back_rather_than_emptying_the_field(self):
+        import apply_direct as ad
+        assert ad._cover_for({"cover_override": "   "}, {"default_cover": "G"}) == "G"
+
+    def test_cover_is_filled_before_screener_matching(self):
+        # otherwise "Why are you interested in this role?" gets answered from the
+        # answer bank with a one-liner instead of the letter written for this job
+        src = (ROOT / "agents" / "apply_direct.py").read_text()
+        seg = src.split("def _answer_screeners", 1)[1].split("\ndef ", 1)[0]
+        # anchored on the CALL SITES: the docstring names answer_for too
+        assert seg.index("ats_forms.is_cover_field(label)") \
+            < seg.index("ats_forms.answer_for(label")
+
+    def test_resume_choice_goes_through_the_one_decider(self):
+        src = (ROOT / "agents" / "apply_direct.py").read_text()
+        seg = src.split("def _resume_path", 1)[1].split("\ndef ", 1)[0]
+        assert "resume_library.resume_for_mode" in seg
+        # and still cannot upload anything outside store/
+        assert "is_relative_to" in seg
+
+
 class TestBrowserLayerRails:
     def test_radios_and_checkboxes_are_never_auto_clicked(self):
         src = (ROOT / "agents" / "apply_direct.py").read_text()

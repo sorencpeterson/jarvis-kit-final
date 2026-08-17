@@ -330,6 +330,21 @@ _PROFILE_RULES = (
 )
 
 
+# Cover-letter fields, matched on the question label. Kept separate from the screener
+# rules because the ANSWER comes from the job record rather than the profile: job_cover.py
+# already writes a per-job cover during the morning batch and caches it on the record as
+# cover_override. Pasting that at apply time costs nothing and is the difference between a
+# generic submission and a customised one.
+_COVER_LABEL = re.compile(
+    r"cover letter|why (are you |do you )?(interested|want)|why this (role|company|job)"
+    r"|tell us (about yourself|why)|anything else|additional information"
+    r"|what (interests|excites) you|message to the hiring", re.I)
+
+
+def is_cover_field(label: str) -> bool:
+    return bool(_COVER_LABEL.search(label or ""))
+
+
 def _norm_q(s: str) -> str:
     s = _norm(s)
     return re.sub(r"[^a-z0-9 ]+", " ", s).strip()
