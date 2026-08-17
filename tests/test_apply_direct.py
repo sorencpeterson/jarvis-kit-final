@@ -291,7 +291,10 @@ class TestSubmitIsProvenNotAssumed:
         # every 'submitted' must be guarded by evidence, and the do-nothing click
         # must land on 'uncertain' rather than being recorded as an application
         assert '"uncertain"' in seg
-        assert seg.count('out["action"] = "submitted"') == 2      # confirmed + advanced
+        # exactly two paths may call it submitted: a NEW receipt phrase, and a page
+        # that demonstrably advanced. Counted on the literal so the assertion does not
+        # depend on whether the assignment is written as a tuple.
+        assert seg.count('"submitted"') == 2
         assert "confirmation_delta" in seg and "page_changed" in seg
 
     def test_a_rejected_form_is_safe_to_retry(self):

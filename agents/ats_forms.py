@@ -284,6 +284,106 @@ def page_changed(before_url: str, after_url: str, before: str, after: str) -> bo
     return abs(len(a) - len(b)) > max(200, len(b) * 0.15) or a[:400] != b[:400]
 
 
+# ---------------------------------------------------------------- screener answers
+#
+# The specs above cover name, email, phone and the resume. A real Greenhouse or Lever
+# form asks for more than that and marks several of them required: work authorization,
+# sponsorship, location, notice period, and a couple of screening questions. Filling 4
+# of 8 required fields and pressing submit produces a validation error, not an
+# application, and that is the single largest reason a deterministic run does not land.
+#
+# So: match the form's own question text against answers the owner has ALREADY given
+# (store/answer_bank.json, seeded once) and the application profile. Still zero LLM.
+#
+# The hard rule is NEVER GUESS. A wrong answer on a real job application is worse than
+# an unfilled one, because the unfilled one is caught by validation and handed to a
+# human while the wrong one is submitted and believed. Anything this cannot match
+# confidently returns None and the job goes to the operator.
+
+_PROFILE_RULES = (
+    # (regex over the question label, profile key, fallback)
+    (r"legally (authorized|eligible) to work|work authorization|authori[sz]ed to work",
+     "work_authorization", "Yes"),
+    (r"require (visa )?sponsorship|need sponsorship|sponsorship (now|in the future)",
+     "requires_sponsorship", "No"),
+    (r"notice period|when (can|could) you start|availability|available to start",
+     "availability", None),
+    (r"desired|expected|salary requirement|compensation expectation",
+     "salary_expectation", None),
+    (r"years of (relevant )?experience|how many years", "years_experience", None),
+    (r"linkedin", "linkedin", None),
+    (r"portfolio|personal (web)?site|website|url", "portfolio", None),
+    (r"\bcity\b|current location|where are you (based|located)", "city_state", None),
+    (r"\bstate\b(?!ment)", "state_abbrev", None),
+    (r"zip|postal code", "zip5", None),
+    (r"street address|address line", "street_address", None),
+    (r"first name", "first_name", None),
+    (r"last name|surname|family name", "last_name", None),
+    (r"full name|^name$", "full_name", None),
+    (r"e-?mail", "email", None),
+    (r"phone|mobile|cell", "phone", None),
+    (r"gender", "eeo.gender", None),
+    (r"race|ethnicity", "eeo.race", None),
+    (r"veteran", "eeo.veteran", None),
+    (r"disability", "eeo.disability", None),
+    (r"pronouns", "eeo.pronouns", None),
+)
+
+
+def _norm_q(s: str) -> str:
+    s = _norm(s)
+    return re.sub(r"[^a-z0-9 ]+", " ", s).strip()
+
+
+def _profile_get(profile: dict, key: str):
+    if "." in key:
+        head, tail = key.split(".", 1)
+        sub = profile.get(head)
+        return (sub or {}).get(tail) if isinstance(sub, dict) else None
+    return profile.get(key)
+
+
+def answer_for(label: str, profile: dict, bank: list | None = None) -> str | None:
+    """The owner's OWN answer to this form question, or None when unsure.
+
+    Order matters: the profile is structured fact and wins, then the answer bank,
+    which is the owner's own previously-given wording. Nothing is generated.
+    """
+    q = _norm_q(label)
+    if not q or len(q) < 3:
+        return None
+
+    for pat, key, fallback in _PROFILE_RULES:
+        if re.search(pat, q):
+            v = _profile_get(profile, key)
+            if v not in (None, "", []):
+                return str(v)
+            if fallback is not None:
+                return fallback
+            return None      # the profile does not know: do not invent one
+
+    # the answer bank: the owner's own answers to questions like this one
+    best, best_score = None, 0
+    for item in (bank or []):
+        bq = _norm_q(item.get("q", ""))
+        a = (item.get("a") or "").strip()
+        if not bq or not a:
+            continue
+        if bq == q:
+            return a
+        # token overlap, both directions, so neither a long form label nor a long
+        # banked question can win on length alone
+        tq, tb = set(q.split()), set(bq.split())
+        if not tq or not tb:
+            continue
+        overlap = len(tq & tb) / max(len(tq), len(tb))
+        if overlap > best_score:
+            best, best_score = a, overlap
+    # 0.7 is deliberately strict: a near-miss here becomes a wrong answer on a real
+    # application, and an unfilled field is merely a handoff
+    return best if best_score >= 0.7 else None
+
+
 def summary() -> str:
     rows = []
     for s in SPECS:

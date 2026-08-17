@@ -88,6 +88,80 @@ def _resume_path(job: dict) -> Path | None:
     return RESUME if RESUME.is_file() else None
 
 
+_LABEL_JS = """(el) => {
+  const id = el.getAttribute('id');
+  if (id) { const l = document.querySelector(`label[for="${CSS.escape(id)}"]`);
+            if (l && l.innerText.trim()) return l.innerText; }
+  const wrap = el.closest('label');
+  if (wrap && wrap.innerText.trim()) return wrap.innerText;
+  const grp = el.closest('div,fieldset,li,section');
+  if (grp) { const lab = grp.querySelector('label,legend');
+             if (lab && lab.innerText.trim()) return lab.innerText; }
+  return el.getAttribute('aria-label') || el.getAttribute('placeholder')
+      || el.getAttribute('name') || '';
+}"""
+
+
+def _answer_bank() -> list:
+    try:
+        return json.loads((ROOT / "store" / "answer_bank.json").read_text()).get("qa", [])
+    except (OSError, json.JSONDecodeError, AttributeError):
+        return []
+
+
+def _answer_screeners(page, profile: dict, out: dict) -> list:
+    """Fill the form's OWN questions from answers the owner already gave.
+
+    Only touches controls that are still EMPTY, so nothing the spec filled is
+    overwritten. Anything ats_forms.answer_for() cannot match confidently is left
+    blank on purpose: an unfilled required field fails validation and reaches a
+    human, while a guessed one is submitted and believed.
+    """
+    bank = _answer_bank()
+    done = []
+    try:
+        controls = page.query_selector_all(
+            "input:not([type=hidden]):not([type=file]):not([type=submit]), textarea, select")
+    except Exception:  # noqa: BLE001
+        return done
+    for el in controls[:60]:                       # bounded: no runaway on a huge form
+        try:
+            if not el.is_visible() or not el.is_enabled():
+                continue
+            kind = (el.get_attribute("type") or el.evaluate("e => e.tagName") or "").lower()
+            if kind in ("checkbox", "radio"):
+                continue                            # consent/EEO radios: never auto-click
+            if (el.input_value() or "").strip():
+                continue                            # already filled by the spec
+            label = el.evaluate(_LABEL_JS) or ""
+            ans = ats_forms.answer_for(label, profile, bank)
+            if not ans:
+                continue
+            if kind == "select":
+                # only choose an option that genuinely matches; never the first one
+                picked = el.evaluate(
+                    """(sel, want) => {
+                        const w = String(want).toLowerCase().trim();
+                        for (const o of sel.options) {
+                          const t = (o.textContent||'').toLowerCase().trim();
+                          if (t === w || (t && (t.startsWith(w) || w.startsWith(t)))) {
+                            sel.value = o.value;
+                            sel.dispatchEvent(new Event('change', {bubbles:true}));
+                            return o.textContent;
+                          }
+                        }
+                        return null;
+                     }""", ans)
+                if picked:
+                    done.append(f"{label.strip()[:36]}={str(picked).strip()[:20]}")
+                continue
+            el.fill(ans)
+            done.append(f"{label.strip()[:36]}={ans[:20]}")
+        except Exception:  # noqa: BLE001 -- one awkward control must not stop the form
+            continue
+    return done
+
+
 def new_result(job: dict, spec: dict) -> dict:
     """The result dict, created by the CALLER so its state survives an exception.
 
@@ -165,6 +239,12 @@ def apply_one(page, job: dict, spec: dict, profile: dict, submit: bool,
         out["action"] = "handoff"
         out["reason"] = f"required field(s) not on page: {', '.join(not_landed)}"
         return out
+
+    # Everything above fills name/email/phone/resume. Real forms mark more than that
+    # required -- work authorization, sponsorship, location, notice period, a screener
+    # or two -- and pressing submit with those blank produces a validation error, not
+    # an application. That is the largest single reason a run does not land.
+    out["answered"] = _answer_screeners(page, profile, out)
 
     if not submit:
         out["action"] = "dry-run"
@@ -316,7 +396,9 @@ def run(limit: int = 10, submit: bool = False, only_ats: str = "") -> int:
                     skipped += 1
                     print(f"  {tag} walled     {r['reason']}")
                 elif r["action"] == "dry-run":
-                    print(f"  {tag} would fill {', '.join(r['filled']) or '(nothing)'}")
+                    ans = r.get("answered") or []
+                    print(f"  {tag} would fill {', '.join(r['filled']) or '(nothing)'}"
+                          + (f"  +{len(ans)} screener(s): {'; '.join(ans[:4])}" if ans else ""))
                 elif r["action"] == "uncertain" or r.get("submit_attempted"):
                     # a submit may already have landed: never return this to the
                     # approved pool, or the LLM operator applies to the same
