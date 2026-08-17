@@ -11,6 +11,7 @@ validation and reaches a human. A guessed one is submitted and believed.
 """
 from __future__ import annotations
 
+import json
 import sys
 from pathlib import Path
 
@@ -155,6 +156,71 @@ class TestCustomisationIsUsed:
         assert "resume_library.resume_for_mode" in seg
         # and still cannot upload anything outside store/
         assert "is_relative_to" in seg
+
+
+class TestJobDoctor:
+    """One command that says why applications are not landing. Every failure mode in
+    this pipeline is silent: a thin profile, an empty answer bank, a missing resume and
+    an unrendered variant library all look identical from the outside."""
+
+    def _load(self):
+        sys.path.insert(0, str(ROOT / "tools"))
+        import job_doctor
+        job_doctor._rows.clear()
+        return job_doctor
+
+    def test_it_reports_rather_than_changes_anything(self):
+        src = (ROOT / "tools" / "job_doctor.py").read_text()
+        body = src.split('"""', 2)[2]
+        for banned in ("write_text(", "unlink(", "set_status", "rmtree", ".fill("):
+            assert banned not in body, f"the doctor must not act: {banned}"
+
+    def test_a_missing_resume_is_blocking_not_advisory(self, monkeypatch, tmp_path):
+        jd = self._load()
+        monkeypatch.setattr(jd, "STORE", tmp_path)
+        jd.check_resume()
+        assert jd._rows[0][0] == "FAIL"
+
+    def test_an_empty_answer_bank_is_blocking(self, monkeypatch, tmp_path):
+        jd = self._load()
+        monkeypatch.setattr(jd, "STORE", tmp_path)
+        jd.check_answer_bank()
+        assert jd._rows[0][0] == "FAIL"
+        assert "--seed" in jd._rows[0][3]
+
+    def test_a_thin_profile_warns_with_the_specific_fields(self, monkeypatch, tmp_path):
+        jd = self._load()
+        (tmp_path / "application_profile.json").write_text(json.dumps(
+            {"first_name": "A", "last_name": "B", "email": "a@b.co"}))
+        monkeypatch.setattr(jd, "STORE", tmp_path)
+        jd.check_profile()
+        state, _name, detail, _fix = jd._rows[0]
+        assert state == "WARN"
+        assert "work_authorization" in detail or "phone" in detail
+
+    def test_missing_identity_fields_are_blocking(self, monkeypatch, tmp_path):
+        jd = self._load()
+        (tmp_path / "application_profile.json").write_text(json.dumps({"phone": "x"}))
+        monkeypatch.setattr(jd, "STORE", tmp_path)
+        jd.check_profile()
+        assert jd._rows[0][0] == "FAIL"
+
+    def test_every_check_carries_a_fix_when_it_fails(self, monkeypatch, tmp_path):
+        jd = self._load()
+        monkeypatch.setattr(jd, "STORE", tmp_path)
+        for fn in (jd.check_profile, jd.check_answer_bank, jd.check_resume):
+            fn()
+        for state, name, _d, fix in jd._rows:
+            if state == "FAIL":
+                assert fix, f"{name} fails without telling anyone how to fix it"
+
+    def test_one_broken_check_does_not_hide_the_others(self, monkeypatch):
+        jd = self._load()
+        monkeypatch.setattr(jd, "check_profile",
+                            lambda: (_ for _ in ()).throw(RuntimeError("boom")))
+        monkeypatch.setattr(sys, "argv", ["job_doctor"])
+        jd.main()
+        assert len(jd._rows) > 3, "a raising check aborted the whole run"
 
 
 class TestBrowserLayerRails:
