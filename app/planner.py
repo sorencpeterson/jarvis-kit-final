@@ -194,11 +194,31 @@ def _cli(prompt: str, timeout: int = 130, feature: str = "default") -> str | Non
         pass
     """Route the model by feature (public-facing writing -> Sonnet, internal -> Haiku) and
     meter every call to store/usage.jsonl. Falls back to raw output on any non-JSON result."""
+    m = _models()
+    model = m.get(feature) or m.get("default") or MODEL
+
+    # Cheap-provider routing. Only fires when this feature's model is an explicit
+    # "provider:<name>" entry the owner configured, so the default path below is
+    # untouched. Any failure (missing key, outage, bad response) falls THROUGH to the
+    # claude CLI rather than taking the agent down: a third party being unreachable
+    # should cost money, not a morning run. The fallback is printed, never silent,
+    # because a provider that quietly never works looks identical to one that is
+    # simply cheap.
+    try:
+        import providers
+        prov = providers.resolve(model)
+    except Exception:  # noqa: BLE001
+        prov = None
+    if prov:
+        text, usage = providers.call(prov, prompt, timeout=timeout)
+        if text is not None:
+            _log_usage(feature, f"provider:{prov['name']}/{prov['model']}", usage)
+            return text
+        model = m.get("default") or MODEL     # fell back: use a real claude model id
+
     cli = _find_claude_cli()
     if not cli:
         return None
-    m = _models()
-    model = m.get(feature) or m.get("default") or MODEL
     try:
         out = subprocess.run(
             # --strict-mcp-config + an EMPTY mcp config = this text-gen child inherits NONE of

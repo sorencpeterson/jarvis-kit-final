@@ -294,3 +294,65 @@ the pipeline, larger than applying on some days. `resume_tailor_limit` tracks th
 apply cap so it stops tailoring resumes for jobs it will not submit today. The
 PDFs are cached, so tomorrow's run picks up where this one stopped and nothing is
 wasted.
+
+---
+
+## Sending bulk work to a cheap model
+
+Most of what this system asks a model to do is bulk work behind a code gate: draft a
+cover letter, rewrite two resume blocks, classify a mail thread, summarise a
+transcript. Every one of those outputs is already checked by code that does not care
+which model produced it, and those gates are what make a cheaper model safe to use:
+
+| gate | what it refuses |
+|---|---|
+| `resume_tailor.validate()` | any number not already in your resume |
+| `ats_forms.answer_for()` | anything below 0.7 confidence, rather than guessing |
+| `ats_forms.confirmation_delta()` | a submission the page did not actually confirm |
+| `answer_bank._clean_qa()` | injection-shaped text before it is ever replayed |
+| `store_lib.humanize()` | em-dashes and cliché |
+
+A weak model producing sloppy output hits the same wall a strong one does.
+
+```bash
+python3 app/providers.py      # what is configured and what is routed
+```
+
+Configure a provider, then route features to it one at a time:
+
+```json
+"providers": {
+  "cheap": {
+    "base_url": "https://api.example.com/v1",
+    "api_key_env": "CHEAP_API_KEY",
+    "model": "their-model-name"
+  }
+},
+"models": {
+  "tailor":  "provider:cheap",
+  "plan":    "provider:cheap",
+  "content": "claude-sonnet-4-6"
+}
+```
+
+The endpoint is OpenAI-compatible, so DeepSeek, Together, Groq, OpenRouter and a local
+Ollama all work through the same adapter and switching vendors is a config edit.
+The key comes from the **environment**, never from `config.json`.
+
+**Where to route, and where not to.** Anything a human reads keeps the strong model:
+`content`, `networking`, `reply`, `proposal`. Bulk generation behind a gate is what
+you want on the cheap one: `tailor`, `plan`, `interpret`, `brief`, `quality_grade`.
+
+The apply operator is deliberately **not** routable here. It is a long agentic browser
+loop with heavy tool use across many turns, which is exactly where weaker models
+degrade sharply rather than gracefully, and it is the one place a failure costs a real
+job application rather than a retry.
+
+**What leaves your machine.** Whatever is in the prompt, to whoever runs that
+`base_url`. For project code that is unremarkable. For a resume, employment history or
+job applications it is personal data going to a new company, so route those features
+deliberately or not at all.
+
+**Failure is a fallback, not an outage.** A missing key, an outage or a malformed
+response falls through to the default model and prints why. That is deliberate: a
+third party being unreachable should cost money, not a morning run.
