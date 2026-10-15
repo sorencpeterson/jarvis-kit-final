@@ -148,3 +148,33 @@ class TestFamiliesCarryNoCareer:
         # the per-job LLM path; a failing variant is dropped, never patched
         assert "resume_tailor.tailor_blocks" in build
         assert "rejected" in build
+
+
+class TestSeniorityAloneNeverPicks:
+    """A title with no family keyword match must land on the generalist, not on an
+    arbitrary same-level variant. The +6 seniority bonus is identical for every
+    variant at that level, so when it was the only signal the winner was decided by
+    iteration order: "Demand Generation Manager" selected an ANALYTICS resume."""
+
+    def test_an_unplaceable_title_scores_zero_everywhere(self):
+        v = _lib("analytics_manager")[0]
+        assert rl.score(v, "Underwater Welder Manager") == 0
+        assert rl.score(v, "Demand Generation Manager") == 0
+
+    def test_it_falls_back_to_the_generalist_at_the_right_tier(self):
+        lib = _lib("analytics_manager", "seo_manager", "generalist_manager",
+                   "generalist_director")
+        assert rl.match({"title": "Underwater Welder Manager"}, lib)["key"] \
+            == "generalist_manager"
+        assert rl.match({"title": "Director of Underwater Welding"}, lib)["key"] \
+            == "generalist_director"
+
+    def test_a_real_keyword_match_still_gets_its_seniority_bonus(self):
+        v = _lib("seo_manager")[0]
+        assert rl.score(v, "SEO Manager") > rl.score(v, "SEO Director")
+
+    def test_demand_generation_reaches_the_leadgen_family(self):
+        assert "demand generation" in rl.FAMILIES["leadgen"]
+        lib = _lib("leadgen_manager", "analytics_manager")
+        assert rl.match({"title": "Demand Generation Manager"}, lib)["family"] \
+            == "leadgen"

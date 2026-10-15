@@ -81,6 +81,12 @@ FAMILIES = {
     "content": ("content", "copywriter", "editorial", "brand", "social media"),
     "analytics": ("analytics", "data", "reporting", "insights", "measurement"),
     "product_marketing": ("product marketing", "pmm", "go to market", "positioning"),
+    "ops": ("operations", "business operations", "chief of staff", "program management"),
+    "leadgen": ("lead generation", "lead gen", "demand generation",
+                "demand gen", "pipeline", "sdr", "outbound"),
+    "leadership": ("director", "head of", "vp of", "vice president", "chief"),
+    "automation": ("automation", "crm", "workflow", "zapier", "gohighlevel", "hubspot"),
+    "pm": ("project manager", "project management", "program manager", "delivery"),
     "ecommerce": ("ecommerce", "e-commerce", "shopify", "dtc", "retail media"),
 }
 
@@ -124,11 +130,20 @@ def score(variant: dict, title: str, query: str = "") -> int:
     is a much cheaper mistake than an SEO resume on a paid media role.
     """
     hay = f" {(title or '').lower()} {(query or '').lower()} "
-    s = 0
+    s = hits = 0
     for kw in variant.get("keywords", ()):
         if kw in hay:
             # longer keyword = more specific ("paid media manager" beats "marketing")
             s += 10 + len(kw.split())
+            hits += 1
+    # No family keyword matched, so this variant is not about this job. Seniority
+    # alone must never carry a score: it is the same +6 for EVERY variant at that
+    # level, so the winner became whichever happened to be iterated first.
+    # "Demand Generation Manager" picked an analytics resume that way. A title we
+    # cannot place belongs on the generalist, which is what match() falls back to
+    # when nothing scores.
+    if not hits:
+        return 0
     lvl = _level_of(title)
     if lvl and lvl == variant.get("level"):
         s += 6
