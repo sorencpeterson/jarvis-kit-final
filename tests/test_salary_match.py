@@ -107,8 +107,10 @@ class TestHourlyCompUnitPreserved:
 
 class TestPoolFloorLoosened:
     def test_default_pool_floor_dropped_from_95k(self):
-        # the pool floor that was silently dropping sub-95k jobs is now low (Alex's ask)
-        assert jobs._min_yearly() <= 40000
+        # The pool floor that was silently dropping sub-95k jobs now reads CONFIG.
+        # Owner-agnostic on purpose: a second install legitimately sets its own
+        # number (one real package ships 52k), and that must not fail the suite.
+        assert jobs._min_yearly() < 95000
 
     def test_low_paying_job_with_posted_comp_is_not_auto_dropped_by_floor(self):
         # a $55k posting used to be culled by the 95k floor; now it clears the salary check

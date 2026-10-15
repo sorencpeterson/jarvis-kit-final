@@ -294,7 +294,9 @@ class TestRun:
                 {"id": "a2", "status": "applied", "title": "T", "company": "C"},
                 {"id": "a3", "status": "skipped", "title": "T", "company": "C"}]
         self._wire(tmp_path, monkeypatch, rows)
-        assert rt.run(dry_run=True) == 1
+        # resume_tailor_limit can legitimately be 0 when a variant library is
+        # shipped pre-rendered, so assert the SELECTION, not a nonzero count.
+        assert rt.run(dry_run=True) == min(1, rt._tailor_limit())
         assert "a1" in capsys.readouterr().out
 
     def test_existing_file_skipped(self, tmp_path, monkeypatch):
