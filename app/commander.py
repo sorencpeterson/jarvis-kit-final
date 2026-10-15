@@ -22,6 +22,8 @@ import owner  # noqa: E402
 from store_lib import append_todo, compact, new_id, now_iso  # noqa: E402
 import planner  # noqa: E402
 
+_PORT = int(os.environ.get("BRAIN_PORT") or 8765)  # see app/server.py BRAIN_PORT
+
 GHL = ROOT.parent / "playwright-project/automations/ghl/gohighlevel-cli/api.sh"
 DRAFTS = ROOT / "store" / "drafts.jsonl"
 VENV_PY = str(ROOT / ".venv" / "bin" / "python")
@@ -128,7 +130,7 @@ def a_launch(args):
         return f"unknown launch '{which}'"
     try:
         r = urllib.request.urlopen(
-            urllib.request.Request("http://localhost:8765/api/launch/" + which, method="POST",
+            urllib.request.Request(f"http://localhost:{_PORT}/api/launch/" + which, method="POST",
                                    headers={"X-Brain-Token": secret("brain_token")}), timeout=25)
         d = json.loads(r.read())
     except Exception as e:
@@ -158,7 +160,7 @@ def a_win(args):
     body = json.dumps({"kind": "won", "amount": amt, "note": str(args.get("note") or "")[:200]}).encode()
     try:
         urllib.request.urlopen(urllib.request.Request(
-            "http://localhost:8765/api/ledger", data=body, method="POST",
+            f"http://localhost:{_PORT}/api/ledger", data=body, method="POST",
             headers={"X-Brain-Token": secret("brain_token"), "Content-Type": "application/json"}), timeout=10)
         return f"${amt:,.0f} on the board. The plan bar just moved, sir."
     except Exception as e:  # noqa: BLE001
@@ -252,7 +254,7 @@ def a_pipeline_review(args):
     from store_lib import secret
     try:
         r = urllib.request.urlopen(urllib.request.Request(
-            "http://localhost:8765/api/deals",
+            f"http://localhost:{_PORT}/api/deals",
             headers={"X-Brain-Token": secret("brain_token")}), timeout=20)
         d = json.loads(r.read())
     except Exception as e:  # noqa: BLE001
@@ -304,7 +306,7 @@ def _brain_api(path: str, method: str = "POST", payload=None, timeout: int = 25)
     import urllib.request
     from store_lib import secret
     req = urllib.request.Request(
-        "http://localhost:8765" + path, method=method,
+        f"http://localhost:{_PORT}" + path, method=method,
         data=(json.dumps(payload).encode() if payload is not None else None),
         headers={"X-Brain-Token": secret("brain_token"), "Content-Type": "application/json"})
     with urllib.request.urlopen(req, timeout=timeout) as r:

@@ -125,3 +125,37 @@ class TestPlannerIntegration:
         src = (ROOT / "app" / "providers.py").read_text()
         assert 'os.environ.get(prov["api_key_env"])' in src
         assert '"api_key"' not in src.split('"""', 2)[2]
+
+
+class TestPortIsNotHardcoded:
+    """Two installs on one machine must not cross-talk. The apply operator is TOLD its
+    callback URL in the prompt, so a hardcoded port means instance B's operators report
+    to instance A and mark the wrong jobs applied."""
+
+    def test_server_derives_the_port_from_the_environment(self):
+        src = (ROOT / "app" / "server.py").read_text()
+        assert 'BRAIN_PORT = int(os.environ.get("BRAIN_PORT") or 8765)' in src
+        assert 'BRAIN_BASE = f"http://localhost:{BRAIN_PORT}"' in src
+
+    def test_no_file_still_hardcodes_the_url(self):
+        import re as _re
+        bad = []
+        for rel in ("app/server.py", "app/commander.py", "agents/job_pipeline_quality.py"):
+            for i, line in enumerate((ROOT / rel).read_text().splitlines(), 1):
+                if _re.search(r"localhost:8765", line) and "BRAIN_PORT" not in line:
+                    bad.append(f"{rel}:{i}")
+        assert not bad, f"hardcoded port survives at {bad}"
+
+    def test_the_placeholder_is_resolved_before_the_operator_sees_it(self):
+        # the prompt is a plain-string concatenation, so {BRAIN_BASE} is substituted
+        # explicitly; without that the operator gets the literal text and every
+        # callback fails silently
+        src = (ROOT / "app" / "server.py").read_text()
+        assert 'text = text.replace("{BRAIN_BASE}", BRAIN_BASE)' in src
+        seg = src.split('text = text.replace("{BRAIN_BASE}", BRAIN_BASE)', 1)[1][:400]
+        assert "owner.personalize(text)" in seg, "must resolve BEFORE returning"
+
+    def test_serve_script_honours_it(self):
+        src = (ROOT / "serve.sh").read_text()
+        assert 'BRAIN_PORT="${BRAIN_PORT:-8765}"' in src
+        assert '--port "$BRAIN_PORT"' in src

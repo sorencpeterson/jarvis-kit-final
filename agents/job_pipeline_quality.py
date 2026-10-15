@@ -55,6 +55,7 @@ from __future__ import annotations
 import hashlib
 import hmac
 import json
+import os
 import re
 import sys
 import urllib.error
@@ -70,6 +71,8 @@ from store_lib import now_iso, sign_secret  # noqa: E402
 import ats_friction  # noqa: E402
 import jobs  # noqa: E402
 import resume_tailor  # noqa: E402
+
+_PORT = int(os.environ.get("BRAIN_PORT") or 8765)  # see app/server.py BRAIN_PORT
 
 STALE_DAYS = 7
 OPENED_STORE = ROOT / "store" / "manual_opened.json"
@@ -309,7 +312,7 @@ def _applied_link(jid: str) -> str:
     uses (hmac over the id, scoped to /applied+/skipped on localhost only)."""
     cb = hmac.new(sign_secret().encode(), f"applycb:{jid}".encode(),
                   hashlib.sha256).hexdigest()[:24]
-    return f"http://localhost:8765/api/jobs/{quote(jid, safe='')}/applied?cb={cb}"
+    return f"http://localhost:{_PORT}/api/jobs/{quote(jid, safe='')}/applied?cb={cb}"
 
 
 def build_prefill_companion(job: dict) -> dict:
