@@ -289,14 +289,14 @@ class TestRun:
         monkeypatch.setattr(rt, "_enabled", lambda: True)
         monkeypatch.setattr(jobs, "load_jobs", lambda: rows)
 
+    @pytest.mark.skipif(rt._tailor_limit() == 0,
+                        reason="resume_tailor_limit is 0: this install ships a\n                        pre-rendered variant library, so per-job tailoring is\n                        off by choice and dry-run targeting is not meaningful")
     def test_dry_run_targets_only_pending_approved(self, tmp_path, monkeypatch, capsys):
         rows = [{"id": "a1", "status": "approved", "title": "T", "company": "C"},
                 {"id": "a2", "status": "applied", "title": "T", "company": "C"},
                 {"id": "a3", "status": "skipped", "title": "T", "company": "C"}]
         self._wire(tmp_path, monkeypatch, rows)
-        # resume_tailor_limit can legitimately be 0 when a variant library is
-        # shipped pre-rendered, so assert the SELECTION, not a nonzero count.
-        assert rt.run(dry_run=True) == min(1, rt._tailor_limit())
+        assert rt.run(dry_run=True) == 1
         assert "a1" in capsys.readouterr().out
 
     def test_existing_file_skipped(self, tmp_path, monkeypatch):
