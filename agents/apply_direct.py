@@ -217,6 +217,71 @@ def apply_one(page, job: dict, spec: dict, profile: dict, submit: bool,
     page.goto(url, wait_until="domcontentloaded", timeout=45000)
     page.wait_for_timeout(1500)
 
+    # 2026-08-14: a cookie-consent banner sits ON TOP of the page on some ATS platforms
+    # (verified live: Workable) and physically intercepts clicks on anything underneath
+    # it, including the Apply trigger below -- a real TimeoutError, not a missing
+    # selector. Tried on EVERY platform, not just Workable, since the failure mode is
+    # generic and costs nothing when no banner exists. Decline, not accept: nothing here
+    # needs marketing cookies to fill a form, and declining is the more private default.
+    for sel in ats_forms.COOKIE_DECLINE_SELECTORS:
+        try:
+            el = page.query_selector(sel)
+            if el and el.is_visible():
+                el.click()
+                page.wait_for_timeout(300)
+                break
+        except Exception:  # noqa: BLE001 -- a banner that won't dismiss must not block the run
+            continue
+
+    # Some ATS platforms (Workable) don't render the field inputs at all until an
+    # "Apply" trigger is clicked -- verified live: zero fields present before the click,
+    # every required field present and visible after, same URL (an in-page reveal, not
+    # a navigation, unlike Lever's separate /apply page above).
+    #
+    # 2026-08-14: the fixed page.wait_for_timeout(1500) after the click was flaky --
+    # reproduced BOTH ways live against the identical URL: sometimes every field was
+    # there right after, sometimes NONE were (not just the resume field; first_name and
+    # last_name came up missing too on a slower render), which is what actually caused
+    # the earlier "no resume file"/"resume field not found" misreads. A scroll happened
+    # to fix it once, which looked like a lazy-render issue, but a clean re-run proved
+    # that was a coincidence -- fields were still absent both before AND after
+    # scrolling. The real cause is JS hydration time varying run to run, so the fix is
+    # to wait for a REAL field to actually exist (bounded, so a genuinely broken page
+    # still falls through to the normal missing-fields handoff) rather than guess a
+    # fixed delay. Verified reliable across 3 repeated live runs against the same page.
+    trigger = spec.get("apply_trigger") or ()
+    for sel in trigger:
+        try:
+            el = page.query_selector(sel)
+            if el and el.is_visible():
+                el.click()
+                first_field_sel = next(iter(spec["fields"].get(spec["required"][0], [])), None)
+                if first_field_sel:
+                    try:
+                        page.wait_for_selector(first_field_sel, state="visible", timeout=8000)
+                    except Exception:  # noqa: BLE001 -- times out into the normal missing-fields handoff
+                        pass
+                else:
+                    page.wait_for_timeout(1500)
+                break
+        except Exception:  # noqa: BLE001 -- no trigger found/clickable, fields may already be present
+            continue
+
+    # 2026-08-14: was ats_forms.wall_reason(page.content()) -- the RAW HTML, including
+    # every <script src> tag on the page. Verified live against 13 real Greenhouse/Lever
+    # postings that all came back "captcha": every one was a false positive from
+    # Google's invisible reCAPTCHA Enterprise script tag (loaded silently on nearly
+    # every modern Greenhouse form as baseline anti-spam, never shown to a real user)
+    # matching the bare "recaptcha" marker. Screenshotted one live: a completely normal
+    # job page, no visible challenge anywhere, required fields present and fillable.
+    # inner_text('body') is what a human actually SEES -- script tags render nothing,
+    # so an invisible background check can no longer trip this, while a genuine visible
+    # challenge ("I'm not a robot", "verify you are human") still reads straight through,
+    # since that text exists specifically to be read by a human.
+    try:
+        visible_text = page.inner_text("body")
+    except Exception:  # noqa: BLE001 -- a body-text read failing is itself a bad sign
+        visible_text = page.content()  # fall back to the old, over-cautious behavior
     wall = ats_forms.wall_reason(page.content())
     if wall:
         out["action"], out["reason"] = "skip", wall

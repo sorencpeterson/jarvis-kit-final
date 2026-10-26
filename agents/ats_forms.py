@@ -82,6 +82,11 @@ ASHBY = {
 WORKABLE = {
     "host_match": ("workable.com", "apply.workable.com"),
     "confidence": "low",
+    # Austin Apon, verified live 2026-08-14: Workable shows only a description and
+    # an "Apply now" button. ZERO of the fields below exist until it is clicked;
+    # every one appears right after, same URL, revealed in place. Without this
+    # every Workable job misread as "form is missing required fields".
+    "apply_trigger": ["text=Apply now", "a[data-ui='apply-button']"],
     "fields": {
         "first_name": ["input[name='firstname']", "#firstname"],
         "last_name": ["input[name='lastname']", "#lastname"],
@@ -128,6 +133,19 @@ SMARTRECRUITERS = {
 }
 
 SPECS = (GREENHOUSE, LEVER, ASHBY, WORKABLE, RIPPLING, SMARTRECRUITERS)
+
+# Contributed by Austin Apon, verified live 2026-08-14: a cookie banner sits ON TOP
+# of the page on some platforms (Workable) and physically intercepts clicks on the
+# Apply trigger underneath, producing a real TimeoutError rather than a missing
+# selector. Declined, not accepted: nothing here needs marketing cookies to fill a
+# form, and declining is the more private default.
+COOKIE_DECLINE_SELECTORS = (
+    "[data-ui='cookie-consent-decline']",   # Workable
+    "#onetrust-reject-all-handler",         # OneTrust
+    "button#CybotCookiebotDialogBodyButtonDecline",  # Cookiebot
+    "text=Decline all",
+    "text=Reject all",
+)
 
 # Deliberately absent, and why:
 #   workday        multi-screen wizard behind mandatory account creation. A sibling
