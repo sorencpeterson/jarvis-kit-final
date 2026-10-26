@@ -55,6 +55,11 @@ GREENHOUSE = {
 LEVER = {
     "host_match": ("lever.co", "jobs.lever.co"),
     "confidence": "medium",
+    # Lever's job page is a DESCRIPTION; the form lives at /apply. Without this every
+    # Lever posting reported "required field(s) not on page: full_name, email", which
+    # reads like a broken form rather than the wrong URL. Unlike Workable's in-place
+    # reveal, this is a real navigation.
+    "apply_path_suffix": "/apply",
     "fields": {
         "full_name": ["input[name='name']", "#name"],
         "email": ["input[name='email']", "#email", "input[type='email']"],
@@ -318,6 +323,32 @@ def page_changed(before_url: str, after_url: str, before: str, after: str) -> bo
 # human while the wrong one is submitted and believed. Anything this cannot match
 # confidently returns None and the job goes to the operator.
 
+
+# NEVER auto-answer these, whatever else matches. A form asking for a password or a
+# login is asking for something this system does not handle, and a live posting
+# ("Please provide the link and password to your portfolio") was about to be answered
+# with a bare URL.
+_NEVER_ANSWER = re.compile(
+    r"password|passcode|\blogin\b|credential|social security|\bssn\b|"
+    r"bank|routing|credit card|date of birth|\bdob\b", re.I)
+
+# A QUESTION, not a field label. "Have you independently built and maintained a
+# website?" contains "website" and was being answered with the portfolio URL, which
+# is a nonsense answer to a yes/no.
+#
+# But question-shape alone is not disqualifying: "Are you authorized to work in the
+# US?" is a question the profile answers correctly. What matters is whether the STORED
+# VALUE can answer a question at all. A policy fact can; an identifier cannot, because
+# no question is answered by a URL or a street address. _QUESTION_SAFE below marks the
+# rules that survive a question-shaped label; everything else falls to the answer bank.
+_QUESTION_SHAPED = re.compile(
+    r"^\s*(do|does|did|have|has|had|are|is|was|were|will|would|can|could|should|may)\b"
+    r"|\bhow many\b|\bhow long\b|\bwhy\b|\bdescribe\b|\btell us\b|\bplease (describe|explain|share|provide)\b",
+    re.I)
+
+_QUESTION_SAFE = {"work_authorization", "requires_sponsorship", "availability",
+                  "salary_expectation", "years_experience"}
+
 _PROFILE_RULES = (
     # (regex over the question label, profile key, fallback)
     (r"legally (authorized|eligible) to work|work authorization|authori[sz]ed to work",
@@ -385,8 +416,17 @@ def answer_for(label: str, profile: dict, bank: list | None = None) -> str | Non
     q = _norm_q(label)
     if not q or len(q) < 3:
         return None
+    if _NEVER_ANSWER.search(label or ""):
+        return None
 
+    # A question-shaped label skips the profile rules entirely: those map a FIELD NAME
+    # to a stored value, and applying them to a question produces a confident
+    # non-answer. The answer bank below still gets its chance, since that is where a
+    # real answer to a real question lives.
+    question = bool(_QUESTION_SHAPED.search(label or ""))
     for pat, key, fallback in _PROFILE_RULES:
+        if question and key not in _QUESTION_SAFE:
+            continue
         if re.search(pat, q):
             v = _profile_get(profile, key)
             if v not in (None, "", []):

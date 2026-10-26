@@ -13,18 +13,21 @@ from __future__ import annotations
 
 import json
 import sys
+
+import pytest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 for p in (ROOT, ROOT / "app", ROOT / "agents"):
     sys.path.insert(0, str(p))
 
+import ats_forms  # noqa: E402
 import ats_forms as af  # noqa: E402
 
 PROFILE = {
     "full_name": "Alex Rivera", "first_name": "Alex", "last_name": "Rivera",
     "email": "alex@example.com", "phone": "555-0100",
-    "city_state": "Austin, TX", "state_abbrev": "TX", "zip5": "78701",
+    "city_state": "Austin, TX", "street_address": "1 Main St", "state_abbrev": "TX", "zip5": "78701",
     "linkedin": "linkedin.com/in/alexrivera", "portfolio": "example.com",
     "work_authorization": "US citizen", "requires_sponsorship": "No",
     "availability": "2 weeks", "years_experience": "6",
@@ -245,3 +248,66 @@ class TestBrowserLayerRails:
         src = (ROOT / "agents" / "apply_direct.py").read_text()
         seg = src.split("def _answer_screeners", 1)[1].split("\ndef ", 1)[0]
         assert "[:60]" in seg
+
+
+class TestNeverAnswersCredentialAsks:
+    """A live posting asked "Please provide the link and password to your portfolio"
+    and was about to be answered with a bare URL. Found in a dry run, not production."""
+
+    @pytest.mark.parametrize("label", [
+        "Please provide the link and password to your portfolio",
+        "Portfolio login",
+        "What is your SSN?",
+        "Social Security Number",
+        "Bank account number",
+        "Credit card",
+        "Date of birth",
+        "Account password",
+    ])
+    def test_credential_and_identity_asks_return_nothing(self, label):
+        assert af.answer_for(label, PROFILE, BANK) is None
+
+
+class TestQuestionsAreNotFieldLabels:
+    """A yes/no question containing a field word was being answered with that field's
+    value: "Have you independently built and maintained a website?" got the portfolio
+    URL. Question shape alone is not disqualifying though, so what matters is whether
+    the stored value can answer a question at all."""
+
+    @pytest.mark.parametrize("label", [
+        "Have you independently built and maintained a website?",
+        "Do you have experience independently building websites?",
+        "Describe your portfolio",
+        "Tell us about your website work",
+    ])
+    def test_a_question_never_gets_an_identifier(self, label):
+        got = af.answer_for(label, PROFILE, BANK)
+        assert got != PROFILE["portfolio"], f"{label!r} answered with a URL"
+
+    @pytest.mark.parametrize("label,expect", [
+        ("Are you legally authorized to work in the United States?", "US citizen"),
+        ("Will you now or in the future require sponsorship?", "No"),
+        ("How many years of experience do you have?", "6"),
+    ])
+    def test_a_policy_fact_still_answers_its_question(self, label, expect):
+        # these are questions AND the profile answers them correctly; the guard must
+        # not throw them out with the identifier rules
+        assert af.answer_for(label, PROFILE) == expect
+
+    def test_plain_field_labels_are_unaffected(self):
+        assert af.answer_for("Portfolio", PROFILE) == PROFILE["portfolio"]
+        assert af.answer_for("Website", PROFILE) == PROFILE["portfolio"]
+        assert af.answer_for("Street Address", PROFILE) == PROFILE.get("street_address")
+
+
+class TestLeverNeedsTheApplyPath:
+    def test_lever_carries_an_apply_suffix(self):
+        # every Lever posting reported "required field(s) not on page" because the job
+        # page is a description and the form lives at /apply
+        assert ats_forms.LEVER.get("apply_path_suffix") == "/apply"
+
+    def test_the_runner_appends_it_idempotently(self):
+        src = (ROOT / "agents" / "apply_direct.py").read_text()
+        seg = src.split("def apply_one", 1)[1][:1200]
+        assert "apply_path_suffix" in seg
+        assert "endswith(suffix.strip" in seg, "must not double-append /apply/apply"

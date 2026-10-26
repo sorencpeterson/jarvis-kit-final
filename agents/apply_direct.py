@@ -214,6 +214,10 @@ def apply_one(page, job: dict, spec: dict, profile: dict, submit: bool,
     url = job.get("apply_url") or ""
     out = out if out is not None else new_result(job, spec)
 
+    suffix = spec.get("apply_path_suffix") or ""
+    if suffix and not url.rstrip("/").endswith(suffix.strip("/")):
+        url = url.rstrip("/") + suffix
+
     page.goto(url, wait_until="domcontentloaded", timeout=45000)
     page.wait_for_timeout(1500)
 
