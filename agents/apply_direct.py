@@ -41,6 +41,7 @@ from __future__ import annotations
 import argparse
 import json
 import random
+import re
 import sys
 import time
 from pathlib import Path
@@ -144,64 +145,130 @@ def _consent_ok() -> bool:
 
 
 
-def _pick_option(page, el, want: str) -> str:
-    """Open a React combobox and choose the option that matches `want`. Returns the
-    chosen option text, or "".
+def _opts_in(page, el):
+    """The option elements belonging to THIS combobox, via aria-controls.
 
-    Why this exists: Greenhouse renders Country, Location, work-authorization, the
-    non-compete question and the privacy notice as role=combobox. el.fill() writes the
-    text into the box, the component's own state never updates, and the form then
-    reports the field required-and-blank while visibly showing the right text. Probed
-    live: every required field on an Arcesium posting is React, five of them combobox.
+    Scoping matters: an Arcesium posting pre-renders 244 [role=option] nodes (every
+    country, plus other selects), so a global query returns other fields' options.
+    """
+    owns = el.get_attribute("aria-controls") or el.get_attribute("aria-owns") or ""
+    if owns:
+        box = page.query_selector(f"#{owns}")
+        if box:
+            got = box.query_selector_all("[role=option], [class*=option]")
+            if got:
+                return got
+    return page.query_selector_all(
+        "[role=listbox]:not([hidden]) [role=option], .select__menu [class*=option]")
+
+
+# Yes/No comboboxes, matched by POLARITY rather than text overlap. "Authorized to
+# work in the US for any employer" contains neither "yes" nor "no", so a literal match
+# leaves a required authorization question blank. Deliberately narrow: only an answer
+# that OPENS with an unambiguous marker gets a polarity, because getting this backwards
+# would put a false statement about work authorization on a real application. Anything
+# else falls through to the handoff.
+_AFFIRM_OPEN = ("yes", "authorized", "i am authorized", "i am", "i do", "i have",
+                "eligible", "us citizen", "permanent resident")
+_DENY_OPEN = ("no", "none", "not ", "n/a", "i do not", "i am not", "never")
+_YES_OPT = ("yes", "y")
+_NO_OPT = ("no", "n")
+
+
+def _polarity(want: str) -> str:
+    w = " ".join((want or "").lower().split())
+    for d in _DENY_OPEN:            # checked FIRST: "not authorized" must not read affirmative
+        if w.startswith(d):
+            return "no"
+    for a in _AFFIRM_OPEN:
+        if w.startswith(a):
+            return "yes"
+    return ""
+
+
+def _match_option(opts, want: str):
+    """Best option for `want`, or None. Never settles for a weak match.
 
     The answer may be a sentence ("No. Nothing restricts me from working") while the
-    option is one word ("No"), so matching runs both directions. Nothing is chosen
-    unless an option genuinely corresponds; a combobox left unset falls through to the
-    normal required-field handoff rather than submitting a form that looks complete.
+    option is one word ("No"), so the answer's leading clause is tried as well as the
+    whole string. Longest genuine match wins, so "No" cannot beat "No, I do not
+    require sponsorship".
+    """
+    w = " ".join((want or "").lower().split())
+    lead = re.split(r"[.,;:]", w)[0].strip()
+    cands = [c for c in (w, lead) if c]
+    best, best_len = None, 0
+    for o in opts[:250]:
+        try:
+            if not o.is_visible():
+                continue
+            t = " ".join((o.inner_text() or "").lower().split())
+        except Exception:  # noqa: BLE001
+            continue
+        if not t:
+            continue
+        for c in cands:
+            if t == c or t.startswith(c) or c.startswith(t) or (len(t) > 2 and t in c):
+                if len(t) > best_len:
+                    best, best_len = o, len(t)
+                break
+    if best is not None:
+        return best
+    # no literal overlap: try polarity against a yes/no style option set
+    pol = _polarity(want)
+    if not pol:
+        return None
+    wanted = _YES_OPT if pol == "yes" else _NO_OPT
+    for o in opts[:250]:
+        try:
+            if not o.is_visible():
+                continue
+            t = " ".join((o.inner_text() or "").lower().split()).strip(" .")
+        except Exception:  # noqa: BLE001
+            continue
+        if t in wanted or any(t.startswith(x + ",") or t.startswith(x + " ") for x in wanted):
+            return o
+    return None
+
+
+def _pick_option(page, el, want: str) -> str:
+    """Open a React combobox and choose the option matching `want`. Returns its text.
+
+    Greenhouse renders Country, Location, work authorization, the non-compete question
+    and the privacy notice as role=combobox. el.fill() writes text into the box, the
+    component's state never updates, and the form reports the field required-and-blank
+    while visibly showing the right text. (Its search input also reads as empty AFTER
+    a successful pick, because the selection lives in a sibling element -- so never
+    verify a combobox by reading el.value.)
+
+    READ THE OPTIONS BEFORE TYPING. Typing filters the list, and typing a sentence
+    into a Yes/No dropdown filters it to nothing: that is why the non-compete and
+    sponsorship questions stayed blank while Country, whose answer happened to be a
+    literal option, worked. Typing is only a fallback for genuinely long lists
+    (country, city) where the wanted option is not rendered until filtered.
     """
     try:
         el.click()
-        page.wait_for_timeout(250)
-        try:
-            el.fill("")
-            el.type(want[:60], delay=15)
-        except Exception:  # noqa: BLE001 -- some comboboxes are read-only, list only
-            pass
-        page.wait_for_timeout(450)
-        # Scope to the listbox THIS combobox controls. Probed live: an Arcesium
-        # posting pre-renders 244 [role=option] elements (every country, plus other
-        # selects), so a global query returned other fields' options and the slice
-        # never reached Country's at all. react-select exposes the right container in
-        # aria-controls, which is the only reliable scope.
-        owns = el.get_attribute("aria-controls") or el.get_attribute("aria-owns") or ""
-        opts = []
-        if owns:
-            box = page.query_selector(f"#{owns}")
-            if box:
-                opts = box.query_selector_all("[role=option], [class*=option]")
-        if not opts:
-            opts = page.query_selector_all(
-                "[role=listbox]:not([hidden]) [role=option], .select__menu [class*=option]")
-        w = " ".join((want or "").lower().split())
-        best, best_txt = None, ""
-        for o in opts[:200]:
+        page.wait_for_timeout(350)
+
+        opts = _opts_in(page, el)
+        hit = _match_option(opts, want)
+
+        if hit is None and len(opts) > 12:
+            # long list: filter it, then look again
             try:
-                if not o.is_visible():
-                    continue
-                t = " ".join((o.inner_text() or "").lower().split())
-            except Exception:  # noqa: BLE001
-                continue
-            if not t:
-                continue
-            if t == w or w.startswith(t) or t.startswith(w) or t in w:
-                # prefer the longest genuine match, so "No" does not beat
-                # "No, I do not require sponsorship"
-                if len(t) > len(best_txt):
-                    best, best_txt = o, t
-        if best is not None:
-            best.click()
-            page.wait_for_timeout(200)
-            return best_txt
+                el.fill("")
+                el.type(want[:40], delay=15)
+                page.wait_for_timeout(500)
+                hit = _match_option(_opts_in(page, el), want)
+            except Exception:  # noqa: BLE001 -- read-only combobox, list only
+                pass
+
+        if hit is not None:
+            txt = " ".join((hit.inner_text() or "").split())
+            hit.click()
+            page.wait_for_timeout(250)
+            return txt[:60]
         el.press("Escape")
     except Exception:  # noqa: BLE001 -- a stubborn combobox falls to the handoff
         pass
@@ -499,6 +566,30 @@ def apply_one(page, job: dict, spec: dict, profile: dict, submit: bool,
 
             bad = ats_forms.validation_error(before, after)
             if bad:
+                # Name the fields the FORM objects to, rather than guessing from the
+                # DOM. A react-select search input reads as empty even when a value is
+                # chosen (the selection lives in a sibling element), so inspecting
+                # el.value to find "missing" fields is actively misleading. The form's
+                # own aria-invalid / error text is the only honest source.
+                try:
+                    flagged = page.evaluate(r"""() => {
+                      const out=[];
+                      for (const e of document.querySelectorAll(
+                            '[aria-invalid="true"],[class*=error],[role=alert]')) {
+                        let lab='';
+                        const id=e.getAttribute && e.getAttribute('id');
+                        if (id){const l=document.querySelector(`label[for="${CSS.escape(id)}"]`);
+                                if(l) lab=l.innerText;}
+                        if(!lab && e.closest){const w=e.closest('label,div,fieldset');
+                                if(w){const l2=w.querySelector('label,legend'); if(l2) lab=l2.innerText;}}
+                        const t=(lab||e.innerText||'').trim().replace(/\s+/g,' ').slice(0,64);
+                        if (t && !out.includes(t)) out.push(t);
+                      }
+                      return out.slice(0,10); }""")
+                    if flagged:
+                        out["flagged"] = flagged
+                except Exception:  # noqa: BLE001
+                    pass
                 # the form rejected us and is still on screen. Nothing was submitted,
                 # so this is safe to hand back rather than leave submission-uncertain.
                 out["action"] = "handoff"
@@ -518,6 +609,33 @@ def apply_one(page, job: dict, spec: dict, profile: dict, submit: bool,
             # The click changed NOTHING: no URL move, no new text, no complaint. It
             # did not submit. Marking this applied is what produced a 5% real rate
             # behind a much higher reported one.
+            #
+            # A form can also reject with NO new text at all (a red border, or just
+            # aria-invalid), which is indistinguishable from a dead button by text
+            # alone. Capture the flagged fields here too, so "nothing happened" says
+            # WHY rather than leaving it to a one-off script.
+            try:
+                still = page.evaluate(r"""() => {
+                  const out=[];
+                  for (const e of document.querySelectorAll('[aria-invalid="true"]')) {
+                    let lab=''; const id=e.getAttribute('id');
+                    if (id){const l=document.querySelector(`label[for="${CSS.escape(id)}"]`);
+                            if(l) lab=l.innerText;}
+                    if(!lab && e.closest){const w=e.closest('label,div,fieldset');
+                            if(w){const l2=w.querySelector('label,legend'); if(l2) lab=l2.innerText;}}
+                    const t=(lab||'').trim().replace(/\s+/g,' ').slice(0,64);
+                    if (t && !out.includes(t)) out.push(t);
+                  }
+                  return {invalid: out.slice(0,8), url: location.href}; }""")
+                if still.get("invalid"):
+                    out["flagged"] = still["invalid"]
+                    out["action"] = "handoff"
+                    out["submit_attempted"] = False
+                    out["reason"] = ("form rejected silently (aria-invalid, no message); "
+                                     "needs a human")
+                    return out
+            except Exception:  # noqa: BLE001
+                pass
             out["action"] = "uncertain"
             out["reason"] = ("submit clicked but the page did not change; "
                              "likely not submitted, verify in ATS")
@@ -630,12 +748,16 @@ def run(limit: int = 10, submit: bool = False, only_ats: str = "") -> int:
                                     "verify in ATS before retrying)", expect="applying")
                     skipped += 1
                     print(f"  {tag} UNCERTAIN  {r['reason'][:44]}")
+                    for f in (r.get("flagged") or [])[:6]:
+                        print(f"        still invalid: {f}")
                 else:
                     # nothing was submitted, so hand it straight back to the LLM
                     # operator by returning it to the approved pool
                     jobs.set_status(r["id"], "approved", expect="applying")
                     handed += 1
                     print(f"  {tag} -> operator {r['reason'][:52]}")
+                    for f in (r.get("flagged") or [])[:6]:
+                        print(f"        form objects to: {f}")
 
                 if submit and i < len(queue) - 1:
                     time.sleep(_pace(cfg))

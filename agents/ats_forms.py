@@ -34,6 +34,14 @@ from urllib.parse import urlparse
 # `required` fields that resolve to an empty value abort the deterministic attempt
 # and hand the job to the LLM operator rather than submitting something incomplete.
 
+
+# SUBMIT SELECTORS ARE TEXT-FIRST, and that is not cosmetic.
+# Probed live on a Workable posting: the page carries FIVE button[type=submit] elements
+# and the FIRST one is the site's own "Search for jobs" bar. A bare type selector
+# therefore clicked that on every run, which is exactly the "submit clicked but the
+# page did not change" outcome. The real control reads "Submit application". Generic
+# type selectors stay only as a last resort, after every by-text match.
+
 GREENHOUSE = {
     "host_match": ("greenhouse.io", "job-boards.greenhouse.io", "boards.greenhouse.io"),
     "confidence": "high",          # simplest and most stable of the major boards
@@ -48,7 +56,7 @@ GREENHOUSE = {
                   "input[type='tel']"],
     },
     "resume": ["input[type='file'][name*='resume']", "#resume", "input[type='file']"],
-    "submit": ["#submit_app", "button[type='submit']", "input[type='submit']"],
+    "submit": ["#submit_app", "button:has-text('Submit application')", "button:has-text('Submit Application')", "button:has-text('Submit')", "button[type='submit']", "input[type='submit']"],
     "required": ("first_name", "last_name", "email"),
 }
 
@@ -67,7 +75,7 @@ LEVER = {
         "linkedin": ["input[name='urls[LinkedIn]']", "input[name*='LinkedIn']"],
     },
     "resume": ["input[type='file'][name='resume']", "input[type='file']"],
-    "submit": ["button[type='submit']", ".postings-btn[type='submit']"],
+    "submit": ["button:has-text('Submit application')", "button:has-text('Submit Application')", "button:has-text('Submit')", ".postings-btn[type='submit']", "button[type='submit']"],
     "required": ("full_name", "email"),
 }
 
@@ -80,7 +88,7 @@ ASHBY = {
         "phone": ["input[name='_systemfield_phone']", "input[type='tel']"],
     },
     "resume": ["input[type='file']"],
-    "submit": ["button[type='submit']"],
+    "submit": ["button:has-text('Submit application')", "button:has-text('Submit Application')", "button:has-text('Submit')", "button[type='submit']"],
     "required": ("full_name", "email"),
 }
 
@@ -99,7 +107,7 @@ WORKABLE = {
         "phone": ["input[name='phone']", "input[type='tel']"],
     },
     "resume": ["input[type='file']"],
-    "submit": ["button[type='submit']", "button[data-ui='submit-application']"],
+    "submit": ["button[data-ui='submit-application']", "button:has-text('Submit application')", "button:has-text('Submit Application')", "button:has-text('Submit')", "button[type='submit']"],
     "required": ("first_name", "last_name", "email"),
 }
 
@@ -113,7 +121,7 @@ RIPPLING = {
         "phone": ["input[name='phone']", "input[type='tel']"],
     },
     "resume": ["input[type='file']"],
-    "submit": ["button[type='submit']"],
+    "submit": ["button:has-text('Submit application')", "button:has-text('Submit Application')", "button:has-text('Submit')", "button[type='submit']"],
     "required": ("first_name", "last_name", "email"),
     # Known quirk, carried over from the LLM operator's hard-won notes: after a
     # clean submit the button can spin forever even though the application landed
@@ -133,7 +141,7 @@ SMARTRECRUITERS = {
         "phone": ["input[name='phoneNumber']", "input[type='tel']"],
     },
     "resume": ["input[type='file']"],
-    "submit": ["button[type='submit']", "#submit-application"],
+    "submit": ["#submit-application", "button:has-text('Submit application')", "button:has-text('Submit Application')", "button:has-text('Submit')", "button[type='submit']"],
     "required": ("first_name", "last_name", "email"),
 }
 

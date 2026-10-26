@@ -300,7 +300,8 @@ class TestSubmitIsProvenNotAssumed:
     def test_a_rejected_form_is_safe_to_retry(self):
         # nothing was submitted, so it must NOT be left submission-uncertain
         src = (ROOT / "agents" / "apply_direct.py").read_text()
-        seg = src.split("validation_error(before, after)", 1)[1][:400]
+        # the flagged-fields capture now sits between, so widen the window
+        seg = src.split("validation_error(before, after)", 1)[1][:2200]
         assert 'out["submit_attempted"] = False' in seg
         assert '"handoff"' in seg
 
@@ -333,3 +334,79 @@ class TestDocumentedHonestly:
         src = (ROOT / "agents" / "apply_direct.py").read_text()
         assert '"--dry-run", action="store_true", default=True' in src
         assert "def run(limit: int = 10, submit: bool = False" in src
+
+
+class TestPolarityCannotInvert:
+    """A Yes/No combobox is matched by polarity, because "Authorized to work in the US
+    for any employer" contains neither "yes" nor "no". Getting this backwards would put
+    a false statement about work authorization on a real application, so only an answer
+    OPENING with an unambiguous marker gets a polarity at all."""
+
+    @pytest.mark.parametrize("ans,expect", [
+        ("Yes", "yes"),
+        ("Authorized to work in the US for any employer", "yes"),
+        ("I am authorized", "yes"),
+        ("US citizen", "yes"),
+        ("No", "no"),
+        ("No.", "no"),
+        ("none", "no"),
+        ("I do not require sponsorship", "no"),
+        ("Not authorized to work", "no"),
+    ])
+    def test_polarity(self, ans, expect):
+        import apply_direct as ad
+        assert ad._polarity(ans) == expect
+
+    def test_a_negation_is_never_read_as_affirmative(self):
+        import apply_direct as ad
+        # "not ..." starts with a deny marker AND contains "authorized"; deny wins
+        for a in ("Not authorized to work", "No, I am authorized elsewhere",
+                  "not eligible"):
+            assert ad._polarity(a) == "no", a
+
+    def test_a_non_polar_answer_gets_no_polarity(self):
+        import apply_direct as ad
+        for a in ("Negotiable", "Sioux Falls, SD", "United States", "5", ""):
+            assert ad._polarity(a) == "", a
+
+    def test_options_are_scoped_to_the_controlling_listbox(self):
+        src = (ROOT / "agents" / "apply_direct.py").read_text()
+        assert 'get_attribute("aria-controls")' in src
+        # a live posting pre-renders 244 [role=option] nodes; a global query is wrong
+        assert "244" in src
+
+    def test_options_are_read_before_typing(self):
+        # typing a sentence into a Yes/No dropdown filters it to nothing, which is why
+        # the non-compete and sponsorship questions stayed blank
+        src = (ROOT / "agents" / "apply_direct.py").read_text()
+        seg = src.split("def _pick_option", 1)[1].split("\ndef ", 1)[0]
+        assert seg.index("_opts_in(page, el)") < seg.index("el.type(")
+
+
+class TestSubmitSelectorIsNotGeneric:
+    """Probed live on a Workable posting: the page carries FIVE button[type=submit]
+    elements and the FIRST is "Search for jobs". A bare type selector therefore clicked
+    the site's job-search bar on every run, which produced exactly the "submit clicked
+    but the page did not change" outcome for weeks."""
+
+    def test_no_spec_leads_with_a_bare_type_selector(self):
+        for spec in ats_forms.SPECS:
+            first = spec["submit"][0]
+            assert first != "button[type='submit']", spec["host_match"][0]
+            assert first != "input[type='submit']", spec["host_match"][0]
+
+    def test_every_spec_matches_submit_by_text_or_a_specific_id(self):
+        for spec in ats_forms.SPECS:
+            sels = " ".join(spec["submit"])
+            assert ("has-text" in sels or "#submit" in sels
+                    or "data-ui='submit-application'" in sels), spec["host_match"][0]
+
+    def test_the_generic_selector_survives_only_as_a_fallback(self):
+        # still useful on a plain form, but never first
+        for spec in ats_forms.SPECS:
+            if "button[type='submit']" in spec["submit"]:
+                assert spec["submit"].index("button[type='submit']") > 0
+
+    def test_the_reason_is_recorded_where_someone_will_read_it(self):
+        src = (ROOT / "agents" / "ats_forms.py").read_text()
+        assert "Search for jobs" in src
