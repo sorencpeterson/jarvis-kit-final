@@ -282,7 +282,7 @@ def apply_one(page, job: dict, spec: dict, profile: dict, submit: bool,
         visible_text = page.inner_text("body")
     except Exception:  # noqa: BLE001 -- a body-text read failing is itself a bad sign
         visible_text = page.content()  # fall back to the old, over-cautious behavior
-    wall = ats_forms.wall_reason(page.content())
+    wall = ats_forms.wall_reason(visible_text)
     if wall:
         out["action"], out["reason"] = "skip", wall
         return out
