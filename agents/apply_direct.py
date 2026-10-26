@@ -136,6 +136,78 @@ def _cover_for(job: dict, profile: dict) -> str:
             or (profile.get("default_cover") or "").strip())
 
 
+def _consent_ok() -> bool:
+    """Owner knob for ticking a required DATA-PRIVACY notice. Ships False.
+    Scope is enforced in ats_forms.is_privacy_ack(), not here: arbitration,
+    background checks and employment terms are refused even with this on."""
+    return bool(_cfg().get("accept_privacy_notice"))
+
+
+
+def _pick_option(page, el, want: str) -> str:
+    """Open a React combobox and choose the option that matches `want`. Returns the
+    chosen option text, or "".
+
+    Why this exists: Greenhouse renders Country, Location, work-authorization, the
+    non-compete question and the privacy notice as role=combobox. el.fill() writes the
+    text into the box, the component's own state never updates, and the form then
+    reports the field required-and-blank while visibly showing the right text. Probed
+    live: every required field on an Arcesium posting is React, five of them combobox.
+
+    The answer may be a sentence ("No. Nothing restricts me from working") while the
+    option is one word ("No"), so matching runs both directions. Nothing is chosen
+    unless an option genuinely corresponds; a combobox left unset falls through to the
+    normal required-field handoff rather than submitting a form that looks complete.
+    """
+    try:
+        el.click()
+        page.wait_for_timeout(250)
+        try:
+            el.fill("")
+            el.type(want[:60], delay=15)
+        except Exception:  # noqa: BLE001 -- some comboboxes are read-only, list only
+            pass
+        page.wait_for_timeout(450)
+        # Scope to the listbox THIS combobox controls. Probed live: an Arcesium
+        # posting pre-renders 244 [role=option] elements (every country, plus other
+        # selects), so a global query returned other fields' options and the slice
+        # never reached Country's at all. react-select exposes the right container in
+        # aria-controls, which is the only reliable scope.
+        owns = el.get_attribute("aria-controls") or el.get_attribute("aria-owns") or ""
+        opts = []
+        if owns:
+            box = page.query_selector(f"#{owns}")
+            if box:
+                opts = box.query_selector_all("[role=option], [class*=option]")
+        if not opts:
+            opts = page.query_selector_all(
+                "[role=listbox]:not([hidden]) [role=option], .select__menu [class*=option]")
+        w = " ".join((want or "").lower().split())
+        best, best_txt = None, ""
+        for o in opts[:200]:
+            try:
+                if not o.is_visible():
+                    continue
+                t = " ".join((o.inner_text() or "").lower().split())
+            except Exception:  # noqa: BLE001
+                continue
+            if not t:
+                continue
+            if t == w or w.startswith(t) or t.startswith(w) or t in w:
+                # prefer the longest genuine match, so "No" does not beat
+                # "No, I do not require sponsorship"
+                if len(t) > len(best_txt):
+                    best, best_txt = o, t
+        if best is not None:
+            best.click()
+            page.wait_for_timeout(200)
+            return best_txt
+        el.press("Escape")
+    except Exception:  # noqa: BLE001 -- a stubborn combobox falls to the handoff
+        pass
+    return ""
+
+
 def _answer_screeners(page, job: dict, profile: dict, out: dict) -> list:
     """Fill the form's OWN questions from answers the owner already gave.
 
@@ -157,10 +229,30 @@ def _answer_screeners(page, job: dict, profile: dict, out: dict) -> list:
                 continue
             kind = (el.get_attribute("type") or el.evaluate("e => e.tagName") or "").lower()
             if kind in ("checkbox", "radio"):
-                continue                            # consent/EEO radios: never auto-click
+                # A required data-privacy acknowledgment is the one tick allowed here,
+                # and only with the owner's knob on. Everything else (arbitration,
+                # background checks, EEO, generic terms) stays the human's act.
+                lab = el.evaluate(_LABEL_JS) or ""
+                if (_consent_ok() and ats_forms.is_privacy_ack(lab)
+                        and not el.is_checked()):
+                    el.check()
+                    done.append(f"ACK privacy notice: {lab.strip()[:60]}")
+                continue
             if (el.input_value() or "").strip():
                 continue                            # already filled by the spec
             label = el.evaluate(_LABEL_JS) or ""
+            # The privacy notice arrives as a COMBOBOX on Greenhouse, not a checkbox,
+            # so the authorized ack has to be handled here too. Scope is still
+            # ats_forms.is_privacy_ack(): arbitration, background checks and
+            # employment terms are refused whatever the knob says.
+            if ats_forms.is_privacy_ack(label):
+                if _consent_ok():
+                    for aff in ("I accept", "Accept", "Yes", "I agree", "Acknowledged"):
+                        got = _pick_option(page, el, aff)
+                        if got:
+                            done.append(f"ACK privacy notice=[{got[:24]}]")
+                            break
+                continue
             # a cover-letter box gets THIS job's cover, not a screener answer
             if ats_forms.is_cover_field(label):
                 cov = _cover_for(job, profile)
@@ -189,7 +281,33 @@ def _answer_screeners(page, job: dict, profile: dict, out: dict) -> list:
                 if picked:
                     done.append(f"{label.strip()[:36]}={str(picked).strip()[:20]}")
                 continue
+            is_combo = bool(el.get_attribute("role") == "combobox"
+                            or el.get_attribute("aria-autocomplete"))
+            if is_combo:
+                got = _pick_option(page, el, ans)
+                if got:
+                    done.append(f"{label.strip()[:30]}=[{got[:24]}]")
+                continue
             el.fill(ans)
+            # Greenhouse's Country and Location fields are comboboxes: fill() types the
+            # text but the component's value stays EMPTY until an option is chosen, so
+            # the form rejected "Country*" and "Location (City)*" as required-and-blank
+            # while the box visibly showed the right text. Pick the first option if one
+            # appears; otherwise leave it, and the normal required-field handoff catches
+            # it rather than submitting a form that looks full and is not.
+            try:
+                if (el.get_attribute("role") == "combobox"
+                        or el.get_attribute("aria-autocomplete")
+                        or el.get_attribute("aria-controls")):
+                    page.wait_for_timeout(400)
+                    opt = page.query_selector(
+                        "[role=option]:visible, li[id*=option]:visible,"
+                        " .select__option:visible")
+                    if opt:
+                        opt.click()
+                        page.wait_for_timeout(200)
+            except Exception:  # noqa: BLE001 -- a stubborn combobox falls to the handoff
+                pass
             done.append(f"{label.strip()[:36]}={ans[:20]}")
         except Exception:  # noqa: BLE001 -- one awkward control must not stop the form
             continue

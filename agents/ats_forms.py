@@ -352,6 +352,38 @@ _QUESTION_SHAPED = re.compile(
     r"|\bhow many\b|\bhow long\b|\bwhy\b|\bdescribe\b|\btell us\b|\bplease (describe|explain|share|provide)\b",
     re.I)
 
+# ---- data-privacy acknowledgment, narrowly ------------------------------------
+#
+# Austin, via Soren, 2026-10-26: authorized ticking the data-privacy notice that
+# Greenhouse and others require before an application can be submitted at all.
+#
+# Deliberately NOT a blanket "accept anything" switch. These three stay human
+# whatever the config says, because they carry real legal weight rather than being
+# a processing notice:
+#   - arbitration agreements and class-action waivers
+#   - background / credit / drug screening consent
+#   - anything about a non-compete, immigration status, or an employment contract
+# A privacy notice says "we will process your data to consider you". An arbitration
+# clause gives up a right. Those are not the same act and must not share a knob.
+_PRIVACY_ACK = re.compile(
+    r"(personal data privacy|data privacy notice|privacy notice|privacy policy|"
+    r"candidate notice|gdpr|ccpa|data protection)", re.I)
+
+_NEVER_ACK = re.compile(
+    r"arbitrat|class action|waiv(e|er)|background (check|screen)|credit check|"
+    r"drug (test|screen)|non-?compete|employment (agreement|contract)|"
+    r"at-will|immigration|visa status|right to work document", re.I)
+
+
+def is_privacy_ack(label: str) -> bool:
+    """True only for a data-processing notice a form requires to accept an application.
+    Anything with legal weight returns False no matter what else matches."""
+    t = label or ""
+    if _NEVER_ACK.search(t):
+        return False
+    return bool(_PRIVACY_ACK.search(t))
+
+
 _QUESTION_SAFE = {"work_authorization", "requires_sponsorship", "availability",
                   "salary_expectation", "years_experience"}
 

@@ -227,11 +227,44 @@ class TestJobDoctor:
 
 
 class TestBrowserLayerRails:
-    def test_radios_and_checkboxes_are_never_auto_clicked(self):
+    def test_only_a_privacy_ack_may_ever_be_ticked(self):
+        # Austin authorized ticking the data-privacy notice a form requires before it
+        # will accept an application at all. That is the ONLY tick allowed, it is
+        # behind an owner knob shipping False, and the scope is enforced in
+        # is_privacy_ack() rather than here.
         src = (ROOT / "agents" / "apply_direct.py").read_text()
         seg = src.split("def _answer_screeners", 1)[1].split("\ndef ", 1)[0]
         assert 'if kind in ("checkbox", "radio")' in seg
-        assert "never auto-click" in seg
+        assert "_consent_ok() and ats_forms.is_privacy_ack(lab)" in seg
+        assert "stays the human" in seg
+        # the knob defaults off
+        knob = src.split("def _consent_ok", 1)[1][:400]
+        assert 'get("accept_privacy_notice")' in knob
+
+    def test_legal_weight_acks_are_refused_whatever_the_knob_says(self):
+        for label in ("I agree to binding arbitration",
+                      "I consent to a background check",
+                      "I waive my right to a jury trial",
+                      "I accept the at-will employment terms",
+                      "Do you have a non-compete?",
+                      "I agree to the terms and conditions"):
+            assert not ats_forms.is_privacy_ack(label), label
+
+    def test_a_real_privacy_notice_is_recognised(self):
+        for label in ("Candidate Notice: Please read and accept the Global Personal "
+                      "Data Privacy Notice",
+                      "I accept the Privacy Policy", "GDPR consent",
+                      "Data Protection Notice"):
+            assert ats_forms.is_privacy_ack(label), label
+
+    def test_a_combobox_value_is_committed_not_just_typed(self):
+        # fill() types the text but a combobox's value stays EMPTY until an option is
+        # chosen, which is why Country* and Location (City)* read as required-and-blank
+        # while visibly showing the right text
+        src = (ROOT / "agents" / "apply_direct.py").read_text()
+        seg = src.split("def _answer_screeners", 1)[1].split("\ndef ", 1)[0]
+        assert "role=option" in seg
+        assert 'get_attribute("role") == "combobox"' in seg
 
     def test_only_empty_controls_are_touched(self):
         src = (ROOT / "agents" / "apply_direct.py").read_text()
