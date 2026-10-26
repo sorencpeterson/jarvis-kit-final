@@ -311,3 +311,36 @@ class TestLeverNeedsTheApplyPath:
         seg = src.split("def apply_one", 1)[1][:1200]
         assert "apply_path_suffix" in seg
         assert "endswith(suffix.strip" in seg, "must not double-append /apply/apply"
+
+
+class TestConsentIsNeverAutoAccepted:
+    """A live Greenhouse form required "Candidate Notice: Please read and accept the
+    Global Personal Data Privacy Notice". Accepting terms is the applicant's own act.
+    This is the field that correctly makes such a form a human handoff."""
+
+    @pytest.mark.parametrize("label", [
+        "Candidate Notice: Please read and accept the Global Personal Data Privacy Notice",
+        "I agree to the terms and conditions",
+        "I acknowledge the privacy policy",
+        "Do you consent to a background check?",
+        "Please read and accept our terms",
+        "Do you have any employment restrictions such as a non-compete?",
+    ])
+    def test_consent_and_legal_questions_return_nothing(self, label):
+        assert af.answer_for(label, PROFILE, BANK) is None
+
+
+class TestAddressAndCountry:
+    def test_greenhouse_address_wording_resolves(self):
+        p = dict(PROFILE, street_address="401 E 8th", country="United States")
+        for label in ("Current Mailing Address*", "Home Address", "Street Address",
+                      "Address Line 1"):
+            assert af.answer_for(label, p) == "401 E 8th", label
+
+    def test_country_has_a_safe_default(self):
+        assert af.answer_for("Country*", {}) == "United States"
+        assert af.answer_for("Country", {"country": "Canada"}) == "Canada"
+
+    def test_country_of_citizenship_is_not_answered_from_country(self):
+        # a different question with a different answer; never guess citizenship
+        assert af.answer_for("Country of citizenship", {"country": "United States"}) is None

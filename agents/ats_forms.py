@@ -330,7 +330,13 @@ def page_changed(before_url: str, after_url: str, before: str, after: str) -> bo
 # with a bare URL.
 _NEVER_ANSWER = re.compile(
     r"password|passcode|\blogin\b|credential|social security|\bssn\b|"
-    r"bank|routing|credit card|date of birth|\bdob\b", re.I)
+    r"bank|routing|credit card|date of birth|\bdob\b|"
+    # Accepting terms, a privacy notice or any consent is the applicant's act, not
+    # this system's. A live Greenhouse form required "Candidate Notice: please read
+    # and accept the Global Personal Data Privacy..." -- that field is why these forms
+    # route to a human, and it should stay that way.
+    r"consent|privacy (notice|policy)|terms and conditions|i (agree|accept|acknowledge)|"
+    r"please read and accept|candidate notice|non-?compete", re.I)
 
 # A QUESTION, not a field label. "Have you independently built and maintained a
 # website?" contains "website" and was being answered with the portfolio URL, which
@@ -365,7 +371,8 @@ _PROFILE_RULES = (
     (r"\bcity\b|current location|where are you (based|located)", "city_state", None),
     (r"\bstate\b(?!ment)", "state_abbrev", None),
     (r"zip|postal code", "zip5", None),
-    (r"street address|address line", "street_address", None),
+    (r"street address|address line|mailing address|home address", "street_address", None),
+    (r"^country$|\bcountry\b(?! of citizenship)", "country", "United States"),
     (r"first name", "first_name", None),
     (r"last name|surname|family name", "last_name", None),
     (r"full name|^name$", "full_name", None),
