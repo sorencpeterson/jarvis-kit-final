@@ -393,7 +393,13 @@ def is_privacy_ack(label: str) -> bool:
 
 
 _QUESTION_SAFE = {"work_authorization", "requires_sponsorship", "availability",
-                  "salary_expectation", "years_experience"}
+                  "salary_expectation", "years_experience",
+                  # EEO is routinely ASKED as a question ("Are you Hispanic/Latino?",
+                  # "Are you a protected veteran?"), and the answer is a fact about the
+                  # owner that he recorded himself. Without these the question-shape
+                  # guard skipped them and required EEO fields stayed blank.
+                  "eeo.gender", "eeo.race", "eeo.veteran_status",
+                  "eeo.disability_status", "eeo.pronouns"}
 
 _PROFILE_RULES = (
     # (regex over the question label, profile key, fallback)
@@ -418,10 +424,14 @@ _PROFILE_RULES = (
     (r"full name|^name$", "full_name", None),
     (r"e-?mail", "email", None),
     (r"phone|mobile|cell", "phone", None),
+    # EEO keys are matched against the names a real exported package actually uses.
+    # These read eeo.veteran / eeo.disability, while the file stores veteran_status and
+    # disability_status, so the owner's real answers were silently never used and the
+    # required EEO fields came back blank. _profile_get tries both spellings now.
     (r"gender", "eeo.gender", None),
-    (r"race|ethnicity", "eeo.race", None),
-    (r"veteran", "eeo.veteran", None),
-    (r"disability", "eeo.disability", None),
+    (r"race|ethnicity|hispanic|latino", "eeo.race", None),
+    (r"veteran", "eeo.veteran_status", None),
+    (r"disability", "eeo.disability_status", None),
     (r"pronouns", "eeo.pronouns", None),
 )
 
@@ -446,11 +456,26 @@ def _norm_q(s: str) -> str:
     return re.sub(r"[^a-z0-9 ]+", " ", s).strip()
 
 
+# EEO questions a form marks REQUIRED still need an answer when the owner recorded
+# none. "Decline to self-identify" is the honest one: it is an option every compliant
+# EEO form offers, and it states a real choice rather than inventing demographics.
+_EEO_DECLINE = "I do not wish to answer"
+
+
 def _profile_get(profile: dict, key: str):
     if "." in key:
         head, tail = key.split(".", 1)
         sub = profile.get(head)
-        return (sub or {}).get(tail) if isinstance(sub, dict) else None
+        if not isinstance(sub, dict):
+            return None
+        # accept both spellings: "veteran_status" as stored, "veteran" as asked
+        for k in (tail, f"{tail}_status", tail.replace("_status", "")):
+            v = sub.get(k)
+            if v not in (None, "", []):
+                return v
+        # an EEO field the owner left blank declines rather than staying empty, since
+        # the form will not submit without it
+        return _EEO_DECLINE if head == "eeo" else None
     return profile.get(key)
 
 

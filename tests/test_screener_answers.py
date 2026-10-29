@@ -63,8 +63,24 @@ class TestProfileBackedAnswers:
 
     def test_eeo_comes_from_its_own_block(self):
         assert af.answer_for("Gender", PROFILE) == "Prefer not to say"
-        # nothing recorded for race: must not fall through to some other value
-        assert af.answer_for("Race / Ethnicity", PROFILE) is None
+        # Nothing recorded for race. It must not fall through to some OTHER profile
+        # value, but a required EEO field cannot be left blank either or the form will
+        # not submit, so it declines: a real option on every compliant EEO form, and a
+        # stated choice rather than invented demographics.
+        assert af.answer_for("Race / Ethnicity", PROFILE) == af._EEO_DECLINE
+
+    def test_eeo_asked_as_a_question_still_resolves(self):
+        p = dict(PROFILE, eeo={"veteran_status": "I am not a protected veteran"})
+        assert af.answer_for("Are you a protected veteran?", p) \
+            == "I am not a protected veteran"
+        assert af.answer_for("Are you Hispanic/Latino?", p) == af._EEO_DECLINE
+
+    def test_eeo_keys_match_a_real_exported_package(self):
+        # a real package stores veteran_status / disability_status; rules that read
+        # eeo.veteran silently ignored the owner's own answers
+        p = {"eeo": {"veteran_status": "No", "disability_status": "No"}}
+        assert af.answer_for("Veteran Status*", p) == "No"
+        assert af.answer_for("Disability Status*", p) == "No"
 
     def test_identity_fields(self):
         assert af.answer_for("First Name", PROFILE) == "Alex"
