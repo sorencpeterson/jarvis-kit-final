@@ -214,6 +214,22 @@ def _match_option(opts, want: str):
                 break
     if best is not None:
         return best
+
+    # A decline answer has to match the wording the FORM uses. Greenhouse EEO offers
+    # "Decline To Self Identify"; our sentinel says "I do not wish to answer", and a
+    # literal comparison finds nothing, leaving a required race field blank.
+    if any(k in w for k in ("do not wish", "decline", "prefer not", "not disclose")):
+        for o in opts[:250]:
+            try:
+                if not o.is_visible():
+                    continue
+                t = " ".join((o.inner_text() or "").lower().split())
+            except Exception:  # noqa: BLE001
+                continue
+            if any(k in t for k in ("decline", "prefer not", "do not wish",
+                                    "not disclose", "not to answer", "not specified")):
+                return o
+
     # no literal overlap: try polarity against a yes/no style option set
     pol = _polarity(want)
     if not pol:
@@ -257,10 +273,21 @@ def _pick_option(page, el, want: str) -> str:
         if hit is None and len(opts) > 12:
             # long list: filter it, then look again
             try:
+                # A location box wants the CITY. Typing "Sioux Falls, SD" filters a
+                # Greenhouse city list (which offers "Sioux Falls, South Dakota,
+                # United States") down to nothing, so try the bare city too.
+                typed = want[:40]
                 el.fill("")
-                el.type(want[:40], delay=15)
+                el.type(typed, delay=15)
                 page.wait_for_timeout(500)
                 hit = _match_option(_opts_in(page, el), want)
+                if hit is None and "," in want:
+                    head = want.split(",", 1)[0].strip()
+                    el.fill("")
+                    el.type(head[:40], delay=15)
+                    page.wait_for_timeout(600)
+                    o2 = _opts_in(page, el)
+                    hit = _match_option(o2, head) or (o2[0] if len(o2) == 1 else None)
             except Exception:  # noqa: BLE001 -- read-only combobox, list only
                 pass
 
@@ -502,17 +529,34 @@ def apply_one(page, job: dict, spec: dict, profile: dict, submit: bool,
         out["action"] = "handoff"
         out["reason"] = "no resume file (expected store/resume.pdf)"
         return out
+    # VERIFY the upload, do not assume it. set_input_files() succeeds silently on a
+    # DETACHED node, and this page re-renders twice before we get here (the cookie
+    # decline, then the combobox interactions), so a reference captured earlier writes
+    # the file into an orphaned element. The form then reports "Resume/CV* is required"
+    # while our own log says resume=... uploaded. Re-query immediately before use, then
+    # confirm the page actually shows the filename, and retry once if it does not.
     uploaded = False
+    stem = res.stem[:18]
     for sel in spec["resume"]:
-        try:
-            el = page.query_selector(sel)
-            if el:
+        for attempt in (1, 2):
+            try:
+                el = page.query_selector(sel)       # re-queried every attempt
+                if not el:
+                    break
                 el.set_input_files(str(res))
-                out["filled"].append(f"resume={res.name}")
-                uploaded = True
-                break
-        except Exception:  # noqa: BLE001
-            continue
+                page.wait_for_timeout(900)
+                try:
+                    shown = stem.lower() in (page.inner_text("body") or "").lower()
+                except Exception:  # noqa: BLE001
+                    shown = True                    # cannot read: do not loop forever
+                if shown:
+                    out["filled"].append(f"resume={res.name}")
+                    uploaded = True
+                    break
+            except Exception:  # noqa: BLE001
+                pass
+        if uploaded:
+            break
     if not uploaded and submit:
         out["action"] = "handoff"
         out["reason"] = "resume field not found on the page"
