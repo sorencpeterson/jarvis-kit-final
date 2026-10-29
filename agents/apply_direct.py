@@ -247,6 +247,74 @@ def _match_option(opts, want: str):
     return None
 
 
+
+# How a HUMAN would read each required control after a fill. This exists because the
+# obvious check is wrong: a react-select search input reads as empty even after a
+# successful pick (the selection renders in a sibling element), so inspecting el.value
+# reports filled fields as blank and blank ones as fine. Seven employers were burned
+# rediscovering that through live submits, one attempt at a time.
+#
+# Free and repeatable: --check fills and reads, never clicks submit, and a dry run does
+# not call bump_attempts, so this can be run as often as needed at zero cost.
+_READINESS_JS = r"""() => {
+  const rows = [];
+  const seen = new Set();
+  for (const el of document.querySelectorAll('input,textarea,select')) {
+    const t = (el.type || '').toLowerCase();
+    if (['hidden','submit','button'].includes(t)) continue;
+    const st = getComputedStyle(el);
+    if (st.display === 'none' || st.visibility === 'hidden') continue;
+    const req = el.required || el.getAttribute('aria-required') === 'true';
+    if (!req) continue;
+
+    let lab = '';
+    const id = el.getAttribute('id');
+    if (id) { const l = document.querySelector(`label[for="${CSS.escape(id)}"]`);
+              if (l) lab = l.innerText; }
+    if (!lab) { const w = el.closest('label'); if (w) lab = w.innerText; }
+    if (!lab) { const g = el.closest('div,fieldset');
+                if (g) { const l2 = g.querySelector('label,legend'); if (l2) lab = l2.innerText; } }
+    lab = (lab || el.getAttribute('aria-label') || el.getAttribute('name') || '')
+            .trim().replace(/\s+/g,' ').slice(0, 56);
+    if (!lab || seen.has(lab)) continue;
+    seen.add(lab);
+
+    let val = (el.value || '').trim();
+    if (t === 'file') {
+      val = el.files && el.files.length ? el.files[0].name : '';
+    } else if (!val) {
+      // react-select and friends: the chosen value is rendered beside the input
+      const box = el.closest('[class*=select],[class*=Select],[role=combobox]')
+               || el.parentElement;
+      if (box) {
+        const sv = box.querySelector('[class*=singleValue],[class*=single-value],'
+                                   + '[class*=multiValue],[class*=selected]');
+        if (sv) val = (sv.innerText || '').trim();
+        if (!val) {
+          const txt = (box.innerText || '').trim().replace(/\s+/g,' ');
+          if (txt && !/^select\.{0,3}$/i.test(txt) && txt.length < 90) val = txt;
+        }
+      }
+    }
+    rows.push({label: lab, value: val.slice(0, 44), ok: !!val});
+  }
+  return rows; }"""
+
+
+def readiness(page) -> list:
+    """CONSERVATIVE on purpose, and known to under-report. Verified against a live
+    Greenhouse form: fields the form itself accepted (Country, Veteran Status, Gender)
+    still read as blank here, because a react-select selection is not always exposed
+    where this can find it. So MISSING means "could not confirm", not "definitely
+    empty", and the form's own post-submit objection list is the authority. Use this to
+    catch obvious gaps for free; do not treat a clean run as proof it will submit.
+    """
+    try:
+        return page.evaluate(_READINESS_JS) or []
+    except Exception:  # noqa: BLE001
+        return []
+
+
 def _pick_option(page, el, want: str) -> str:
     """Open a React combobox and choose the option matching `want`. Returns its text.
 
@@ -421,7 +489,7 @@ def new_result(job: dict, spec: dict) -> dict:
 
 
 def apply_one(page, job: dict, spec: dict, profile: dict, submit: bool,
-              out: dict | None = None) -> dict:
+              out: dict | None = None, check: bool = False) -> dict:
     """Fill one application, recording progress into `out` as it goes."""
     url = job.get("apply_url") or ""
     out = out if out is not None else new_result(job, spec)
@@ -579,7 +647,8 @@ def apply_one(page, job: dict, spec: dict, profile: dict, submit: bool,
     out["answered"] = _answer_screeners(page, job, profile, out)
 
     if not submit:
-        out["action"] = "dry-run"
+        out["readiness"] = readiness(page)
+        out["action"] = "check" if check else "dry-run"
         return out
 
     for sel in spec["submit"]:
@@ -690,7 +759,8 @@ def apply_one(page, job: dict, spec: dict, profile: dict, submit: bool,
     return out
 
 
-def run(limit: int = 10, submit: bool = False, only_ats: str = "") -> int:
+def run(limit: int = 10, submit: bool = False, only_ats: str = "",
+        check: bool = False) -> int:
     cfg = _cfg()
     if submit and not cfg.get("direct_apply"):
         print("apply_direct: --submit requires \"direct_apply\": true in "
@@ -762,7 +832,7 @@ def run(limit: int = 10, submit: bool = False, only_ats: str = "") -> int:
                 # whatever it managed to record, submit_attempted above all
                 r = new_result(job, spec)
                 try:
-                    apply_one(page, job, spec, profile, submit, out=r)
+                    apply_one(page, job, spec, profile, submit, out=r, check=check)
                 except Exception as e:  # noqa: BLE001 -- one bad page never stops the batch
                     r["action"] = "handoff"
                     r["reason"] = f"page error: {type(e).__name__}"
@@ -778,6 +848,14 @@ def run(limit: int = 10, submit: bool = False, only_ats: str = "") -> int:
                     jobs.set_status(r["id"], "skipped", r["reason"], expect="applying")
                     skipped += 1
                     print(f"  {tag} walled     {r['reason']}")
+                elif r["action"] == "check":
+                    rows = r.get("readiness") or []
+                    miss = [x for x in rows if not x["ok"]]
+                    mark = "READY" if not miss else f"{len(miss)} BLANK"
+                    print(f"  {tag} {mark}  ({len(rows)} required)")
+                    for x in rows:
+                        flag = "ok " if x["ok"] else "MISSING"
+                        print(f"        {flag:<7} {x['label'][:46]:<46} {x['value'][:28]}")
                 elif r["action"] == "dry-run":
                     ans = r.get("answered") or []
                     print(f"  {tag} would fill {', '.join(r['filled']) or '(nothing)'}"
@@ -835,9 +913,12 @@ def main() -> int:
     ap.add_argument("--submit", action="store_true",
                     help="actually submit (also needs direct_apply:true in config)")
     ap.add_argument("--dry-run", action="store_true", default=True)
+    ap.add_argument("--check", action="store_true",
+                    help="fill and report every required field as a human would read "
+                         "it. Never submits, never burns an attempt.")
     ap.add_argument("--ats", default="", help="only this ATS, e.g. greenhouse.io")
     a = ap.parse_args()
-    return run(limit=a.limit, submit=a.submit, only_ats=a.ats)
+    return run(limit=a.limit, submit=a.submit, only_ats=a.ats, check=a.check)
 
 
 if __name__ == "__main__":
